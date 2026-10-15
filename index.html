@@ -26,7 +26,7 @@
     <header class="bg-red-700 text-white shadow-md sticky top-0 z-30">
         <div class="max-w-md mx-auto px-4 py-2.5 flex items-center justify-between">
             <div class="flex items-center space-x-2">
-                <img src="logo.png" alt="Logo Jumbara" class="h-8 w-auto object-contain">
+                <img id="imgLogoHeader" src="logo.png" alt="Logo Jumbara" class="h-8 w-auto object-contain transition-all duration-300">
                 <div>
                     <h1 class="text-xs font-black tracking-wide leading-tight">JUMBARA PMR MULA KE-4</h1>
                     <p class="text-[9px] text-red-200">PMI Kab. Purbalingga 2026</p>
@@ -60,7 +60,7 @@
         <!-- FORM LOGIN JURI SECURE -->
         <div id="secLogin" class="card-bg bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 space-y-4">
             <div class="text-center">
-                <img src="logo.png" alt="Logo Jumbara" class="h-24 w-auto mx-auto mb-2 drop-shadow-lg object-contain">
+                <img id="imgLogoLogin" src="logo.png" alt="Logo Jumbara" class="h-24 w-auto mx-auto mb-2 drop-shadow-lg object-contain transition-all duration-300">
                 <h2 class="text-lg font-black">LOGIN JURI POS</h2>
                 <p class="text-xs text-sub text-slate-400">Pilih ID Juri & Masukkan PIN</p>
             </div>
@@ -149,7 +149,7 @@
 
                 <div class="input-bg bg-slate-900 p-3 rounded-xl border border-slate-700 flex justify-between items-center mt-3">
                     <span class="text-xs font-bold text-sub text-slate-300">TOTAL SKOR:</span>
-                    <span id="lblTotalSkorAuto" class="text-2xl font-black text-amber-400">0 Poin</span>
+                    <span id="lblTotalSkorAuto" class="text-2xl font-black text-amber-400">0</span>
                 </div>
             </div>
 
@@ -217,7 +217,6 @@
             isLightMode: false,
 
             init: async function() {
-                // WARN JIKA REFRESH SAAT WAKTU BERJALAN
                 window.addEventListener('beforeunload', (e) => {
                     if (this.timerRunning) {
                         e.preventDefault();
@@ -246,12 +245,19 @@
                 this.isLightMode = !this.isLightMode;
                 const body = document.getElementById('appBody');
                 const ico = document.getElementById('icoTheme');
+                const imgHeader = document.getElementById('imgLogoHeader');
+                const imgLogin = document.getElementById('imgLogoLogin');
+
                 if (this.isLightMode) {
                     body.classList.add('theme-light');
                     ico.className = "fa-solid fa-moon text-slate-200";
+                    if (imgHeader) imgHeader.src = "logo1.png";
+                    if (imgLogin) imgLogin.src = "logo1.png";
                 } else {
                     body.classList.remove('theme-light');
                     ico.className = "fa-solid fa-sun text-amber-300";
+                    if (imgHeader) imgHeader.src = "logo.png";
+                    if (imgLogin) imgLogin.src = "logo.png";
                 }
             },
 
@@ -265,7 +271,6 @@
                 }
             },
 
-            // LOGIN DENGAN VERIFIKASI SECURE DI SERVER
             login: async function() {
                 const idJuri = document.getElementById('selJuri').value;
                 const pin = document.getElementById('txtPin').value;
@@ -414,7 +419,7 @@
                     div.innerHTML = `
                         <div class="flex justify-between items-center border-b border-slate-800 pb-1.5">
                             <span class="text-xs font-bold text-sub">${namaItem}</span>
-                            <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono">Maks: ${bobotMaks} Pt</span>
+                            <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono">Maks: ${bobotMaks}</span>
                         </div>
                         
                         <div class="flex gap-1.5">
@@ -599,7 +604,7 @@
                     }
                     total += val;
                 });
-                document.getElementById('lblTotalSkorAuto').innerText = total + " Poin";
+                document.getElementById('lblTotalSkorAuto').innerText = total;
             },
 
             logout: function() {
@@ -607,7 +612,6 @@
                 location.reload();
             },
 
-            // KONEKSI BLUETOOTH DENGAN AUTO DETEKSI TERPUTUS
             connectBT: async function() {
                 try {
                     this.btDevice = await navigator.bluetooth.requestDevice({
@@ -619,7 +623,6 @@
                         ]
                     });
 
-                    // EVENT HANDLER KONDISI TERPUTUS
                     this.btDevice.addEventListener('gattserverdisconnected', () => {
                         this.btChar = null;
                         document.getElementById('lblBT').innerText = "Konek Printer";
@@ -697,12 +700,12 @@
                         this.simpanRiwayatLokal(payload);
                         await this.cetakStruk(payload);
                         
-                        this.init(); // Refresh data tracking
+                        this.init();
 
                         document.getElementById('selKontingen').value = '';
                         document.getElementById('txtCatatan').value = '';
                         inputs.forEach(inp => inp.value = '');
-                        document.getElementById('lblTotalSkorAuto').innerText = "0 Poin";
+                        document.getElementById('lblTotalSkorAuto').innerText = "0";
                         this.resetTimer();
                     } else {
                         alert("Gagal simpan: " + result.message);
@@ -744,7 +747,7 @@
                                     <strong class="text-sub text-xs block">${item.kontingen}</strong>
                                     <span class="text-[10px] text-slate-400">${item.timestamp} | Durasi: ${item.durasi}s</span>
                                 </div>
-                                <span class="bg-red-600 text-white font-black text-xs px-2 py-0.5 rounded">${item.total_skor} Pt</span>
+                                <span class="bg-red-600 text-white font-black text-xs px-2 py-0.5 rounded">${item.total_skor}</span>
                             </div>
                             <div class="flex justify-end pt-1">
                                 <button onclick="app.cetakDariRiwayat(${idx})" class="bg-amber-500 text-slate-900 text-[10px] px-2 py-1 rounded font-bold">
@@ -820,21 +823,20 @@
                     let label = `${idx}. ${item}`;
                     if (label.length > 32) label = label.substring(0, 32);
                     cmd += `${label}\n`;
-                    cmd += `   -> Skor: ${nilai} Poin\n`;
+                    cmd += `   -> Skor: ${nilai}\n`;
                     idx++;
                 }
 
                 cmd += "--------------------------------\n";
                 
                 cmd += ESC + 'a' + '\x02' + ESC + 'E' + '\x01';
-                cmd += `TOTAL SKOR : [ ${data.total_skor} PT ]\n`;
+                cmd += `TOTAL SKOR : [ ${data.total_skor} ]\n`;
                 cmd += ESC + 'E' + '\x00' + ESC + 'a' + '\x00';
 
                 if (data.catatan && data.catatan !== "-") {
                     cmd += `CATATAN : ${data.catatan}\n`;
                 }
 
-                // FALLBACK JIKA PDF BUKTI DRIVE BELUM TERSEDIA (OFFLINE)
                 cmd += "--------------------------------\n";
                 cmd += ESC + 'a' + '\x01';
                 if (data.pdf_url) {
