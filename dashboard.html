@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Dashboard Jumbara PMR</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen p-6 font-sans">
+
+    <!-- HEADER DASHBOARD -->
+    <header class="flex justify-between items-center bg-slate-900 border border-slate-800 p-4 rounded-2xl mb-6 shadow-2xl">
+        <div class="flex items-center space-x-3">
+            <div class="bg-red-600 p-3 rounded-xl">
+                <i class="fa-solid fa-trophy text-2xl text-amber-300"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-black tracking-wide text-white">LIVE LEADERBOARD JUMBARA PMR MULA IV</h1>
+                <p class="text-xs text-slate-400">Papan Skor, Klasemen, & Progress Tracking Real-Time</p>
+            </div>
+        </div>
+        <div class="text-right">
+            <span class="text-xs text-slate-400 block">Status Sistem:</span>
+            <span class="inline-flex items-center text-xs font-bold text-emerald-400">
+                <span class="w-2 h-2 bg-emerald-500 rounded-full mr-1.5 animate-ping"></span> Live Auto-Update (15s)
+            </span>
+        </div>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- KARTU JUARA UMUM (3 BESAR) -->
+        <div class="lg:col-span-1 bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl space-y-4">
+            <h2 class="text-base font-black text-amber-400 flex items-center border-b border-slate-800 pb-2">
+                <i class="fa-solid fa-crown mr-2"></i> KLASEMEN JUARA UMUM
+            </h2>
+
+            <div id="containerJuaraUmum" class="space-y-3">
+                <p class="text-xs text-slate-500 animate-pulse">Memuat data klasemen...</p>
+            </div>
+        </div>
+
+        <!-- KARTU KLASEMEN PER POS LOMBA -->
+        <div class="lg:col-span-2 bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl space-y-4">
+            <h2 class="text-base font-black text-emerald-400 flex items-center border-b border-slate-800 pb-2">
+                <i class="fa-solid fa-list-ol mr-2"></i> PERINGKAT TOP 3 PER POS LOMBA
+            </h2>
+
+            <div id="containerJuaraPos" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <p class="text-xs text-slate-500 animate-pulse col-span-2">Memuat data pos...</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- TRACKING PROGRES POS KONTINGEN -->
+    <div class="mt-6 bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl space-y-4">
+        <h2 class="text-base font-black text-cyan-400 flex items-center border-b border-slate-800 pb-2">
+            <i class="fa-solid fa-route mr-2"></i> MONITORING PROGRES POS KONTINGEN
+        </h2>
+
+        <div id="containerTracking" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <p class="text-xs text-slate-500 animate-pulse col-span-3">Memuat tracking progres...</p>
+        </div>
+    </div>
+
+    <script>
+        const GAS_API_URL = "GANTI_DENGAN_URL_DEPLOYMENT_APPS_SCRIPT_KAMU";
+
+        async function loadDashboard() {
+            try {
+                const res = await fetch(GAS_API_URL);
+                const data = await res.json();
+
+                renderJuaraUmum(data.juara_umum || []);
+                renderJuaraPos(data.juara_pos || []);
+                renderTracking(data.tracking || []);
+            } catch (e) {
+                console.error("Gagal update dashboard:", e);
+            }
+        }
+
+        function renderJuaraUmum(list) {
+            const container = document.getElementById('containerJuaraUmum');
+            container.innerHTML = '';
+
+            if (list.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-500">Belum ada rekap nilai masuk.</p>';
+                return;
+            }
+
+            const medals = ['text-amber-400', 'text-slate-300', 'text-amber-600'];
+            const badges = ['bg-amber-500/20 text-amber-300 border-amber-500/40', 'bg-slate-400/20 text-slate-300 border-slate-400/40', 'bg-amber-700/20 text-amber-500 border-amber-700/40'];
+
+            list.forEach((item, index) => {
+                const keys = Object.keys(item);
+                const tim = item[keys[0]];
+                const skor = item[keys[1]];
+
+                const div = document.createElement('div');
+                div.className = `p-3.5 rounded-xl border flex items-center justify-between ${badges[index] || 'bg-slate-800 border-slate-700'}`;
+                div.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <span class="text-2xl font-black ${medals[index] || 'text-slate-500'}">#${index + 1}</span>
+                        <div>
+                            <strong class="text-sm block font-bold text-white">${tim}</strong>
+                            <span class="text-[10px] text-slate-400 block">Kandidat Juara Umum</span>
+                        </div>
+                    </div>
+                    <span class="text-xl font-black text-amber-400">${skor} <span class="text-xs font-normal">pts</span></span>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function renderJuaraPos(list) {
+            const container = document.getElementById('containerJuaraPos');
+            container.innerHTML = '';
+
+            if (list.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-500 col-span-2">Belum ada nilai pos masuk.</p>';
+                return;
+            }
+
+            const grouped = {};
+            list.forEach(row => {
+                const keys = Object.keys(row);
+                const pos = row[keys[0]];
+                if (!grouped[pos]) grouped[pos] = [];
+                if (grouped[pos].length < 3) grouped[pos].push(row);
+            });
+
+            for (const [posName, teamList] of Object.entries(grouped)) {
+                const box = document.createElement('div');
+                box.className = "bg-slate-950/60 p-3.5 rounded-xl border border-slate-800 space-y-2";
+                
+                let rowsHtml = '';
+                teamList.forEach((t, idx) => {
+                    const keys = Object.keys(t);
+                    rowsHtml += `
+                        <div class="flex justify-between items-center text-xs border-b border-slate-800/60 pb-1">
+                            <span class="font-bold text-slate-300">${idx + 1}. ${t[keys[1]]}</span>
+                            <span class="font-black text-emerald-400">${t[keys[2]]} pt</span>
+                        </div>
+                    `;
+                });
+
+                box.innerHTML = `
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800 pb-1">${posName}</h3>
+                    <div class="space-y-1 mt-1">${rowsHtml}</div>
+                `;
+                container.appendChild(box);
+            }
+        }
+
+        function renderTracking(list) {
+            const container = document.getElementById('containerTracking');
+            container.innerHTML = '';
+
+            if (!list || list.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-500 col-span-3">Data tracking belum tersedia.</p>';
+                return;
+            }
+
+            list.forEach(item => {
+                const persen = Math.round((item.selesai_count / item.total_pos) * 100);
+
+                let badgesSudah = item.pos_sudah.map(p => `<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-bold px-1.5 py-0.5 rounded">✓ ${p}</span>`).join(' ');
+                let badgesBelum = item.pos_belum.map(p => `<span class="bg-red-500/20 text-red-400 border border-red-500/40 text-[10px] font-bold px-1.5 py-0.5 rounded">✗ ${p}</span>`).join(' ');
+
+                const card = document.createElement('div');
+                card.className = "bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2";
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <strong class="text-xs font-bold text-white block">${item.id_kontingen} - ${item.nama_tim}</strong>
+                            <span class="text-[10px] text-slate-400 block">${item.kecamatan}</span>
+                        </div>
+                        <span class="text-xs font-black text-cyan-400 bg-cyan-950/80 px-2 py-0.5 rounded-md border border-cyan-800">${persen}%</span>
+                    </div>
+
+                    <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                        <div class="bg-cyan-500 h-1.5 rounded-full transition-all duration-500" style="width: ${persen}%"></div>
+                    </div>
+
+                    <div class="flex flex-wrap gap-1 pt-1">
+                        ${badgesSudah}
+                        ${badgesBelum}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        loadDashboard();
+        setInterval(loadDashboard, 15000);
+    </script>
+</body>
+</html>

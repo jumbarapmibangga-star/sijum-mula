@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Juri - Jumbara PMR</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#dc2626">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between font-sans">
+
+    <!-- HEADER / NAVBAR -->
+    <header class="bg-red-700 text-white shadow-md sticky top-0 z-30">
+        <div class="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-square-poll-vertical text-xl"></i>
+                <h1 class="text-base font-bold tracking-wide">PORTAL JURI JUMBARA</h1>
+            </div>
+            <div id="navActions" class="hidden flex items-center gap-2">
+                <button id="btnBT" onclick="app.connectBT()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 px-2.5 py-1 rounded-lg text-xs font-black flex items-center shadow">
+                    <i class="fa-solid fa-print mr-1"></i> <span id="lblBT">Konek Printer</span>
+                </button>
+                <button onclick="app.logout()" class="bg-slate-800 text-red-300 px-2.5 py-1 rounded-lg text-xs font-bold" title="Keluar">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTAINER UTAMA -->
+    <main class="max-w-md mx-auto p-4 w-full flex-grow flex flex-col justify-center">
+
+        <!-- FORM LOGIN JURI -->
+        <div id="secLogin" class="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 space-y-4">
+            <div class="text-center">
+                <i class="fa-solid fa-user-shield text-4xl text-red-500 mb-2"></i>
+                <h2 class="text-xl font-black">LOGIN JURI POS</h2>
+                <p class="text-xs text-slate-400">Pilih ID Juri & masukkan PIN resmi</p>
+            </div>
+
+            <div>
+                <label class="text-xs font-bold text-slate-300 mb-1 block">PILIH NAMA JURI</label>
+                <select id="selJuri" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm focus:border-red-500 outline-none text-white">
+                    <option value="">-- Memuat Data Juri --</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="text-xs font-bold text-slate-300 mb-1 block">PIN RAHASIA</label>
+                <input id="txtPin" type="password" maxlength="6" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-center text-lg font-bold tracking-widest focus:border-red-500 outline-none text-amber-400" placeholder="****">
+            </div>
+
+            <button onclick="app.login()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl shadow-lg transition">
+                MASUK PORTAL
+            </button>
+        </div>
+
+        <!-- FORM PENILAIAN -->
+        <div id="secForm" class="hidden space-y-4">
+            <!-- INFO JURI LOGGED IN -->
+            <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 flex justify-between items-center text-xs">
+                <div>
+                    <span class="text-slate-400 block">Juri Tersetel:</span>
+                    <strong id="lblNamaJuri" class="text-red-400 font-bold text-sm"></strong>
+                </div>
+                <div class="text-right">
+                    <span class="text-slate-400 block">Pos Tugas:</span>
+                    <span id="lblPosJuri" class="bg-red-950 text-red-300 border border-red-800 px-2 py-0.5 rounded font-mono font-bold"></span>
+                </div>
+            </div>
+
+            <!-- INPUT KONTINGEN -->
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-3">
+                <div>
+                    <label class="text-xs font-bold text-slate-300 mb-1 block">PILIH KONTINGEN / TIM</label>
+                    <select id="selKontingen" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm font-bold focus:border-red-500 outline-none text-white">
+                        <option value="">-- Pilih Tim --</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- WADAH RUBRIK PENILAIAN DINAMIS -->
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-3">
+                <label class="text-xs font-bold text-amber-400 block border-b border-slate-700 pb-1">
+                    <i class="fa-solid fa-list-check mr-1"></i> RUBRIK PENILAIAN (<span id="lblKodePosRubrik"></span>)
+                </label>
+                
+                <div id="containerRubrik" class="space-y-2.5">
+                    <!-- Terisi Otomatis Berdasarkan Pos Juri -->
+                </div>
+
+                <!-- TOTAL SKOR AKUMULASI -->
+                <div class="bg-slate-900 p-3 rounded-xl border border-slate-700 flex justify-between items-center mt-3">
+                    <span class="text-xs font-bold text-slate-300">TOTAL SKOR:</span>
+                    <span id="lblTotalSkorAuto" class="text-2xl font-black text-amber-400">0 Poin</span>
+                </div>
+            </div>
+
+            <!-- INPUT DURASI & CATATAN -->
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-3">
+                <div class="grid grid-cols-1 gap-3">
+                    <div>
+                        <label class="text-xs font-bold text-slate-300 mb-1 block">DURASI PENAMPILAN (DETIK)</label>
+                        <input id="txtDurasi" type="number" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-lg font-black text-emerald-400 text-center outline-none" placeholder="0">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-300 mb-1 block">CATATAN EVALUASI JURI</label>
+                        <textarea id="txtCatatan" rows="2" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-slate-200 outline-none" placeholder="Masukkan catatan evaluasi jika ada..."></textarea>
+                    </div>
+                </div>
+
+                <button id="btnSimpan" onclick="app.simpan()" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-3.5 rounded-xl shadow-lg flex items-center justify-center space-x-2 text-sm transition">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    <span>SIMPAN & CETAK STRUK</span>
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="p-3 text-center text-xs text-slate-500">
+        &copy; Panitia Jumbara PMR Mula - System v2.0 PWA
+    </footer>
+
+    <!-- LOGIKA UTAMA APLIKASI -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+
+        // URL APPS SCRIPT
+        const GAS_API_URL = "GANTI_DENGAN_URL_DEPLOYMENT_APPS_SCRIPT_KAMU";
+
+        const app = {
+            masterData: null,
+            btChar: null,
+            currentJuri: null,
+
+            init: async function() {
+                try {
+                    const res = await fetch(GAS_API_URL);
+                    this.masterData = await res.json();
+                    this.renderJuriOptions();
+                    this.checkSession();
+                } catch (e) {
+                    alert("Gagal memuat data master dari server: " + e.message);
+                }
+            },
+
+            renderJuriOptions: function() {
+                const sel = document.getElementById('selJuri');
+                sel.innerHTML = '<option value="">-- Pilih Nama Juri --</option>';
+                if(this.masterData && this.masterData.juri) {
+                    this.masterData.juri.forEach(j => {
+                        sel.innerHTML += `<option value="${j.ID_JURI}">${j.NAMA_JURI} (${j.KODE_POS})</option>`;
+                    });
+                }
+            },
+
+            login: function() {
+                const idJuri = document.getElementById('selJuri').value;
+                const pin = document.getElementById('txtPin').value;
+
+                if (!idJuri || !pin) return alert("Pilih Nama Juri dan isi PIN!");
+
+                const juriObj = this.masterData.juri.find(j => j.ID_JURI === idJuri);
+                if (juriObj && String(juriObj.PIN) === String(pin)) {
+                    this.currentJuri = juriObj;
+                    sessionStorage.setItem('juriSession', JSON.stringify(juriObj));
+                    this.showDashboard();
+                } else {
+                    alert("PIN Salah! Silakan coba lagi.");
+                }
+            },
+
+            checkSession: function() {
+                const sess = sessionStorage.getItem('juriSession');
+                if (sess) {
+                    this.currentJuri = JSON.parse(sess);
+                    this.showDashboard();
+                }
+            },
+
+            showDashboard: function() {
+                document.getElementById('secLogin').classList.add('hidden');
+                document.getElementById('secForm').classList.remove('hidden');
+                document.getElementById('navActions').classList.remove('hidden');
+
+                document.getElementById('lblNamaJuri').innerText = this.currentJuri.NAMA_JURI;
+                document.getElementById('lblPosJuri').innerText = this.currentJuri.KODE_POS;
+
+                this.renderKontingenOptions();
+                this.renderRubrikDinamis();
+            },
+
+            renderKontingenOptions: function() {
+                const sel = document.getElementById('selKontingen');
+                sel.innerHTML = '<option value="">-- Pilih Tim --</option>';
+                if(this.masterData && this.masterData.kontingen) {
+                    this.masterData.kontingen.forEach(k => {
+                        sel.innerHTML += `<option value="${k.ID_KONTINGEN} - ${k.NAMA_TIM}">${k.ID_KONTINGEN} - ${k.NAMA_TIM} (${k.KECAMATAN})</option>`;
+                    });
+                }
+
+                // Listener Validasi Cegah Double Input
+                sel.onchange = (e) => {
+                    const selected = e.target.value;
+                    if (!selected || !this.masterData.tracking) return;
+                    
+                    const posJuri = this.currentJuri.KODE_POS;
+                    const trackItem = this.masterData.tracking.find(t => selected.includes(t.id_kontingen));
+
+                    if (trackItem && trackItem.pos_sudah.includes(posJuri)) {
+                        alert(`⚠️ PERINGATAN:
+
+Tim ${selected} SUDAH PERNAH DINILAI di ${posJuri}!
+
+Jika disimpan ulang, data nilai sebelumnya akan tertimpa di Google Sheets.`);
+                    }
+                };
+            },
+
+            renderRubrikDinamis: function() {
+                const container = document.getElementById('containerRubrik');
+                document.getElementById('lblKodePosRubrik').innerText = this.currentJuri.KODE_POS;
+                container.innerHTML = '';
+
+                if (!this.masterData.rubrik) {
+                    container.innerHTML = '<p class="text-xs text-red-400">Data rubrik tidak ditemukan.</p>';
+                    return;
+                }
+
+                const items = this.masterData.rubrik.filter(r => r.KODE_POS === this.currentJuri.KODE_POS);
+
+                if (items.length === 0) {
+                    container.innerHTML = '<p class="text-xs text-amber-400">Pos ini tidak memiliki rubrik khusus. Masukkan nilai langsung di bawah.</p>';
+                    return;
+                }
+
+                items.forEach((item) => {
+                    const div = document.createElement('div');
+                    div.className = "flex justify-between items-center bg-slate-900 p-2.5 rounded-lg border border-slate-700";
+                    div.innerHTML = `
+                        <div class="pr-2">
+                            <span class="text-xs font-bold block text-slate-200">${item.NAMA_ITEM}</span>
+                            <span class="text-[10px] text-slate-400 block">Maksimal: ${item.BOBOT_MAKS} Poin</span>
+                        </div>
+                        <input type="number" 
+                               min="0" 
+                               max="${item.BOBOT_MAKS}" 
+                               data-item="${item.NAMA_ITEM}" 
+                               data-maks="${item.BOBOT_MAKS}" 
+                               oninput="app.hitungTotalAuto()" 
+                               class="input-rubrik bg-slate-800 border border-slate-600 rounded-lg p-2 w-20 text-center font-bold text-amber-400 text-sm focus:border-red-500 outline-none" 
+                               placeholder="0">
+                    `;
+                    container.appendChild(div);
+                });
+            },
+
+            hitungTotalAuto: function() {
+                let total = 0;
+                const inputs = document.querySelectorAll('.input-rubrik');
+                inputs.forEach(input => {
+                    let val = parseFloat(input.value) || 0;
+                    let max = parseFloat(input.getAttribute('data-maks')) || 100;
+                    if (val > max) {
+                        val = max;
+                        input.value = max;
+                    }
+                    total += val;
+                });
+                document.getElementById('lblTotalSkorAuto').innerText = total + " Poin";
+            },
+
+            logout: function() {
+                sessionStorage.clear();
+                location.reload();
+            },
+
+            // DIRECT WEB BLUETOOTH UNTUK PRINTER THERMAL
+            connectBT: async function() {
+                try {
+                    const device = await navigator.bluetooth.requestDevice({
+                        acceptAllDevices: true,
+                        optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb', '00001101-0000-1000-8000-00805f9b34fb']
+                    });
+                    const server = await device.gatt.connect();
+                    const services = await server.getPrimaryServices();
+
+                    for (const service of services) {
+                        const chars = await service.getCharacteristics();
+                        for (const c of chars) {
+                            if (c.properties.write || c.properties.writeWithoutResponse) {
+                                this.btChar = c;
+                                break;
+                            }
+                        }
+                        if (this.btChar) break;
+                    }
+
+                    if (this.btChar) {
+                        document.getElementById('lblBT').innerText = "Terhubung";
+                        document.getElementById('btnBT').className = "bg-emerald-500 text-slate-900 px-2.5 py-1 rounded-lg text-xs font-black flex items-center shadow";
+                        alert("✅ Printer RPP02N Berhasil Terhubung!");
+                    }
+                } catch (e) {
+                    alert("Gagal menyambungkan Bluetooth: " + e.message);
+                }
+            },
+
+            simpan: async function() {
+                const kontingen = document.getElementById('selKontingen').value;
+                const durasi = document.getElementById('txtDurasi').value;
+                const catatan = document.getElementById('txtCatatan').value;
+
+                if (!kontingen) return alert("Pilih Kontingen terlebih dahulu!");
+
+                let rincianNilai = {};
+                let totalSkor = 0;
+                const inputs = document.querySelectorAll('.input-rubrik');
+                
+                inputs.forEach(input => {
+                    const itemNama = input.getAttribute('data-item');
+                    const itemNilai = parseFloat(input.value) || 0;
+                    rincianNilai[itemNama] = itemNilai;
+                    totalSkor += itemNilai;
+                });
+
+                const btn = document.getElementById('btnSimpan');
+                btn.disabled = true;
+                btn.innerText = "MENYIMPAN DATA...";
+
+                const payload = {
+                    nama_juri: this.currentJuri.NAMA_JURI,
+                    pos_lomba: this.currentJuri.KODE_POS,
+                    kontingen: kontingen,
+                    total_skor: totalSkor,
+                    durasi: durasi || "0",
+                    catatan: catatan || "-",
+                    rincian_nilai: rincianNilai
+                };
+
+                try {
+                    const res = await fetch(GAS_API_URL, {
+                        method: "POST",
+                        body: JSON.stringify(payload)
+                    });
+                    const result = await res.json();
+
+                    if (result.status === "SUCCESS") {
+                        alert("✅ Data Nilai Berhasil Disimpan!");
+                        await this.cetakStruk(payload);
+                        
+                        // Refresh data lokal agar tracking ter-update
+                        this.init();
+
+                        // Reset Form
+                        document.getElementById('selKontingen').value = '';
+                        document.getElementById('txtDurasi').value = '';
+                        document.getElementById('txtCatatan').value = '';
+                        inputs.forEach(inp => inp.value = '');
+                        document.getElementById('lblTotalSkorAuto').innerText = "0 Poin";
+                    } else {
+                        alert("Gagal simpan: " + result.message);
+                    }
+                } catch (e) {
+                    alert("Error jaringan: " + e.message);
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i><span>SIMPAN & CETAK STRUK</span>`;
+                }
+            },
+
+            cetakStruk: async function(data) {
+                if (!this.btChar) {
+                    alert("⚠️ Data tersimpan di Google Sheets, namun Printer Bluetooth belum terhubung.");
+                    return;
+                }
+
+                const ESC = '\x1B';
+                let cmd = ESC + '@'; // Reset printer
+                cmd += ESC + 'a' + '\x01'; // Align Center
+                cmd += ESC + 'E' + '\x01'; // Bold ON
+                cmd += "BUKTI PENILAIAN JUMBARA\n";
+                cmd += "PMR MULA IV - PURBALINGGA\n";
+                cmd += ESC + 'E' + '\x00'; // Bold OFF
+                cmd += "--------------------------------\n";
+                cmd += ESC + 'a' + '\x00'; // Align Left
+                cmd += `POS   : ${data.pos_lomba}\n`;
+                cmd += `JURI  : ${data.nama_juri}\n`;
+                cmd += `TIM   : ${data.kontingen}\n`;
+                cmd += "--------------------------------\n";
+                cmd += "RINCIAN ITEM PENILAIAN:\n";
+
+                for (const [item, nilai] of Object.entries(data.rincian_nilai)) {
+                    cmd += `- ${item}: ${nilai} pt\n`;
+                }
+
+                cmd += "--------------------------------\n";
+                cmd += ESC + 'a' + '\x01' + ESC + 'E' + '\x01';
+                cmd += `TOTAL SKOR: ${data.total_skor} PT\n`;
+                cmd += ESC + 'E' + '\x00' + ESC + 'a' + '\x00';
+                cmd += `DURASI    : ${data.durasi} Detik\n`;
+                cmd += `CATATAN   : ${data.catatan}\n`;
+                cmd += "--------------------------------\n";
+                cmd += ESC + 'a' + '\x01';
+                cmd += "Simpan struk ini sebagai bukti\nresmi hasil penilaian.\n\n\n\n";
+
+                const encoder = new TextEncoder();
+                await this.btChar.writeValue(encoder.encode(cmd));
+            }
+        };
+
+        window.onload = () => app.init();
+    </script>
+</body>
+</html>
