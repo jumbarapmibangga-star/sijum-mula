@@ -1,869 +1,535 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>SIJUM Mula - Sistem Penilaian Digital Jumbara PMR Mula Purbalingga</title>
-  
-  <!-- PWA Web App Meta Tags -->
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#dc2626">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
-
-  <!-- Tailwind CSS CDN & FontAwesome -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-    body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      -webkit-tap-highlight-color: transparent;
-    }
-    /* Pulse effect untuk indikator Bluetooth & Recording */
-    .pulse-dot {
-      animation: pulse 1.5s infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(0.95); }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Portal Juri - Jumbara PMR</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#dc2626">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .pulse-dot { animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    </style>
 </head>
-<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col justify-between select-none">
-
-  <!-- TOP HEADER / NAVBAR -->
-  <header class="bg-red-700 text-white shadow-md sticky top-0 z-30">
-    <div class="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
-      <div class="flex items-center space-x-2">
-        <div class="bg-white text-red-700 p-1.5 rounded-lg shadow-inner font-extrabold text-sm">
-          PMI
-        </div>
-        <div>
-          <h1 class="font-extrabold text-base tracking-wide leading-none">SIJUM MULA</h1>
-          <p class="text-[10px] text-red-200">Jumbara PMR Mula Purbalingga</p>
-        </div>
-      </div>
-
-      <!-- Action Buttons in Header -->
-      <div class="flex items-center space-x-2">
-        <!-- Bluetooth Printer Status Indicator Button -->
-        <button id="btn-bt-connect" onclick="connectBluetoothPrinter()" class="flex items-center space-x-1.5 bg-red-800 hover:bg-red-900 text-white text-xs px-2.5 py-1.5 rounded-full border border-red-500 transition">
-          <span id="bt-dot" class="w-2 h-2 rounded-full bg-gray-400"></span>
-          <i class="fa-solid fa-print text-xs"></i>
-          <span id="bt-status-text" class="text-[11px] font-medium">Printer Off</span>
-        </button>
-
-        <!-- Settings / Config Button -->
-        <button onclick="toggleModal('modal-config', true)" class="text-white hover:text-red-200 p-1.5">
-          <i class="fa-solid fa-gear text-lg"></i>
-        </button>
-      </div>
-    </div>
-  </header>
-
-
-  <!-- MAIN CONTAINER (SCREEN SWITCHER) -->
-  <main class="max-w-md mx-auto w-full flex-grow p-4 space-y-4">
-
-    <!-- ========================================== -->
-    <!-- SCREEN 1: LOGIN JURI & PIN                 -->
-    <!-- ========================================== -->
-    <section id="screen-login" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-5">
-      <div class="text-center space-y-1">
-        <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-100 text-red-600 mb-2">
-          <i class="fa-solid fa-user-check text-xl"></i>
-        </div>
-        <h2 class="text-xl font-bold text-slate-800">Autentikasi Juri</h2>
-        <p class="text-xs text-slate-500">Pilih Pos Penilaian dan masukkan PIN resmi Anda</p>
-      </div>
-
-      <form id="form-login" onsubmit="handleLogin(event)" class="space-y-4">
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Pos Penilaian</label>
-          <select id="login-pos-id" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-red-500 focus:outline-none">
-            <option value="" disabled selected>-- Pilih Pos --</option>
-            <option value="POS-01">Pos 1: Pertolongan Pertama (PP)</option>
-            <option value="POS-02">Pos 2: Remaja Sehat Jiwa Raga (RSJR)</option>
-            <option value="POS-03">Pos 3: Donor Darah Sukarela (DDS)</option>
-            <option value="POS-04">Pos 4: Kepemimpinan & Kesiapsiagaan Bencana</option>
-            <option value="POS-05">Pos 5: Saniter & Kesehatan Lingkungan</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Nama Juri</label>
-          <input type="text" id="login-juri-name" required placeholder="Contoh: Ahmad Subagyo" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-red-500 focus:outline-none">
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">PIN Otentikasi Juri</label>
-          <input type="password" id="login-pin" required maxlength="6" pattern="[0-9]*" inputmode="numeric" placeholder="****" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-center text-lg font-bold tracking-widest focus:ring-2 focus:ring-red-500 focus:outline-none">
-        </div>
-
-        <button type="submit" id="btn-submit-login" class="w-full bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-bold py-3 rounded-xl shadow-md transition flex items-center justify-center space-x-2">
-          <span>Masuk & Load Rubrik</span>
-          <i class="fa-solid fa-arrow-right text-sm"></i>
-        </button>
-      </form>
-    </section>
-
-
-    <!-- ========================================== -->
-    <!-- SCREEN 2: DASHBOARD & PENILAIAN UTAMA     -->
-    <!-- ========================================== -->
-    <section id="screen-main" class="hidden space-y-4">
-      
-      <!-- Info Bar Juri Active -->
-      <div class="bg-slate-800 text-white rounded-xl p-3 flex justify-between items-center shadow-sm text-xs">
-        <div>
-          <span class="text-slate-400 block text-[10px] uppercase tracking-wider">Aktif Penilaian:</span>
-          <span id="active-pos-display" class="font-bold text-red-400">Pos 1 - Pertolongan Pertama</span>
-        </div>
-        <div class="text-right">
-          <span id="active-juri-display" class="font-medium block">Juri: -</span>
-          <button onclick="handleLogout()" class="text-red-300 underline text-[10px] hover:text-red-100">Ganti Juri</button>
-        </div>
-      </div>
-
-      <!-- Quick Actions Header Bar -->
-      <div class="grid grid-cols-2 gap-2">
-        <button onclick="printLastReceipt()" class="bg-white border border-slate-300 hover:bg-slate-50 active:bg-slate-100 text-slate-700 font-semibold py-2 px-3 rounded-xl text-xs flex items-center justify-center space-x-1.5 shadow-sm">
-          <i class="fa-solid fa-rotate-left text-red-600"></i>
-          <span>Cetak Struk Terakhir</span>
-        </button>
-        <button onclick="openHistoryModal()" class="bg-white border border-slate-300 hover:bg-slate-50 active:bg-slate-100 text-slate-700 font-semibold py-2 px-3 rounded-xl text-xs flex items-center justify-center space-x-1.5 shadow-sm">
-          <i class="fa-solid fa-clock-rotate-left text-blue-600"></i>
-          <span>Riwayat Pos (<span id="history-count">0</span>)</span>
-        </button>
-      </div>
-
-      <!-- 1. Pilih Kontingen / Tim -->
-      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-2">
-        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Pilih Tim / Kontingen PMR Mula</label>
-        <select id="select-team" onchange="onTeamChanged()" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-red-500 focus:outline-none">
-          <option value="" disabled selected>-- Pilih Tim Berpenampilan --</option>
-          <option value="MULA-01|SDN 1 Purbalingga">MULA-01 - SDN 1 Purbalingga</option>
-          <option value="MULA-02|SDN 2 Kandang Gampang">MULA-02 - SDN 2 Kandang Gampang</option>
-          <option value="MULA-03|SDN 1 Penambongan">MULA-03 - SDN 1 Penambongan</option>
-          <option value="MULA-04|SDN 3 Purbalingga Lor">MULA-04 - SDN 3 Purbalingga Lor</option>
-          <option value="MULA-05|MI Negeri 1 Purbalingga">MULA-05 - MI Negeri 1 Purbalingga</option>
-        </select>
-      </div>
-
-      <!-- 2. Stopwatch Timer Performance -->
-      <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-4 shadow-md text-center space-y-3">
-        <div class="flex justify-between items-center border-b border-slate-700 pb-2">
-          <span class="text-[11px] font-semibold tracking-wider text-slate-400 uppercase">Durasi Penampilan</span>
-          <span id="timer-status-badge" class="bg-slate-700 text-slate-300 text-[10px] px-2 py-0.5 rounded-full font-medium">Standby</span>
-        </div>
-        
-        <div id="stopwatch-display" class="font-mono text-4xl font-extrabold tracking-widest text-emerald-400 my-1">
-          00:00
-        </div>
-
-        <div class="flex justify-center items-center space-x-2 pt-1">
-          <button id="btn-timer-start" onclick="startTimer()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white text-xs font-bold py-2 rounded-lg transition flex items-center justify-center space-x-1">
-            <i class="fa-solid fa-play"></i>
-            <span>Mulai</span>
-          </button>
-          <button id="btn-timer-pause" onclick="pauseTimer()" disabled class="flex-1 bg-amber-600 hover:bg-amber-500 active:bg-amber-700 disabled:opacity-40 text-white text-xs font-bold py-2 rounded-lg transition flex items-center justify-center space-x-1">
-            <i class="fa-solid fa-pause"></i>
-            <span>Jeda</span>
-          </button>
-          <button id="btn-timer-reset" onclick="resetTimer()" class="bg-slate-700 hover:bg-slate-600 active:bg-slate-800 text-slate-200 text-xs font-bold py-2 px-3 rounded-lg transition">
-            <i class="fa-solid fa-rotate-right"></i>
-          </button>
-        </div>
-      </div>
-
-      <!-- 3. Form Rubrik Dinamis -->
-      <form id="form-rubrik" onsubmit="handleFormSubmit(event)" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-4">
-        <div class="border-b border-slate-200 pb-2 flex justify-between items-center">
-          <h3 class="font-bold text-sm text-slate-800 flex items-center space-x-1.5">
-            <i class="fa-solid fa-clipboard-check text-red-600"></i>
-            <span>Rubrik Penilaian</span>
-          </h3>
-          <span class="text-[11px] text-slate-500">Skala Dinamis</span>
-        </div>
-
-        <!-- Container Tempat Item Rubrik Di-generate via JS -->
-        <div id="rubrik-container" class="space-y-4">
-          <!-- Dynamic Content Loaded Here -->
-        </div>
-
-        <!-- Catatan Tambahan Juri -->
-        <div class="pt-2">
-          <label class="block text-xs font-semibold text-slate-700 mb-1">Catatan / Evaluasi Juri (Opsional)</label>
-          <textarea id="eval-catatan" rows="2" placeholder="Tulis catatan ringkas untuk tim..." class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-red-500 focus:outline-none"></textarea>
-        </div>
-
-        <!-- Live Score Summary Box -->
-        <div class="bg-red-50 border border-red-200 rounded-xl p-3 flex justify-between items-center">
-          <div>
-            <span class="text-[11px] text-red-700 font-medium block">Total Nilai Akhir</span>
-            <span class="text-[10px] text-red-500">Otomatis terakumulasi</span>
-          </div>
-          <div id="live-total-score" class="text-2xl font-black text-red-700">
-            0.00
-          </div>
-        </div>
-
-        <!-- Action Submit & Print -->
-        <button type="submit" id="btn-submit-score" class="w-full bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-bold py-3.5 rounded-xl shadow-md transition flex items-center justify-center space-x-2 text-sm">
-          <i class="fa-solid fa-paper-plane"></i>
-          <span>Simpan & Cetak Struk</span>
-        </button>
-      </form>
-
-    </section>
-
-  </main>
-
-
-  <!-- FOOTER -->
-  <footer class="bg-white border-t border-slate-200 py-3 text-center text-[11px] text-slate-500">
-    <p>Sistem Penilaian Digital PWA &copy; 2026 PMR Mula Purbalingga</p>
-  </footer>
-
-
-  <!-- ========================================== -->
-  <!-- MODAL 1: RIWAYAT PENILAIAN POS             -->
-  <!-- ========================================== -->
-  <div id="modal-history" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-md rounded-2xl shadow-xl flex flex-col max-h-[85vh] overflow-hidden">
-      <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-        <h3 class="font-bold text-sm text-slate-800 flex items-center space-x-2">
-          <i class="fa-solid fa-history text-blue-600"></i>
-          <span>Riwayat Penilaian Pos</span>
-        </h3>
-        <button onclick="toggleModal('modal-history', false)" class="text-slate-400 hover:text-slate-600 p-1">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
-      </div>
-
-      <div id="history-list-container" class="p-4 overflow-y-auto space-y-3 flex-grow text-xs">
-        <!-- History Items dynamically rendered -->
-      </div>
-
-      <div class="p-3 border-t border-slate-100 bg-slate-50 flex justify-between items-center">
-        <button onclick="clearHistoryData()" class="text-xs text-red-600 hover:text-red-800 font-semibold px-2 py-1">
-          Hapus Semua Riwayat
-        </button>
-        <button onclick="toggleModal('modal-history', false)" class="bg-slate-800 text-white text-xs px-4 py-2 rounded-lg font-semibold">
-          Tutup
-        </button>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- ========================================== -->
-  <!-- MODAL 2: KONFIGURASI API & SETTINGS        -->
-  <!-- ========================================== -->
-  <div id="modal-config" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-md rounded-2xl shadow-xl p-5 space-y-4">
-      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-        <h3 class="font-bold text-sm text-slate-800 flex items-center space-x-2">
-          <i class="fa-solid fa-sliders text-slate-600"></i>
-          <span>Pengaturan Sistem</span>
-        </h3>
-        <button onclick="toggleModal('modal-config', false)" class="text-slate-400 hover:text-slate-600">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
-      </div>
-
-      <div class="space-y-3 text-xs">
-        <div>
-          <label class="block font-semibold text-slate-700 mb-1">Google Apps Script Web App URL</label>
-          <input type="url" id="config-gas-url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-red-500 focus:outline-none">
-          <p class="text-[10px] text-slate-400 mt-1">URL Web App pengirim nilai ke Google Sheets.</p>
-        </div>
-
-        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1 text-[11px]">
-          <div class="font-bold text-slate-700">Printer Thermal Status:</div>
-          <div id="printer-detail-info" class="text-slate-500">Belum terhubung. Klik tombol printer di header untuk pairing.</div>
-        </div>
-      </div>
-
-      <div class="pt-2 flex justify-end space-x-2">
-        <button onclick="saveConfig()" class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-xl text-xs shadow">
-          Simpan Konfigurasi
-        </button>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- ========================================== -->
-  <!-- LOGIKAM UTAMA JAVASCRIPT                   -->
-  <!-- ========================================== -->
-  <script>
-    // ----------------------------------------------------
-    // 1. GLOBAL STATE & CONFIGURATIONS
-    // ----------------------------------------------------
-    const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxty9GSbJQtMy-Z21ffd1H3fuOgPh8FgliuiZVGvpLutDwsHp9rnz2Dk_y8eS8-tirb/exec";
-    
-    let state = {
-      gasUrl: localStorage.getItem('sijum_gas_url') || DEFAULT_GAS_URL,
-      currentJuri: JSON.parse(sessionStorage.getItem('sijum_juri_session')) || null,
-      btDevice: null,
-      btCharacteristic: null,
-      timerInterval: null,
-      timerSeconds: 0,
-      timerIsRunning: false,
-      rubrikData: []
-    };
-
-    // Default Fallback Rubrik jika offline/belum muat Apps Script
-    const DEFAULT_RUBRIK_DATA = [
-      { id: 'k1', label: 'Kelengkapan Peralatan & Atribut', bobot: 20, type: 'dropdown', options: ['Kurang:25', 'Cukup:50', 'Baik:75', 'Sempurna:100'] },
-      { id: 'k2', label: 'Ketepatan Prosedur & Teknik PP', bobot: 30, type: 'dropdown', options: ['Kurang:25', 'Cukup:50', 'Baik:75', 'Sempurna:100'] },
-      { id: 'k3', label: 'Kerjasama Tim & Pembagian Tugas', bobot: 25, type: 'dropdown', options: ['Kurang:25', 'Cukup:50', 'Baik:75', 'Sempurna:100'] },
-      { id: 'k4', label: 'Kecepatan & Sikap Keramahtamahan', bobot: 15, type: 'dropdown', options: ['Kurang:25', 'Cukup:50', 'Baik:75', 'Sempurna:100'] },
-      { id: 'k5', label: 'Kerapihan Hasil Akhir', bobot: 10, type: 'number', min: 0, max: 100 }
-    ];
-
-    // ----------------------------------------------------
-    // 2. INITIALIZATION & ROUTING
-    // ----------------------------------------------------
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('config-gas-url').value = state.gasUrl;
-      updateHistoryBadge();
-
-      if (state.currentJuri) {
-        showScreen('screen-main');
-        initDashboard();
-      } else {
-        showScreen('screen-login');
-      }
-
-      // Register PWA Service Worker
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js')
-          .then(reg => console.log('SW Registered:', reg.scope))
-          .catch(err => console.warn('SW Register Failed:', err));
-      }
-    });
-
-    function showScreen(screenId) {
-      document.getElementById('screen-login').classList.add('hidden');
-      document.getElementById('screen-main').classList.add('hidden');
-      document.getElementById(screenId).classList.remove('hidden');
-    }
-
-    function toggleModal(modalId, show) {
-      const modal = document.getElementById(modalId);
-      if (show) modal.classList.remove('hidden');
-      else modal.classList.add('hidden');
-    }
-
-    function saveConfig() {
-      const urlInput = document.getElementById('config-gas-url').value.trim();
-      if (urlInput) {
-        state.gasUrl = urlInput;
-        localStorage.setItem('sijum_gas_url', urlInput);
-        alert('Konfigurasi URL Google Apps Script berhasil disimpan!');
-        toggleModal('modal-config', false);
-      }
-    }
-
-
-    // ----------------------------------------------------
-    // 3. AUTENTIKASI JURI & PIN
-    // ----------------------------------------------------
-    async function handleLogin(event) {
-      event.preventDefault();
-      const posId = document.getElementById('login-pos-id').value;
-      const posText = document.getElementById('login-pos-id').options[document.getElementById('login-pos-id').selectedIndex].text;
-      const juriName = document.getElementById('login-juri-name').value.trim();
-      const pin = document.getElementById('login-pin').value.trim();
-
-      if (!posId || !juriName || !pin) {
-        alert('Mohon lengkapi seluruh field login.');
-        return;
-      }
-
-      const btn = document.getElementById('btn-submit-login');
-      btn.disabled = true;
-      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Memverifikasi...</span>`;
-
-      try {
-        // Mencoba verifikasi via API Sheets
-        let isValid = true; // Fallback jika offline/offline testing
-        let loadedRubrik = null;
-
-        if (navigator.onLine && state.gasUrl !== DEFAULT_GAS_URL) {
-          const res = await fetch(`${state.gasUrl}?action=login&posId=${encodeURIComponent(posId)}&pin=${encodeURIComponent(pin)}`);
-          const data = await res.json();
-          if (data.status === 'success') {
-            isValid = true;
-            loadedRubrik = data.rubrik;
-          } else {
-            isValid = false;
-            alert('PIN Juri Salah atau tidak terdaftar!');
-          }
-        }
-
-        if (isValid) {
-          state.currentJuri = { posId, posName: posText, juriName, pin };
-          sessionStorage.setItem('sijum_juri_session', JSON.stringify(state.currentJuri));
-          state.rubrikData = loadedRubrik || DEFAULT_RUBRIK_DATA;
-          
-          showScreen('screen-main');
-          initDashboard();
-        }
-      } catch (err) {
-        console.warn("Offline fallback login digunakan:", err);
-        // Offline Fallback Login
-        state.currentJuri = { posId, posName: posText, juriName, pin };
-        sessionStorage.setItem('sijum_juri_session', JSON.stringify(state.currentJuri));
-        state.rubrikData = DEFAULT_RUBRIK_DATA;
-        
-        showScreen('screen-main');
-        initDashboard();
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = `<span>Masuk & Load Rubrik</span> <i class="fa-solid fa-arrow-right text-sm"></i>`;
-      }
-    }
-
-    function handleLogout() {
-      if (confirm('Keluar dari sesi juri saat ini?')) {
-        sessionStorage.removeItem('sijum_juri_session');
-        state.currentJuri = null;
-        showScreen('screen-login');
-      }
-    }
-
-
-    // ----------------------------------------------------
-    // 4. RUBRIK DINAMIS & DASHBOARD
-    // ----------------------------------------------------
-    function initDashboard() {
-      document.getElementById('active-pos-display').innerText = state.currentJuri.posName;
-      document.getElementById('active-juri-display').innerText = `Juri: ${state.currentJuri.juriName}`;
-      renderRubrikForm();
-      resetTimer();
-    }
-
-    function renderRubrikForm() {
-      const container = document.getElementById('rubrik-container');
-      container.innerHTML = '';
-
-      state.rubrikData.forEach((item, index) => {
-        const fieldCard = document.createElement('div');
-        fieldCard.className = 'bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2';
-
-        let inputHtml = '';
-
-        if (item.type === 'dropdown') {
-          const optionsHtml = item.options.map(opt => {
-            // Support parsing options "Kurang:25" atau angka murni "25"
-            let label = opt;
-            let val = opt;
-            if (opt.includes(':')) {
-              const parts = opt.split(':');
-              label = `${parts[0]} (Skor: ${parts[1]})`;
-              val = parts[1];
-            }
-            return `<option value="${val}">${label}</option>`;
-          }).join('');
-
-          inputHtml = `
-            <select name="rubrik_${item.id}" data-bobot="${item.bobot}" onchange="calculateLiveScore()" class="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs font-semibold focus:ring-2 focus:ring-red-500 focus:outline-none">
-              <option value="0" disabled selected>-- Pilih Tingkat Capaian --</option>
-              ${optionsHtml}
-            </select>
-          `;
-        } else {
-          inputHtml = `
-            <input type="number" name="rubrik_${item.id}" data-bobot="${item.bobot}" min="${item.min || 0}" max="${item.max || 100}" placeholder="Masukkan angka (${item.min||0}-${item.max||100})" oninput="calculateLiveScore()" class="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs font-bold focus:ring-2 focus:ring-red-500 focus:outline-none">
-          `;
-        }
-
-        fieldCard.innerHTML = `
-          <div class="flex justify-between items-center">
-            <label class="font-bold text-xs text-slate-800">${index + 1}. ${item.label}</label>
-            <span class="bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded-full">Bobot: ${item.bobot}%</span>
-          </div>
-          ${inputHtml}
-        `;
-
-        container.appendChild(fieldCard);
-      });
-
-      calculateLiveScore();
-    }
-
-    function calculateLiveScore() {
-      let total = 0;
-      state.rubrikData.forEach(item => {
-        const el = document.querySelector(`[name="rubrik_${item.id}"]`);
-        if (el) {
-          const rawVal = parseFloat(el.value) || 0;
-          const bobot = parseFloat(el.dataset.bobot) || 0;
-          // Kalkulasi berbobot
-          total += (rawVal * (bobot / 100));
-        }
-      });
-
-      document.getElementById('live-total-score').innerText = total.toFixed(2);
-      return total.toFixed(2);
-    }
-
-    function onTeamChanged() {
-      resetTimer();
-    }
-
-
-    // ----------------------------------------------------
-    // 5. STOPWATCH TIMER LOGIC
-    // ----------------------------------------------------
-    function startTimer() {
-      if (state.timerIsRunning) return;
-      state.timerIsRunning = true;
-      
-      document.getElementById('btn-timer-start').disabled = true;
-      document.getElementById('btn-timer-pause').disabled = false;
-      document.getElementById('timer-status-badge').className = 'bg-emerald-700 text-white text-[10px] px-2 py-0.5 rounded-full font-medium pulse-dot';
-      document.getElementById('timer-status-badge').innerText = 'Berjalan';
-
-      state.timerInterval = setInterval(() => {
-        state.timerSeconds++;
-        updateTimerDisplay();
-      }, 1000);
-    }
-
-    function pauseTimer() {
-      if (!state.timerIsRunning) return;
-      state.timerIsRunning = false;
-      clearInterval(state.timerInterval);
-
-      document.getElementById('btn-timer-start').disabled = false;
-      document.getElementById('btn-timer-pause').disabled = true;
-      document.getElementById('timer-status-badge').className = 'bg-amber-700 text-white text-[10px] px-2 py-0.5 rounded-full font-medium';
-      document.getElementById('timer-status-badge').innerText = 'Dijeda';
-    }
-
-    function resetTimer() {
-      pauseTimer();
-      state.timerSeconds = 0;
-      updateTimerDisplay();
-      document.getElementById('timer-status-badge').className = 'bg-slate-700 text-slate-300 text-[10px] px-2 py-0.5 rounded-full font-medium';
-      document.getElementById('timer-status-badge').innerText = 'Standby';
-    }
-
-    function updateTimerDisplay() {
-      const mins = Math.floor(state.timerSeconds / 60).toString().padStart(2, '0');
-      const secs = (state.timerSeconds % 60).toString().padStart(2, '0');
-      document.getElementById('stopwatch-display').innerText = `${mins}:${secs}`;
-    }
-
-    function getFormattedDuration() {
-      const mins = Math.floor(state.timerSeconds / 60).toString().padStart(2, '0');
-      const secs = (state.timerSeconds % 60).toString().padStart(2, '0');
-      return `${mins}:${secs}`;
-    }
-
-
-    // ----------------------------------------------------
-    // 6. SUBMISSION & LOCALSTORAGE HISTORY
-    // ----------------------------------------------------
-    async function handleFormSubmit(event) {
-      event.preventDefault();
-
-      const teamSelect = document.getElementById('select-team').value;
-      if (!teamSelect) {
-        alert('Harap pilih Tim / Kontingen terlebih dahulu!');
-        return;
-      }
-
-      const [teamCode, teamName] = teamSelect.split('|');
-      const totalScore = calculateLiveScore();
-      const duration = getFormattedDuration();
-      const catatan = document.getElementById('eval-catatan').value.trim();
-
-      // Kumpulkan Rincian Nilai
-      const rincian = state.rubrikData.map(item => {
-        const el = document.querySelector(`[name="rubrik_${item.id}"]`);
-        const score = parseFloat(el ? el.value : 0) || 0;
-        return {
-          label: item.label,
-          score: score,
-          bobot: item.bobot
-        };
-      });
-
-      const payload = {
-        id: 'PEN-' + Date.now(),
-        timestamp: new Date().toLocaleString('id-ID'),
-        posId: state.currentJuri.posId,
-        posName: state.currentJuri.posName,
-        juriName: state.currentJuri.juriName,
-        teamCode,
-        teamName,
-        duration,
-        totalScore,
-        details: rincian,
-        catatan
-      };
-
-      // Disable Submit Button
-      const btnSubmit = document.getElementById('btn-submit-score');
-      btnSubmit.disabled = true;
-      btnSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Menyimpan Data...</span>`;
-
-      // 1. Simpan ke LocalStorage
-      saveToHistory(payload);
-      localStorage.setItem('sijum_last_print', JSON.stringify(payload));
-
-      // 2. Kirim ke Google Apps Script (asinkronus)
-      try {
-        if (navigator.onLine && state.gasUrl !== DEFAULT_GAS_URL) {
-          fetch(state.gasUrl, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-        }
-      } catch (err) {
-        console.warn('Gagal sync online, tersimpan di lokal offline:', err);
-      }
-
-      // 3. Cetak Struk ESC/POS ke Printer Bluetooth
-      await printReceiptESC(payload);
-
-      alert(`Penilaian untuk ${teamName} berhasil disimpan!`);
-
-      // Reset Form untuk tim berikutnya
-      document.getElementById('form-rubrik').reset();
-      document.getElementById('select-team').value = "";
-      resetTimer();
-      calculateLiveScore();
-
-      btnSubmit.disabled = false;
-      btnSubmit.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span>Simpan & Cetak Struk</span>`;
-    }
-
-    function saveToHistory(record) {
-      let history = JSON.parse(localStorage.getItem('sijum_history')) || [];
-      history.unshift(record); // Tambah di paling depan
-      localStorage.setItem('sijum_history', JSON.stringify(history));
-      updateHistoryBadge();
-    }
-
-    function updateHistoryBadge() {
-      let history = JSON.parse(localStorage.getItem('sijum_history')) || [];
-      document.getElementById('history-count').innerText = history.length;
-    }
-
-    function openHistoryModal() {
-      const container = document.getElementById('history-list-container');
-      let history = JSON.parse(localStorage.getItem('sijum_history')) || [];
-
-      if (history.length === 0) {
-        container.innerHTML = `<div class="text-center text-slate-400 py-6">Belum ada riwayat penilaian di pos ini.</div>`;
-      } else {
-        container.innerHTML = history.map((item, index) => `
-          <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-1.5 shadow-sm">
-            <div class="flex justify-between items-start">
-              <div>
-                <span class="font-extrabold text-slate-800 text-xs">${item.teamCode} - ${item.teamName}</span>
-                <p class="text-[10px] text-slate-500">${item.timestamp} | Durasi: ${item.duration}</p>
-              </div>
-              <span class="bg-red-600 text-white font-black text-sm px-2 py-0.5 rounded-lg">${item.totalScore}</span>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between font-sans select-none">
+
+    <!-- HEADER / NAVBAR -->
+    <header class="bg-red-700 text-white shadow-md sticky top-0 z-30">
+        <div class="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-square-poll-vertical text-xl"></i>
+                <h1 class="text-base font-bold tracking-wide">PORTAL JURI JUMBARA</h1>
             </div>
-            <div class="flex justify-end pt-1 border-t border-slate-200/60">
-              <button onclick="reprintFromHistory(${index})" class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] px-2.5 py-1 rounded-md font-semibold flex items-center space-x-1">
-                <i class="fa-solid fa-print text-[10px]"></i>
-                <span>Cetak Ulang</span>
-              </button>
+            <div id="navActions" class="hidden flex items-center gap-1.5">
+                <button id="btnBT" onclick="app.connectBT()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 px-2 py-1 rounded-lg text-xs font-black flex items-center shadow">
+                    <i class="fa-solid fa-print mr-1"></i> <span id="lblBT">Konek Printer</span>
+                </button>
+                <button onclick="app.bukaRiwayat()" class="bg-slate-800 text-blue-300 hover:text-white px-2 py-1 rounded-lg text-xs font-bold" title="Riwayat Penilaian">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                </button>
+                <button onclick="app.logout()" class="bg-slate-800 text-red-300 hover:text-white px-2 py-1 rounded-lg text-xs font-bold" title="Keluar">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
             </div>
-          </div>
-        `).join('');
-      }
+        </div>
+    </header>
 
-      toggleModal('modal-history', true);
-    }
+    <!-- CONTAINER UTAMA -->
+    <main class="max-w-md mx-auto p-4 w-full flex-grow flex flex-col justify-center space-y-4">
 
-    function clearHistoryData() {
-      if (confirm('Apakah Anda yakin ingin menghapus seluruh riwayat penilaian lokal?')) {
-        localStorage.removeItem('sijum_history');
-        updateHistoryBadge();
-        openHistoryModal();
-      }
-    }
+        <!-- FORM LOGIN JURI -->
+        <div id="secLogin" class="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 space-y-4">
+            <div class="text-center">
+                <i class="fa-solid fa-user-shield text-4xl text-red-500 mb-2"></i>
+                <h2 class="text-xl font-black">LOGIN JURI POS</h2>
+                <p class="text-xs text-slate-400">Pilih ID Juri & masukkan PIN resmi</p>
+            </div>
 
-    async function printLastReceipt() {
-      const lastData = localStorage.getItem('sijum_last_print');
-      if (!lastData) {
-        alert('Belum ada struk penilaian terakhir yang dicetak.');
-        return;
-      }
-      await printReceiptESC(JSON.parse(lastData));
-    }
+            <div>
+                <label class="text-xs font-bold text-slate-300 mb-1 block">PILIH NAMA JURI</label>
+                <select id="selJuri" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm focus:border-red-500 outline-none text-white">
+                    <option value="">-- Memuat Data Juri... --</option>
+                </select>
+            </div>
 
-    async function reprintFromHistory(index) {
-      let history = JSON.parse(localStorage.getItem('sijum_history')) || [];
-      if (history[index]) {
-        await printReceiptESC(history[index]);
-      }
-    }
+            <div>
+                <label class="text-xs font-bold text-slate-300 mb-1 block">PIN RAHASIA</label>
+                <input id="txtPin" type="password" maxlength="6" inputmode="numeric" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-center text-lg font-bold tracking-widest focus:border-red-500 outline-none text-amber-400" placeholder="****">
+            </div>
 
+            <button onclick="app.login()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl shadow-lg transition">
+                MASUK PORTAL
+            </button>
+        </div>
 
-    // ----------------------------------------------------
-    // 7. THERMAL PRINTER ESC/POS (FONT B - 42 CHARS/BARIS)
-    // ----------------------------------------------------
-    async function connectBluetoothPrinter() {
-      const statusText = document.getElementById('bt-status-text');
-      const dot = document.getElementById('bt-dot');
+        <!-- FORM PENILAIAN -->
+        <div id="secForm" class="hidden space-y-4">
+            
+            <!-- INFO JURI LOGGED IN -->
+            <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 flex justify-between items-center text-xs">
+                <div>
+                    <span class="text-slate-400 block">Juri Tersetel:</span>
+                    <strong id="lblNamaJuri" class="text-red-400 font-bold text-sm"></strong>
+                </div>
+                <div class="text-right">
+                    <span class="text-slate-400 block">Pos Tugas:</span>
+                    <span id="lblPosJuri" class="bg-red-950 text-red-300 border border-red-800 px-2 py-0.5 rounded font-mono font-bold"></span>
+                </div>
+            </div>
 
-      try {
-        statusText.innerText = "Pairing...";
-        state.btDevice = await navigator.bluetooth.requestDevice({
-          acceptAllDevices: true,
-          optionalServices: [
-            '000018f0-0000-1000-8000-00805f9b34fb',
-            'e7810a71-73ae-499d-8c15-faa9aef0c3f2',
-            '0000ff00-0000-1000-8000-00805f9b34fb',
-            '00001101-0000-1000-8000-00805f9b34fb'
-          ]
-        });
+            <!-- TOMBOL QUICK ACTION: CETAK ULANG STRUK TERAKHIR -->
+            <div class="flex justify-between items-center gap-2">
+                <button onclick="app.cetakUlangTerakhir()" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-rotate-left text-amber-400"></i>
+                    <span>Cetak Struk Terakhir</span>
+                </button>
+            </div>
 
-        const server = await state.btDevice.gatt.connect();
-        const services = await server.getPrimaryServices();
-        
-        for (const service of services) {
-          const characteristics = await service.getCharacteristics();
-          for (const char of characteristics) {
-            if (char.properties.write || char.properties.writeWithoutResponse) {
-              state.btCharacteristic = char;
-              break;
-            }
-          }
-          if (state.btCharacteristic) break;
+            <!-- INPUT KONTINGEN -->
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-3">
+                <div>
+                    <label class="text-xs font-bold text-slate-300 mb-1 block">PILIH KONTINGEN / TIM</label>
+                    <select id="selKontingen" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm font-bold focus:border-red-500 outline-none text-white">
+                        <option value="">-- Pilih Tim --</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- STOPWATCH TIMER OTOMATIS -->
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 text-center space-y-3">
+                <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+                    <span class="text-xs font-bold text-slate-400 uppercase">Stopwatch Durasi</span>
+                    <span id="lblTimerBadge" class="bg-slate-900 text-slate-400 text-[10px] px-2 py-0.5 rounded-full font-bold">Standby</span>
+                </div>
+                
+                <div id="lblTimerDisplay" class="font-mono text-4xl font-extrabold tracking-widest text-emerald-400 my-1">
+                    00:00
+                </div>
+
+                <div class="flex justify-center items-center gap-2">
+                    <button id="btnTimerStart" onclick="app.startTimer()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-2 rounded-lg transition flex items-center justify-center space-x-1">
+                        <i class="fa-solid fa-play"></i> <span>Mulai</span>
+                    </button>
+                    <button id="btnTimerPause" onclick="app.pauseTimer()" disabled class="flex-1 bg-amber-600 hover:bg-amber-500 disabled:opacity-40 text-white text-xs font-bold py-2 rounded-lg transition flex items-center justify-center space-x-1">
+                        <i class="fa-solid fa-pause"></i> <span>Jeda</span>
+                    </button>
+                    <button id="btnTimerReset" onclick="app.resetTimer()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-bold py-2 px-3 rounded-lg transition">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- WADAH RUBRIK PENILAIAN DINAMIS -->
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-3">
+                <label class="text-xs font-bold text-amber-400 block border-b border-slate-700 pb-1">
+                    <i class="fa-solid fa-list-check mr-1"></i> RUBRIK PENILAIAN (<span id="lblKodePosRubrik"></span>)
+                </label>
+                
+                <div id="containerRubrik" class="space-y-2.5">
+                    <!-- Terisi Otomatis Berdasarkan Pos Juri -->
+                </div>
+
+                <!-- TOTAL SKOR AKUMULASI -->
+                <div class="bg-slate-900 p-3 rounded-xl border border-slate-700 flex justify-between items-center mt-3">
+                    <span class="text-xs font-bold text-slate-300">TOTAL SKOR:</span>
+                    <span id="lblTotalSkorAuto" class="text-2xl font-black text-amber-400">0 Poin</span>
+                </div>
+            </div>
+
+            <!-- INPUT DURASI TERHUBUNG & CATATAN -->
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-3">
+                <div class="grid grid-cols-1 gap-3">
+                    <div>
+                        <label class="text-xs font-bold text-slate-300 mb-1 block">DURASI PENAMPILAN (DETIK)</label>
+                        <input id="txtDurasi" type="number" readonly class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-lg font-black text-emerald-400 text-center outline-none" placeholder="0">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-300 mb-1 block">CATATAN EVALUASI JURI</label>
+                        <textarea id="txtCatatan" rows="2" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-slate-200 outline-none" placeholder="Masukkan catatan evaluasi jika ada..."></textarea>
+                    </div>
+                </div>
+
+                <button id="btnSimpan" onclick="app.simpan()" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-3.5 rounded-xl shadow-lg flex items-center justify-center space-x-2 text-sm transition">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    <span>SIMPAN & CETAK STRUK</span>
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODAL RIWAYAT PENILAIAN -->
+    <div id="modalHistory" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-800 w-full max-w-md rounded-2xl shadow-xl flex flex-col max-h-[80vh] border border-slate-700 overflow-hidden">
+            <div class="p-4 border-b border-slate-700 flex justify-between items-center">
+                <h3 class="font-bold text-sm text-amber-400 flex items-center space-x-2">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span>Riwayat Penilaian Pos</span>
+                </h3>
+                <button onclick="app.tutupRiwayat()" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div id="listHistoryContainer" class="p-4 overflow-y-auto space-y-2.5 flex-grow text-xs">
+                <!-- Disajikan via JS -->
+            </div>
+            <div class="p-3 border-t border-slate-700 bg-slate-900 flex justify-end">
+                <button onclick="app.tutupRiwayat()" class="bg-slate-700 text-white text-xs px-4 py-2 rounded-lg font-bold">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="p-3 text-center text-xs text-slate-500">
+        &copy; Panitia Jumbara PMR Mula - System v2.0 PWA
+    </footer>
+
+    <!-- LOGIKA UTAMA APLIKASI -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
         }
 
-        if (state.btCharacteristic) {
-          dot.className = "w-2 h-2 rounded-full bg-emerald-400 pulse-dot";
-          statusText.innerText = "Terhubung";
-          document.getElementById('printer-detail-info').innerText = `Terhubung dengan: ${state.btDevice.name || 'Printer RPP02N'}`;
-          alert(`Printer Thermal ${state.btDevice.name || 'Bluetooth'} Berhasil Terhubung!`);
-        } else {
-          throw new Error("Karakteristik Write Printer tidak ditemukan.");
-        }
+        // MASUKKAN URL GOOGLE APPS SCRIPT ASLI ANDA DI SINI
+        const GAS_API_URL = "GANTI_DENGAN_URL_DEPLOYMENT_APPS_SCRIPT_KAMU";
 
-      } catch (err) {
-        console.error(err);
-        dot.className = "w-2 h-2 rounded-full bg-gray-400";
-        statusText.innerText = "Printer Off";
-        alert("Gagal menghubungkan printer: " + err.message);
-      }
-    }
+        const app = {
+            masterData: null,
+            btChar: null,
+            currentJuri: null,
+            timerInterval: null,
+            timerSeconds: 0,
+            timerRunning: false,
 
-    // Generator Teks Struk Font B (42 Kolom per Baris) Layout 2 Baris
-    function buildESCReceiptBuffer(data) {
-      const ESC = '\x1B';
-      const GS = '\x1D';
+            init: async function() {
+                try {
+                    const res = await fetch(GAS_API_URL);
+                    this.masterData = await res.json();
+                    this.renderJuriOptions();
+                    this.checkSession();
+                } catch (e) {
+                    alert("Gagal memuat data master dari server: " + e.message);
+                }
+            },
 
-      let cmds = '';
+            renderJuriOptions: function() {
+                const sel = document.getElementById('selJuri');
+                sel.innerHTML = '<option value="">-- Pilih Nama Juri --</option>';
+                if(this.masterData && this.masterData.juri) {
+                    this.masterData.juri.forEach(j => {
+                        sel.innerHTML += `<option value="${j.ID_JURI}">${j.NAMA_JURI} (${j.KODE_POS})</option>`;
+                    });
+                }
+            },
 
-      // Initialize Printer
-      cmds += ESC + '@'; 
-      // Select Font B (9x17 dots, 42 Chars/Line untuk Thermal 58mm)
-      cmds += ESC + 'M' + '\x01';
+            login: function() {
+                const idJuri = document.getElementById('selJuri').value;
+                const pin = document.getElementById('txtPin').value;
 
-      // Header Centered
-      cmds += ESC + 'a' + '\x01'; // Align Center
-      cmds += ESC + 'E' + '\x01'; // Bold On
-      cmds += '==========================================\n';
-      cmds += '           JUMBARA PMR MULA               \n';
-      cmds += '      KABUPATEN PURBALINGGA 2026          \n';
-      cmds += '         STRUK PENILAIAN POS              \n';
-      cmds += '==========================================\n';
-      cmds += ESC + 'E' + '\x00'; // Bold Off
+                if (!idJuri || !pin) return alert("Pilih Nama Juri dan isi PIN!");
 
-      // Metadata Info (Align Left)
-      cmds += ESC + 'a' + '\x00'; // Align Left
-      cmds += `Pos     : ${data.posName}\n`;
-      cmds += `Juri    : ${data.juriName}\n`;
-      cmds += `Waktu   : ${data.timestamp}\n`;
-      cmds += `Durasi  : ${data.duration}\n`;
-      cmds += '------------------------------------------\n';
-      
-      // Layout 2 Baris untuk Nama Tim agar tidak terpotong
-      cmds += ESC + 'E' + '\x01';
-      cmds += `TIM     : ${data.teamCode}\n`;
-      cmds += `NAMA    : ${data.teamName}\n`;
-      cmds += ESC + 'E' + '\x00';
-      cmds += '------------------------------------------\n';
+                const juriObj = this.masterData.juri.find(j => j.ID_JURI === idJuri);
+                if (juriObj && String(juriObj.PIN) === String(pin)) {
+                    this.currentJuri = juriObj;
+                    sessionStorage.setItem('juriSession', JSON.stringify(juriObj));
+                    this.showDashboard();
+                } else {
+                    alert("PIN Salah! Silakan coba lagi.");
+                }
+            },
 
-      // Rincian Nilai (Layout 2 Baris per Kriteria)
-      cmds += ESC + 'E' + '\x01' + 'RINCIAN PENILAIAN:\n' + ESC + 'E' + '\x00';
-      
-      data.details.forEach((item, idx) => {
-        // Baris 1: Nama Kriteria (Maks 42 karakter)
-        let labelStr = `${idx + 1}. ${item.label}`;
-        if (labelStr.length > 42) labelStr = labelStr.substring(0, 42);
-        cmds += `${labelStr}\n`;
+            checkSession: function() {
+                const sess = sessionStorage.getItem('juriSession');
+                if (sess) {
+                    this.currentJuri = JSON.parse(sess);
+                    this.showDashboard();
+                }
+            },
 
-        // Baris 2: Indentasi Rincian Nilai & Bobot
-        const scoreStr = item.score.toFixed(1);
-        const detailStr = `   Skor: ${scoreStr} / 100  (Bobot: ${item.bobot}%)`;
-        cmds += `${detailStr}\n`;
-      });
+            showDashboard: function() {
+                document.getElementById('secLogin').classList.add('hidden');
+                document.getElementById('secForm').classList.remove('hidden');
+                document.getElementById('navActions').classList.remove('hidden');
 
-      cmds += '------------------------------------------\n';
-      
-      // Total Score Highlighted (Align Right)
-      cmds += ESC + 'a' + '\x02'; // Align Right
-      cmds += ESC + 'E' + '\x01'; // Bold On
-      cmds += `TOTAL SKOR AKHIR : [ ${data.totalScore} ]\n`;
-      cmds += ESC + 'E' + '\x00'; // Bold Off
+                document.getElementById('lblNamaJuri').innerText = this.currentJuri.NAMA_JURI;
+                document.getElementById('lblPosJuri').innerText = this.currentJuri.KODE_POS;
 
-      // Catatan Juri jika ada
-      if (data.catatan) {
-        cmds += ESC + 'a' + '\x00'; // Align Left
-        cmds += `Catatan: ${data.catatan}\n`;
-      }
+                this.renderKontingenOptions();
+                this.renderRubrikDinamis();
+                this.resetTimer();
+            },
 
-      cmds += ESC + 'a' + '\x01'; // Align Center
-      cmds += '------------------------------------------\n';
-      cmds += 'Tanda Tangan Juri,\n\n\n\n';
-      cmds += `( ${data.juriName} )\n`;
-      cmds += '==========================================\n';
-      cmds += '    Simpan struk ini sebagai bukti sah    \n';
-      cmds += '==========================================\n\n\n\n';
+            renderKontingenOptions: function() {
+                const sel = document.getElementById('selKontingen');
+                sel.innerHTML = '<option value="">-- Pilih Tim --</option>';
+                if(this.masterData && this.masterData.kontingen) {
+                    this.masterData.kontingen.forEach(k => {
+                        sel.innerHTML += `<option value="${k.ID_KONTINGEN} - ${k.NAMA_TIM}">${k.ID_KONTINGEN} - ${k.NAMA_TIM} (${k.KECAMATAN})</option>`;
+                    });
+                }
 
-      // Encode Text String to Uint8Array (Latin1 / ASCII)
-      const encoder = new TextEncoder();
-      return encoder.encode(cmds);
-    }
+                sel.onchange = (e) => {
+                    this.resetTimer();
+                    const selected = e.target.value;
+                    if (!selected || !this.masterData.tracking) return;
+                    
+                    const posJuri = this.currentJuri.KODE_POS;
+                    const trackItem = this.masterData.tracking.find(t => selected.includes(t.id_kontingen));
 
-    async function printReceiptESC(data) {
-      if (!state.btCharacteristic) {
-        console.warn("Printer Bluetooth tidak terhubung. Melewati proses cetak struk.");
-        return;
-      }
+                    if (trackItem && trackItem.pos_sudah.includes(posJuri)) {
+                        alert(`⚠️ PERINGATAN:\n\nTim ${selected} SUDAH PERNAH DINILAI di ${posJuri}!\n\nJika disimpan ulang, data nilai sebelumnya akan tertimpa di Google Sheets.`);
+                    }
+                };
+            },
 
-      try {
-        const buffer = buildESCReceiptBuffer(data);
-        
-        // Chunk Bytes Sending (Mencegah buffer GATT meluap)
-        const CHUNK_SIZE = 100;
-        for (let i = 0; i < buffer.length; i += CHUNK_SIZE) {
-          const chunk = buffer.slice(i, i + CHUNK_SIZE);
-          await state.btCharacteristic.writeValue(chunk);
-        }
-      } catch (err) {
-        console.error("Gagal mencetak ke printer:", err);
-        alert("Gagal mencetak struk: " + err.message);
-      }
-    }
-  </script>
-</body>
-</html>
+            renderRubrikDinamis: function() {
+                const container = document.getElementById('containerRubrik');
+                document.getElementById('lblKodePosRubrik').innerText = this.currentJuri.KODE_POS;
+                container.innerHTML = '';
+
+                if (!this.masterData.rubrik) {
+                    container.innerHTML = '<p class="text-xs text-red-400">Data rubrik tidak ditemukan.</p>';
+                    return;
+                }
+
+                const items = this.masterData.rubrik.filter(r => r.KODE_POS === this.currentJuri.KODE_POS);
+
+                if (items.length === 0) {
+                    container.innerHTML = '<p class="text-xs text-amber-400">Pos ini tidak memiliki rubrik khusus. Masukkan nilai langsung di bawah.</p>';
+                    return;
+                }
+
+                items.forEach((item) => {
+                    const div = document.createElement('div');
+                    div.className = "flex justify-between items-center bg-slate-900 p-2.5 rounded-lg border border-slate-700";
+                    
+                    let inputHtml = '';
+                    // Jika rubrik memiliki opsi dropdown berlabel
+                    if (item.OPTIONS) {
+                        const opts = item.OPTIONS.split(',').map(o => o.trim());
+                        const optionsHtml = opts.map(opt => {
+                            let label = opt, val = opt;
+                            if (opt.includes(':')) {
+                                const parts = opt.split(':');
+                                label = `${parts[0]} (${parts[1]} pt)`;
+                                val = parts[1];
+                            }
+                            return `<option value="${val}">${label}</option>`;
+                        }).join('');
+
+                        inputHtml = `
+                            <select data-item="${item.NAMA_ITEM}" 
+                                    data-maks="${item.BOBOT_MAKS}" 
+                                    onchange="app.hitungTotalAuto()" 
+                                    class="input-rubrik bg-slate-800 border border-slate-600 rounded-lg p-2 text-xs font-bold text-amber-400 focus:border-red-500 outline-none">
+                                <option value="0">0 Poin</option>
+                                ${optionsHtml}
+                            </select>
+                        `;
+                    } else {
+                        inputHtml = `
+                            <input type="number" 
+                                   min="0" 
+                                   max="${item.BOBOT_MAKS}" 
+                                   data-item="${item.NAMA_ITEM}" 
+                                   data-maks="${item.BOBOT_MAKS}" 
+                                   oninput="app.hitungTotalAuto()" 
+                                   class="input-rubrik bg-slate-800 border border-slate-600 rounded-lg p-2 w-20 text-center font-bold text-amber-400 text-sm focus:border-red-500 outline-none" 
+                                   placeholder="0">
+                        `;
+                    }
+
+                    div.innerHTML = `
+                        <div class="pr-2">
+                            <span class="text-xs font-bold block text-slate-200">${item.NAMA_ITEM}</span>
+                            <span class="text-[10px] text-slate-400 block">Maksimal: ${item.BOBOT_MAKS} Poin</span>
+                        </div>
+                        ${inputHtml}
+                    `;
+                    container.appendChild(div);
+                });
+            },
+
+            hitungTotalAuto: function() {
+                let total = 0;
+                const inputs = document.querySelectorAll('.input-rubrik');
+                inputs.forEach(input => {
+                    let val = parseFloat(input.value) || 0;
+                    let max = parseFloat(input.getAttribute('data-maks')) || 100;
+                    if (val > max) {
+                        val = max;
+                        input.value = max;
+                    }
+                    total += val;
+                });
+                document.getElementById('lblTotalSkorAuto').innerText = total + " Poin";
+            },
+
+            // LOGIKA STOPWATCH TIMER
+            startTimer: function() {
+                if (this.timerRunning) return;
+                this.timerRunning = true;
+                document.getElementById('btnTimerStart').disabled = true;
+                document.getElementById('btnTimerPause').disabled = false;
+                document.getElementById('lblTimerBadge').className = 'bg-emerald-950 text-emerald-400 text-[10px] px-2 py-0.5 rounded-full font-bold pulse-dot';
+                document.getElementById('lblTimerBadge').innerText = 'Berjalan';
+
+                this.timerInterval = setInterval(() => {
+                    this.timerSeconds++;
+                    this.updateTimerDisplay();
+                }, 1000);
+            },
+
+            pauseTimer: function() {
+                if (!this.timerRunning) return;
+                this.timerRunning = false;
+                clearInterval(this.timerInterval);
+                document.getElementById('btnTimerStart').disabled = false;
+                document.getElementById('btnTimerPause').disabled = true;
+                document.getElementById('lblTimerBadge').className = 'bg-amber-950 text-amber-400 text-[10px] px-2 py-0.5 rounded-full font-bold';
+                document.getElementById('lblTimerBadge').innerText = 'Dijeda';
+            },
+
+            resetTimer: function() {
+                this.pauseTimer();
+                this.timerSeconds = 0;
+                this.updateTimerDisplay();
+                document.getElementById('lblTimerBadge').className = 'bg-slate-900 text-slate-400 text-[10px] px-2 py-0.5 rounded-full font-bold';
+                document.getElementById('lblTimerBadge').innerText = 'Standby';
+            },
+
+            updateTimerDisplay: function() {
+                const mins = Math.floor(this.timerSeconds / 60).toString().padStart(2, '0');
+                const secs = (this.timerSeconds % 60).toString().padStart(2, '0');
+                document.getElementById('lblTimerDisplay').innerText = `${mins}:${secs}`;
+                document.getElementById('txtDurasi').value = this.timerSeconds;
+            },
+
+            logout: function() {
+                sessionStorage.clear();
+                location.reload();
+            },
+
+            // DIRECT WEB BLUETOOTH PRINTER THERMAL
+            connectBT: async function() {
+                try {
+                    const device = await navigator.bluetooth.requestDevice({
+                        acceptAllDevices: true,
+                        optionalServices: [
+                            '000018f0-0000-1000-8000-00805f9b34fb', 
+                            '00001101-0000-1000-8000-00805f9b34fb',
+                            '0000ff00-0000-1000-8000-00805f9b34fb'
+                        ]
+                    });
+                    const server = await device.gatt.connect();
+                    const services = await server.getPrimaryServices();
+
+                    for (const service of services) {
+                        const chars = await service.getCharacteristics();
+                        for (const c of chars) {
+                            if (c.properties.write || c.properties.writeWithoutResponse) {
+                                this.btChar = c;
+                                break;
+                            }
+                        }
+                        if (this.btChar) break;
+                    }
+
+                    if (this.btChar) {
+                        document.getElementById('lblBT').innerText = "Terhubung";
+                        document.getElementById('btnBT').className = "bg-emerald-500 text-slate-900 px-2 py-1 rounded-lg text-xs font-black flex items-center shadow";
+                        alert("✅ Printer Thermal RPP02N Berhasil Terhubung!");
+                    }
+                } catch (e) {
+                    alert("Gagal menyambungkan Bluetooth: " + e.message);
+                }
+            },
+
+            simpan: async function() {
+                const kontingen = document.getElementById('selKontingen').value;
+                const durasi = document.getElementById('txtDurasi').value;
+                const catatan = document.getElementById('txtCatatan').value;
+
+                if (!kontingen) return alert("Pilih Kontingen terlebih dahulu!");
+
+                let rincianNilai = {};
+                let totalSkor = 0;
+                const inputs = document.querySelectorAll('.input-rubrik');
+                
+                inputs.forEach(input => {
+                    const itemNama = input.getAttribute('data-item');
+                    const itemNilai = parseFloat(input.value) || 0;
+                    rincianNilai[itemNama] = itemNilai;
+                    totalSkor += itemNilai;
+                });
+
+                const btn = document.getElementById('btnSimpan');
+                btn.disabled = true;
+                btn.innerText = "MENYIMPAN DATA...";
+
+                const payload = {
+                    nama_juri: this.currentJuri.NAMA_JURI,
+                    pos_lomba: this.currentJuri.KODE_POS,
+                    kontingen: kontingen,
+                    total_skor: totalSkor,
+                    durasi: durasi || "0",
+                    catatan: catatan || "-",
+                    rincian_nilai: rincianNilai,
+                    timestamp: new Date().toLocaleString('id-ID')
+                };
+
+                // Simpan ke Cache Lokal untuk Riwayat & Reprint Struk
+                this.simpanRiwayatLokal(payload);
+
+                try {
+                    const res = await fetch(GAS_API_URL, {
+                        method: "POST",
+                        body: JSON.stringify(payload)
+                    });
+                    const result = await res.json();
+
+                    if (result.status === "SUCCESS") {
+                        alert("✅ Data Nilai Berhasil Disimpan!");
+                        await this.cetakStruk(payload);
+                        
+                        this.init(); // Refresh data tracking
+
+                        // Reset Form
+                        document.getElementById('selKontingen').value = '';
+                        document.getElementById('txtCatatan').value = '';
+                        inputs.forEach(inp => inp.value = '');
+                        document.getElementById('lblTotalSkorAuto').innerText = "0 Poin";
+                        this.resetTimer();
+                    } else {
+                        alert("Gagal simpan: " + result.message);
+                    }
+                } catch (e) {
+                    alert("Tersimpan di offline history (Error jaringan): " + e.message);
+                    await this.cetakStruk(payload);
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i><span>SIMPAN & CETAK STRUK</span>`;
+                }
+            },
+
+            // RIWAYAT LOKAL & CETAK ULANG
+            simpanRiwayatLokal: function(data) {
+                let list = JSON.parse(localStorage.getItem('sijum_history_v2')) || [];
+                list.unshift(data);
+                localStorage.setItem('sijum_history_v2', JSON.stringify(list));
+                localStorage.setItem('sijum_last_print_v2', JSON.stringify(data));
+            },
+
+            cetakUlangTerakhir: async function() {
+                const last = localStorage.getItem('sijum_last_print_v2');
+                if (!last) return alert("Belum ada riwayat cetak struk terakhir.");
+                await this.cetakStruk(JSON.parse(last));
+            },
+
+            bukaRiwayat: function() {
+                const container = document.getElementById('listHistoryContainer');
+                let list = JSON.parse(localStorage.getItem('sijum_history_v2')) || [];
+
+                if
