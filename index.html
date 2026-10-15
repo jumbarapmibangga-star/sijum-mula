@@ -604,76 +604,50 @@
             },
 
             cetakStruk: async function(data) {
-                if (!this.btChar) {
-                    alert("⚠️ Data tersimpan, namun Printer Bluetooth belum terhubung.");
-                    return;
-                }
+    if (!this.btChar) {
+        alert("⚠️ Data tersimpan di Google Sheets, namun Printer Bluetooth belum terhubung.");
+        return;
+    }
 
-                const ESC = '\x1B';
-                let cmd = ESC + '@';
-                
-                // Font B (42 Kolom per baris di kertas 58mm)
-                cmd += ESC + 'M' + '\x01';
+    const ESC = '\x1B';
+    let cmd = ESC + '@'; // Reset printer ke Font Standar (Font A)
+    cmd += ESC + 'a' + '\x01'; // Ratakan Tengah
+    cmd += ESC + 'E' + '\x01'; // Bold On
+    cmd += "BUKTI PENILAIAN JUMBARA\n";
+    cmd += "PMR MULA IV - PURBALINGGA\n";
+    cmd += ESC + 'E' + '\x00'; // Bold Off
+    cmd += "--------------------------------\n";
+    cmd += ESC + 'a' + '\x00'; // Ratakan Kiri
+    cmd += `POS   : ${data.pos_lomba}\n`;
+    cmd += `JURI  : ${data.nama_juri}\n`;
+    cmd += `TIM   : ${data.kontingen}\n`;
+    cmd += "--------------------------------\n";
+    cmd += "RINCIAN ITEM PENILAIAN:\n";
 
-                cmd += ESC + 'a' + '\x01' + ESC + 'E' + '\x01';
-                cmd += "==========================================\n";
-                cmd += "           JUMBARA PMR MULA               \n";
-                cmd += "      KABUPATEN PURBALINGGA 2026          \n";
-                cmd += "         STRUK PENILAIAN POS              \n";
-                cmd += "==========================================\n";
-                cmd += ESC + 'E' + '\x00';
+    for (const [item, nilai] of Object.entries(data.rincian_nilai)) {
+        cmd += `- ${item}: ${nilai} pt\n`;
+    }
 
-                cmd += ESC + 'a' + '\x00';
-                cmd += `POS     : ${data.pos_lomba}\n`;
-                cmd += `JURI    : ${data.nama_juri}\n`;
-                cmd += `WAKTU   : ${data.timestamp || '-'}\n`;
-                cmd += `DURASI  : ${data.durasi} Detik\n`;
-                cmd += "------------------------------------------\n";
-                
-                // Layout 2 Baris Nama Tim
-                cmd += ESC + 'E' + '\x01';
-                cmd += `TIM     : ${data.kontingen}\n`;
-                cmd += ESC + 'E' + '\x00';
-                cmd += "------------------------------------------\n";
+    cmd += "--------------------------------\n";
+    cmd += ESC + 'a' + '\x01' + ESC + 'E' + '\x01';
+    cmd += `TOTAL SKOR: ${data.total_skor} PT\n`;
+    cmd += ESC + 'E' + '\x00' + ESC + 'a' + '\x00';
+    cmd += `DURASI    : ${data.durasi} Detik\n`;
+    cmd += `CATATAN   : ${data.catatan}\n`;
+    cmd += "--------------------------------\n";
+    cmd += ESC + 'a' + '\x01';
+    cmd += "Simpan struk ini sebagai bukti\nresmi hasil penilaian.\n\n\n\n";
 
-                cmd += ESC + 'E' + '\x01' + "RINCIAN ITEM PENILAIAN:\n" + ESC + 'E' + '\x00';
-
-                let idx = 1;
-                for (const [item, nilai] of Object.entries(data.rincian_nilai)) {
-                    let label = `${idx}. ${item}`;
-                    if (label.length > 42) label = label.substring(0, 42);
-                    cmd += `${label}\n`;
-                    cmd += `   -> Skor: ${nilai} Poin\n`;
-                    idx++;
-                }
-
-                cmd += "------------------------------------------\n";
-                
-                cmd += ESC + 'a' + '\x02' + ESC + 'E' + '\x01';
-                cmd += `TOTAL SKOR AKHIR : [ ${data.total_skor} PT ]\n`;
-                cmd += ESC + 'E' + '\x00' + ESC + 'a' + '\x00';
-
-                if (data.catatan && data.catatan !== "-") {
-                    cmd += `CATATAN : ${data.catatan}\n`;
-                }
-
-                cmd += ESC + 'a' + '\x01';
-                cmd += "------------------------------------------\n";
-                cmd += "Tanda Tangan Juri,\n\n\n\n";
-                cmd += `( ${data.nama_juri} )\n`;
-                cmd += "==========================================\n";
-                cmd += "    Simpan struk ini sebagai bukti sah    \n";
-                cmd += "==========================================\n\n\n\n";
-
-                const encoder = new TextEncoder();
-                const buffer = encoder.encode(cmd);
-                
-                const CHUNK_SIZE = 100;
-                for (let i = 0; i < buffer.length; i += CHUNK_SIZE) {
-                    const chunk = buffer.slice(i, i + CHUNK_SIZE);
-                    await this.btChar.writeValue(chunk);
-                }
-            }
+    const encoder = new TextEncoder();
+    const buffer = encoder.encode(cmd);
+    
+    // Pengiriman data bertahap agar memori printer tidak jenuh
+    const CHUNK_SIZE = 100;
+    for (let i = 0; i < buffer.length; i += CHUNK_SIZE) {
+        const chunk = buffer.slice(i, i + CHUNK_SIZE);
+        await this.btChar.writeValue(chunk);
+    }
+}
         };
 
         window.onload = () => app.init();
