@@ -97,7 +97,7 @@
                 </div>
             </div>
 
-            <!-- STOPWATCH TIMER OTOMATIS -->
+            <!-- STOPWATCH TIMER (1 TOMBOL TOGGLE) -->
             <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 text-center space-y-3">
                 <div class="flex justify-between items-center border-b border-slate-700 pb-2">
                     <span class="text-xs font-bold text-slate-400 uppercase">Stopwatch Durasi</span>
@@ -108,17 +108,17 @@
                     00:00
                 </div>
 
-                <div class="flex justify-center items-center gap-2">
-                    <button id="btnTimerStart" onclick="app.startTimer()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-2 rounded-lg transition flex items-center justify-center space-x-1">
-                        <i class="fa-solid fa-play"></i> <span>Mulai</span>
-                    </button>
-                    <button id="btnTimerPause" onclick="app.pauseTimer()" disabled class="flex-1 bg-amber-600 hover:bg-amber-500 disabled:opacity-40 text-white text-xs font-bold py-2 rounded-lg transition flex items-center justify-center space-x-1">
-                        <i class="fa-solid fa-pause"></i> <span>Jeda</span>
-                    </button>
-                    <button id="btnTimerReset" onclick="app.resetTimer()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-bold py-2 px-3 rounded-lg transition">
-                        <i class="fa-solid fa-rotate-right"></i>
+                <div class="flex justify-center items-center">
+                    <button id="btnTimerStart" onclick="app.toggleTimer()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-3 rounded-xl transition flex items-center justify-center space-x-2 shadow-lg">
+                        <i class="fa-solid fa-play"></i> <span>MULAI STOPWATCH (Buka Form)</span>
                     </button>
                 </div>
+            </div>
+
+            <!-- PERINGATAN KUNCI FORM -->
+            <div id="msgFormLocked" class="bg-amber-950/80 border border-amber-800 p-2.5 rounded-xl text-center text-xs text-amber-300 font-bold flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-lock text-amber-400"></i>
+                <span>Jalankan Stopwatch untuk membuka Form Penilaian</span>
             </div>
 
             <!-- WADAH RUBRIK PENILAIAN DINAMIS -->
@@ -192,8 +192,8 @@
             navigator.serviceWorker.register('sw.js');
         }
 
-        // MASUKKAN URL GOOGLE APPS SCRIPT WEB APP ANDA DI SINI (AKHIRAN /exec)
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxty9GSbJQtMy-Z21ffd1H3fuOgPh8FgliuiZVGvpLutDwsHp9rnz2Dk_y8eS8-tirb/exec";
+        // URL GOOGLE APPS SCRIPT WEB APP ANDA (/exec)
+        const GAS_API_URL = "GANTI_DENGAN_URL_DEPLOYMENT_APPS_SCRIPT_KAMU";
 
         const app = {
             masterData: null,
@@ -216,9 +216,8 @@
                     this.renderJuriOptions();
                     this.checkSession();
                 } catch (e) {
-                    console.error("Fetch Master Data Error:", e);
+                    console.error("Fetch Error:", e);
                     sel.innerHTML = '<option value="">⚠️ Gagal terhubung ke database</option>';
-                    alert("Gagal memuat data master dari server: " + e.message + "\n\nPastikan URL GAS_API_URL sudah berakhiran /exec dan hak akses set ke 'Anyone'.");
                 }
             },
 
@@ -234,8 +233,6 @@
                             sel.innerHTML += `<option value="${id}">${nama} (${pos})</option>`;
                         }
                     });
-                } else {
-                    sel.innerHTML = '<option value="">-- Tidak ada data juri di Sheet --</option>';
                 }
             },
 
@@ -244,7 +241,6 @@
                 const pin = document.getElementById('txtPin').value;
 
                 if (!idJuri || !pin) return alert("Pilih Nama Juri dan isi PIN!");
-                if (!this.masterData || !this.masterData.juri) return alert("Data Juri belum termuat sempurna dari server.");
 
                 const juriObj = this.masterData.juri.find(j => {
                     const id = j.ID_JURI || j.id_juri || j.id;
@@ -263,10 +259,8 @@
                         sessionStorage.setItem('juriSession', JSON.stringify(this.currentJuri));
                         this.showDashboard();
                     } else {
-                        alert("PIN Salah! Silakan coba lagi.");
+                        alert("PIN Salah!");
                     }
-                } else {
-                    alert("ID Juri tidak ditemukan!");
                 }
             },
 
@@ -314,7 +308,7 @@
                     const trackItem = this.masterData.tracking.find(t => selected.includes(t.id_kontingen));
 
                     if (trackItem && trackItem.pos_sudah && trackItem.pos_sudah.includes(posJuri)) {
-                        alert(`⚠️ PERINGATAN:\n\nTim ${selected} SUDAH PERNAH DINILAI di ${posJuri}!\n\nJika disimpan ulang, data nilai sebelumnya akan tertimpa di Google Sheets.`);
+                        alert(`⚠️ PERINGATAN:\n\nTim ${selected} SUDAH PERNAH DINILAI di ${posJuri}!`);
                     }
                 };
             },
@@ -335,7 +329,7 @@
                 });
 
                 if (items.length === 0) {
-                    container.innerHTML = '<p class="text-xs text-amber-400">Pos ini tidak memiliki rubrik khusus. Masukkan nilai langsung di bawah.</p>';
+                    container.innerHTML = '<p class="text-xs text-amber-400">Pos ini tidak memiliki rubrik khusus.</p>';
                     return;
                 }
 
@@ -391,6 +385,124 @@
                     `;
                     container.appendChild(div);
                 });
+
+                // Kunci form secara default sebelum stopwatch berjalan
+                this.setFormDisabled(true);
+            },
+
+            // KUNCI / BUKA KUNCI FORM INPUT PENILAIAN
+            setFormDisabled: function(disabled) {
+                const inputs = document.querySelectorAll('.input-rubrik');
+                inputs.forEach(inp => {
+                    inp.disabled = disabled;
+                    if (disabled) {
+                        inp.classList.add('opacity-40', 'cursor-not-allowed');
+                    } else {
+                        inp.classList.remove('opacity-40', 'cursor-not-allowed');
+                    }
+                });
+
+                const txtCatatan = document.getElementById('txtCatatan');
+                if (txtCatatan) {
+                    txtCatatan.disabled = disabled;
+                    if (disabled) {
+                        txtCatatan.classList.add('opacity-40', 'cursor-not-allowed');
+                    } else {
+                        txtCatatan.classList.remove('opacity-40', 'cursor-not-allowed');
+                    }
+                }
+
+                const btnSimpan = document.getElementById('btnSimpan');
+                if (btnSimpan) {
+                    btnSimpan.disabled = disabled;
+                    if (disabled) {
+                        btnSimpan.classList.add('opacity-40', 'cursor-not-allowed');
+                    } else {
+                        btnSimpan.classList.remove('opacity-40', 'cursor-not-allowed');
+                    }
+                }
+
+                const msgLock = document.getElementById('msgFormLocked');
+                if (msgLock) {
+                    if (disabled) {
+                        msgLock.classList.remove('hidden');
+                    } else {
+                        msgLock.classList.add('hidden');
+                    }
+                }
+            },
+
+            // LOGIKA STOPWATCH TIMER (1 TOMBOL TOGGLE)
+            toggleTimer: function() {
+                if (this.timerRunning) {
+                    // STOP TIMER
+                    this.timerRunning = false;
+                    clearInterval(this.timerInterval);
+                    
+                    const btn = document.getElementById('btnTimerStart');
+                    if (btn) {
+                        btn.className = "w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-3 rounded-xl transition flex items-center justify-center space-x-2 shadow-lg";
+                        btn.innerHTML = `<i class="fa-solid fa-play"></i> <span>MULAI STOPWATCH</span>`;
+                    }
+
+                    const badge = document.getElementById('lblTimerBadge');
+                    if (badge) {
+                        badge.className = 'bg-amber-950 text-amber-400 text-[10px] px-2 py-0.5 rounded-full font-bold';
+                        badge.innerText = 'Selesai';
+                    }
+                } else {
+                    // JALANKAN TIMER
+                    this.timerRunning = true;
+                    
+                    // BUKA KUNCI FORM SEKALIGUS WAKTU BERJALAN
+                    this.setFormDisabled(false);
+
+                    const btn = document.getElementById('btnTimerStart');
+                    if (btn) {
+                        btn.className = "w-full bg-red-600 hover:bg-red-500 text-white text-xs font-bold py-3 rounded-xl transition flex items-center justify-center space-x-2 shadow-lg";
+                        btn.innerHTML = `<i class="fa-solid fa-stop"></i> <span>STOP / HENTIKAN STOPWATCH</span>`;
+                    }
+
+                    const badge = document.getElementById('lblTimerBadge');
+                    if (badge) {
+                        badge.className = 'bg-emerald-950 text-emerald-400 text-[10px] px-2 py-0.5 rounded-full font-bold pulse-dot';
+                        badge.innerText = 'Berjalan';
+                    }
+
+                    this.timerInterval = setInterval(() => {
+                        this.timerSeconds++;
+                        this.updateTimerDisplay();
+                    }, 1000);
+                }
+            },
+
+            resetTimer: function() {
+                if (this.timerRunning) {
+                    this.timerRunning = false;
+                    clearInterval(this.timerInterval);
+                }
+                this.timerSeconds = 0;
+                this.updateTimerDisplay();
+                this.setFormDisabled(true);
+
+                const btn = document.getElementById('btnTimerStart');
+                if (btn) {
+                    btn.className = "w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-3 rounded-xl transition flex items-center justify-center space-x-2 shadow-lg";
+                    btn.innerHTML = `<i class="fa-solid fa-play"></i> <span>MULAI STOPWATCH (Buka Form)</span>`;
+                }
+
+                const badge = document.getElementById('lblTimerBadge');
+                if (badge) {
+                    badge.className = 'bg-slate-900 text-slate-400 text-[10px] px-2 py-0.5 rounded-full font-bold';
+                    badge.innerText = 'Standby';
+                }
+            },
+
+            updateTimerDisplay: function() {
+                const mins = Math.floor(this.timerSeconds / 60).toString().padStart(2, '0');
+                const secs = (this.timerSeconds % 60).toString().padStart(2, '0');
+                document.getElementById('lblTimerDisplay').innerText = `${mins}:${secs}`;
+                document.getElementById('txtDurasi').value = this.timerSeconds;
             },
 
             hitungTotalAuto: function() {
@@ -406,45 +518,6 @@
                     total += val;
                 });
                 document.getElementById('lblTotalSkorAuto').innerText = total + " Poin";
-            },
-
-            startTimer: function() {
-                if (this.timerRunning) return;
-                this.timerRunning = true;
-                document.getElementById('btnTimerStart').disabled = true;
-                document.getElementById('btnTimerPause').disabled = false;
-                document.getElementById('lblTimerBadge').className = 'bg-emerald-950 text-emerald-400 text-[10px] px-2 py-0.5 rounded-full font-bold pulse-dot';
-                document.getElementById('lblTimerBadge').innerText = 'Berjalan';
-
-                this.timerInterval = setInterval(() => {
-                    this.timerSeconds++;
-                    this.updateTimerDisplay();
-                }, 1000);
-            },
-
-            pauseTimer: function() {
-                if (!this.timerRunning) return;
-                this.timerRunning = false;
-                clearInterval(this.timerInterval);
-                document.getElementById('btnTimerStart').disabled = false;
-                document.getElementById('btnTimerPause').disabled = true;
-                document.getElementById('lblTimerBadge').className = 'bg-amber-950 text-amber-400 text-[10px] px-2 py-0.5 rounded-full font-bold';
-                document.getElementById('lblTimerBadge').innerText = 'Dijeda';
-            },
-
-            resetTimer: function() {
-                this.pauseTimer();
-                this.timerSeconds = 0;
-                this.updateTimerDisplay();
-                document.getElementById('lblTimerBadge').className = 'bg-slate-900 text-slate-400 text-[10px] px-2 py-0.5 rounded-full font-bold';
-                document.getElementById('lblTimerBadge').innerText = 'Standby';
-            },
-
-            updateTimerDisplay: function() {
-                const mins = Math.floor(this.timerSeconds / 60).toString().padStart(2, '0');
-                const secs = (this.timerSeconds % 60).toString().padStart(2, '0');
-                document.getElementById('lblTimerDisplay').innerText = `${mins}:${secs}`;
-                document.getElementById('txtDurasi').value = this.timerSeconds;
             },
 
             logout: function() {
@@ -506,7 +579,7 @@
 
                 const btn = document.getElementById('btnSimpan');
                 btn.disabled = true;
-                btn.innerText = "MENYIMPAN DATA...";
+                btn.innerText = "MENYIMPAN & MENGENERATE PDF...";
 
                 const payload = {
                     nama_juri: this.currentJuri.NAMA_JURI,
@@ -519,8 +592,6 @@
                     timestamp: new Date().toLocaleString('id-ID')
                 };
 
-                this.simpanRiwayatLokal(payload);
-
                 try {
                     const res = await fetch(GAS_API_URL, {
                         method: "POST",
@@ -529,7 +600,13 @@
                     const result = await res.json();
 
                     if (result.status === "SUCCESS") {
-                        alert("✅ Data Nilai Berhasil Disimpan!");
+                        alert("✅ Data Nilai Berhasil Disimpan di Sheets & Drive!");
+                        
+                        if (result.pdf_url) {
+                            payload.pdf_url = result.pdf_url;
+                        }
+
+                        this.simpanRiwayatLokal(payload);
                         await this.cetakStruk(payload);
                         
                         this.init(); // Refresh tracking
@@ -543,7 +620,8 @@
                         alert("Gagal simpan: " + result.message);
                     }
                 } catch (e) {
-                    alert("Tersimpan di offline history: " + e.message);
+                    alert("Simpan Offline: " + e.message);
+                    this.simpanRiwayatLokal(payload);
                     await this.cetakStruk(payload);
                 } finally {
                     btn.disabled = false;
@@ -603,81 +681,107 @@
                 }
             },
 
+            // FUNGSI PENJENERAT PERINTAH ESC/POS UNTUK CETAK QR CODE
+            getQRCodeESCCommand: function(qrData) {
+                if (!qrData) return '';
+                const encoder = new TextEncoder();
+                const dataBytes = encoder.encode(qrData);
+                const len = dataBytes.length + 3;
+                const pL = len % 256;
+                const pH = Math.floor(len / 256);
+
+                let cmd = '';
+                // 1. Pilih Model QR Code (Model 2)
+                cmd += '\x1D\x28\x6B\x04\x00\x31\x41\x32\x00';
+                // 2. Set Ukuran Module QR (Ukuran 5)
+                cmd += '\x1D\x28\x6B\x03\x00\x31\x43\x05';
+                // 3. Set Level Koreksi Error (Level L = 48)
+                cmd += '\x1D\x28\x6B\x03\x00\x31\x45\x30';
+                // 4. Masukkan Data URL
+                cmd += '\x1D\x28\x6B' + String.fromCharCode(pL) + String.fromCharCode(pH) + '\x31\x50\x30' + qrData;
+                // 5. Cetak Simbol QR Code
+                cmd += '\x1D\x28\x6B\x03\x00\x31\x51\x30';
+                return cmd;
+            },
+
             cetakStruk: async function(data) {
-    if (!this.btChar) {
-        alert("⚠️ Data tersimpan, namun Printer Bluetooth belum terhubung.");
-        return;
-    }
+                if (!this.btChar) {
+                    alert("⚠️ Data tersimpan, namun Printer Bluetooth belum terhubung.");
+                    return;
+                }
 
-    const ESC = '\x1B';
-    let cmd = ESC + '@'; // Reset printer ke Font Default (Font A Standar)
-    
-    // Header Centered & Bold
-    cmd += ESC + 'a' + '\x01' + ESC + 'E' + '\x01';
-    cmd += "================================\n";
-    cmd += "      JUMBARA PMR MULA IV       \n";
-    cmd += "    KABUPATEN PURBALINGGA       \n";
-    cmd += "      STRUK PENILAIAN POS       \n";
-    cmd += "================================\n";
-    cmd += ESC + 'E' + '\x00'; // Bold OFF
+                const ESC = '\x1B';
+                let cmd = ESC + '@'; // Font Standar Default A
+                
+                // Header Centered & Bold
+                cmd += ESC + 'a' + '\x01' + ESC + 'E' + '\x01';
+                cmd += "================================\n";
+                cmd += "      JUMBARA PMR MULA IV       \n";
+                cmd += "    KABUPATEN PURBALINGGA       \n";
+                cmd += "      STRUK PENILAIAN POS       \n";
+                cmd += "================================\n";
+                cmd += ESC + 'E' + '\x00';
 
-    // Metadata Info (Align Left)
-    cmd += ESC + 'a' + '\x00';
-    cmd += `POS     : ${data.pos_lomba}\n`;
-    cmd += `JURI    : ${data.nama_juri}\n`;
-    cmd += `WAKTU   : ${data.timestamp || '-'}\n`;
-    cmd += `DURASI  : ${data.durasi} Detik\n`;
-    cmd += "--------------------------------\n";
-    
-    // Data Tim (Bold)
-    cmd += ESC + 'E' + '\x01';
-    cmd += `TIM     : ${data.kontingen}\n`;
-    cmd += ESC + 'E' + '\x00';
-    cmd += "--------------------------------\n";
+                // Metadata (Align Left)
+                cmd += ESC + 'a' + '\x00';
+                cmd += `POS     : ${data.pos_lomba}\n`;
+                cmd += `JURI    : ${data.nama_juri}\n`;
+                cmd += `WAKTU   : ${data.timestamp || '-'}\n`;
+                cmd += `DURASI  : ${data.durasi} Detik\n`;
+                cmd += "--------------------------------\n";
+                
+                cmd += ESC + 'E' + '\x01';
+                cmd += `TIM     : ${data.kontingen}\n`;
+                cmd += ESC + 'E' + '\x00';
+                cmd += "--------------------------------\n";
 
-    // Rincian Item Penilaian (Layout 2 Baris per Item)
-    cmd += ESC + 'E' + '\x01' + "RINCIAN ITEM PENILAIAN:\n" + ESC + 'E' + '\x00';
+                cmd += ESC + 'E' + '\x01' + "RINCIAN ITEM PENILAIAN:\n" + ESC + 'E' + '\x00';
 
-    let idx = 1;
-    for (const [item, nilai] of Object.entries(data.rincian_nilai)) {
-        let label = `${idx}. ${item}`;
-        if (label.length > 32) label = label.substring(0, 32);
-        cmd += `${label}\n`;
-        cmd += `   -> Skor: ${nilai} Poin\n`;
-        idx++;
-    }
+                let idx = 1;
+                for (const [item, nilai] of Object.entries(data.rincian_nilai)) {
+                    let label = `${idx}. ${item}`;
+                    if (label.length > 32) label = label.substring(0, 32);
+                    cmd += `${label}\n`;
+                    cmd += `   -> Skor: ${nilai} Poin\n`;
+                    idx++;
+                }
 
-    cmd += "--------------------------------\n";
-    
-    // Total Skor Akhir (Align Right & Bold)
-    cmd += ESC + 'a' + '\x02' + ESC + 'E' + '\x01';
-    cmd += `TOTAL SKOR : [ ${data.total_skor} PT ]\n`;
-    cmd += ESC + 'E' + '\x00' + ESC + 'a' + '\x00';
+                cmd += "--------------------------------\n";
+                
+                cmd += ESC + 'a' + '\x02' + ESC + 'E' + '\x01';
+                cmd += `TOTAL SKOR : [ ${data.total_skor} PT ]\n`;
+                cmd += ESC + 'E' + '\x00' + ESC + 'a' + '\x00';
 
-    if (data.catatan && data.catatan !== "-") {
-        cmd += `CATATAN : ${data.catatan}\n`;
-    }
+                if (data.catatan && data.catatan !== "-") {
+                    cmd += `CATATAN : ${data.catatan}\n`;
+                }
 
-    // Tanda Tangan & Footer
-    cmd += ESC + 'a' + '\x01';
-    cmd += "--------------------------------\n";
-    cmd += "Tanda Tangan Juri,\n\n\n\n";
-    cmd += `( ${data.nama_juri} )\n`;
-    cmd += "================================\n";
-    cmd += " Simpan struk ini sebagai bukti \n";
-    cmd += "        resmi penilaian.        \n";
-    cmd += "================================\n\n\n\n";
+                // CETAK QR CODE DRIVE JIKA TERSEDIA
+                if (data.pdf_url) {
+                    cmd += "--------------------------------\n";
+                    cmd += ESC + 'a' + '\x01';
+                    cmd += "SCAN BUKTI DIGITAL (DRIVE):\n\n";
+                    cmd += this.getQRCodeESCCommand(data.pdf_url) + "\n\n";
+                }
 
-    const encoder = new TextEncoder();
-    const buffer = encoder.encode(cmd);
-    
-    // Pengiriman bertahap (Chunking) agar buffer Bluetooth stabil
-    const CHUNK_SIZE = 100;
-    for (let i = 0; i < buffer.length; i += CHUNK_SIZE) {
-        const chunk = buffer.slice(i, i + CHUNK_SIZE);
-        await this.btChar.writeValue(chunk);
-    }
-}
+                cmd += ESC + 'a' + '\x01';
+                cmd += "--------------------------------\n";
+                cmd += "Tanda Tangan Juri,\n\n\n\n";
+                cmd += `( ${data.nama_juri} )\n`;
+                cmd += "================================\n";
+                cmd += " Simpan struk ini sebagai bukti \n";
+                cmd += "        resmi penilaian.        \n";
+                cmd += "================================\n\n\n\n";
+
+                const encoder = new TextEncoder();
+                const buffer = encoder.encode(cmd);
+                
+                const CHUNK_SIZE = 100;
+                for (let i = 0; i < buffer.length; i += CHUNK_SIZE) {
+                    const chunk = buffer.slice(i, i + CHUNK_SIZE);
+                    await this.btChar.writeValue(chunk);
+                }
+            }
         };
 
         window.onload = () => app.init();
