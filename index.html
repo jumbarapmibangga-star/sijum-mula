@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Portal Juri - Jumbara PMR</title>
+    <title>Portal Juri - Jumbara PMR Mula</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#dc2626">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -192,7 +192,7 @@
             navigator.serviceWorker.register('sw.js');
         }
 
-        // MASUKKAN URL GOOGLE APPS SCRIPT ASLI ANDA DI SINI
+        // MASUKKAN URL GOOGLE APPS SCRIPT WEB APP ANDA DI SINI (AKHIRAN /exec)
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxty9GSbJQtMy-Z21ffd1H3fuOgPh8FgliuiZVGvpLutDwsHp9rnz2Dk_y8eS8-tirb/exec";
 
         const app = {
@@ -204,23 +204,38 @@
             timerRunning: false,
 
             init: async function() {
+                const sel = document.getElementById('selJuri');
+                if (!GAS_API_URL || GAS_API_URL.includes("GANTI_DENGAN_URL")) {
+                    sel.innerHTML = '<option value="">⚠️ Isikan URL Apps Script di index.html</option>';
+                    return;
+                }
+
                 try {
                     const res = await fetch(GAS_API_URL);
                     this.masterData = await res.json();
                     this.renderJuriOptions();
                     this.checkSession();
                 } catch (e) {
-                    alert("Gagal memuat data master dari server: " + e.message);
+                    console.error("Fetch Master Data Error:", e);
+                    sel.innerHTML = '<option value="">⚠️ Gagal terhubung ke database</option>';
+                    alert("Gagal memuat data master dari server: " + e.message + "\n\nPastikan URL GAS_API_URL sudah berakhiran /exec dan hak akses set ke 'Anyone'.");
                 }
             },
 
             renderJuriOptions: function() {
                 const sel = document.getElementById('selJuri');
                 sel.innerHTML = '<option value="">-- Pilih Nama Juri --</option>';
-                if(this.masterData && this.masterData.juri) {
+                if (this.masterData && this.masterData.juri && this.masterData.juri.length > 0) {
                     this.masterData.juri.forEach(j => {
-                        sel.innerHTML += `<option value="${j.ID_JURI}">${j.NAMA_JURI} (${j.KODE_POS})</option>`;
+                        const id = j.ID_JURI || j.id_juri || j.id;
+                        const nama = j.NAMA_JURI || j.nama_juri || j.nama;
+                        const pos = j.KODE_POS || j.kode_pos || j.pos || '-';
+                        if (id && nama) {
+                            sel.innerHTML += `<option value="${id}">${nama} (${pos})</option>`;
+                        }
                     });
+                } else {
+                    sel.innerHTML = '<option value="">-- Tidak ada data juri di Sheet --</option>';
                 }
             },
 
@@ -229,14 +244,29 @@
                 const pin = document.getElementById('txtPin').value;
 
                 if (!idJuri || !pin) return alert("Pilih Nama Juri dan isi PIN!");
+                if (!this.masterData || !this.masterData.juri) return alert("Data Juri belum termuat sempurna dari server.");
 
-                const juriObj = this.masterData.juri.find(j => j.ID_JURI === idJuri);
-                if (juriObj && String(juriObj.PIN) === String(pin)) {
-                    this.currentJuri = juriObj;
-                    sessionStorage.setItem('juriSession', JSON.stringify(juriObj));
-                    this.showDashboard();
+                const juriObj = this.masterData.juri.find(j => {
+                    const id = j.ID_JURI || j.id_juri || j.id;
+                    return String(id) === String(idJuri);
+                });
+
+                if (juriObj) {
+                    const savedPin = juriObj.PIN || juriObj.pin;
+                    if (String(savedPin) === String(pin)) {
+                        this.currentJuri = {
+                            ID_JURI: juriObj.ID_JURI || juriObj.id_juri || juriObj.id,
+                            NAMA_JURI: juriObj.NAMA_JURI || juriObj.nama_juri || juriObj.nama,
+                            KODE_POS: juriObj.KODE_POS || juriObj.kode_pos || juriObj.pos,
+                            PIN: savedPin
+                        };
+                        sessionStorage.setItem('juriSession', JSON.stringify(this.currentJuri));
+                        this.showDashboard();
+                    } else {
+                        alert("PIN Salah! Silakan coba lagi.");
+                    }
                 } else {
-                    alert("PIN Salah! Silakan coba lagi.");
+                    alert("ID Juri tidak ditemukan!");
                 }
             },
 
@@ -264,9 +294,14 @@
             renderKontingenOptions: function() {
                 const sel = document.getElementById('selKontingen');
                 sel.innerHTML = '<option value="">-- Pilih Tim --</option>';
-                if(this.masterData && this.masterData.kontingen) {
+                if (this.masterData && this.masterData.kontingen) {
                     this.masterData.kontingen.forEach(k => {
-                        sel.innerHTML += `<option value="${k.ID_KONTINGEN} - ${k.NAMA_TIM}">${k.ID_KONTINGEN} - ${k.NAMA_TIM} (${k.KECAMATAN})</option>`;
+                        const id = k.ID_KONTINGEN || k.id_kontingen || k.id;
+                        const nama = k.NAMA_TIM || k.nama_tim || k.nama;
+                        const kec = k.KECAMATAN || k.kecamatan || '';
+                        if (id) {
+                            sel.innerHTML += `<option value="${id} - ${nama}">${id} - ${nama} (${kec})</option>`;
+                        }
                     });
                 }
 
@@ -278,7 +313,7 @@
                     const posJuri = this.currentJuri.KODE_POS;
                     const trackItem = this.masterData.tracking.find(t => selected.includes(t.id_kontingen));
 
-                    if (trackItem && trackItem.pos_sudah.includes(posJuri)) {
+                    if (trackItem && trackItem.pos_sudah && trackItem.pos_sudah.includes(posJuri)) {
                         alert(`⚠️ PERINGATAN:\n\nTim ${selected} SUDAH PERNAH DINILAI di ${posJuri}!\n\nJika disimpan ulang, data nilai sebelumnya akan tertimpa di Google Sheets.`);
                     }
                 };
@@ -294,7 +329,10 @@
                     return;
                 }
 
-                const items = this.masterData.rubrik.filter(r => r.KODE_POS === this.currentJuri.KODE_POS);
+                const items = this.masterData.rubrik.filter(r => {
+                    const pos = r.KODE_POS || r.kode_pos || r.pos;
+                    return pos === this.currentJuri.KODE_POS;
+                });
 
                 if (items.length === 0) {
                     container.innerHTML = '<p class="text-xs text-amber-400">Pos ini tidak memiliki rubrik khusus. Masukkan nilai langsung di bawah.</p>';
@@ -302,13 +340,16 @@
                 }
 
                 items.forEach((item) => {
+                    const namaItem = item.NAMA_ITEM || item.nama_item || item.item;
+                    const bobotMaks = item.BOBOT_MAKS || item.bobot_maks || item.maks || 100;
+                    const options = item.OPTIONS || item.options || '';
+
                     const div = document.createElement('div');
                     div.className = "flex justify-between items-center bg-slate-900 p-2.5 rounded-lg border border-slate-700";
                     
                     let inputHtml = '';
-                    // Jika rubrik memiliki opsi dropdown berlabel
-                    if (item.OPTIONS) {
-                        const opts = item.OPTIONS.split(',').map(o => o.trim());
+                    if (options) {
+                        const opts = options.split(',').map(o => o.trim());
                         const optionsHtml = opts.map(opt => {
                             let label = opt, val = opt;
                             if (opt.includes(':')) {
@@ -320,8 +361,8 @@
                         }).join('');
 
                         inputHtml = `
-                            <select data-item="${item.NAMA_ITEM}" 
-                                    data-maks="${item.BOBOT_MAKS}" 
+                            <select data-item="${namaItem}" 
+                                    data-maks="${bobotMaks}" 
                                     onchange="app.hitungTotalAuto()" 
                                     class="input-rubrik bg-slate-800 border border-slate-600 rounded-lg p-2 text-xs font-bold text-amber-400 focus:border-red-500 outline-none">
                                 <option value="0">0 Poin</option>
@@ -332,9 +373,9 @@
                         inputHtml = `
                             <input type="number" 
                                    min="0" 
-                                   max="${item.BOBOT_MAKS}" 
-                                   data-item="${item.NAMA_ITEM}" 
-                                   data-maks="${item.BOBOT_MAKS}" 
+                                   max="${bobotMaks}" 
+                                   data-item="${namaItem}" 
+                                   data-maks="${bobotMaks}" 
                                    oninput="app.hitungTotalAuto()" 
                                    class="input-rubrik bg-slate-800 border border-slate-600 rounded-lg p-2 w-20 text-center font-bold text-amber-400 text-sm focus:border-red-500 outline-none" 
                                    placeholder="0">
@@ -343,8 +384,8 @@
 
                     div.innerHTML = `
                         <div class="pr-2">
-                            <span class="text-xs font-bold block text-slate-200">${item.NAMA_ITEM}</span>
-                            <span class="text-[10px] text-slate-400 block">Maksimal: ${item.BOBOT_MAKS} Poin</span>
+                            <span class="text-xs font-bold block text-slate-200">${namaItem}</span>
+                            <span class="text-[10px] text-slate-400 block">Maksimal: ${bobotMaks} Poin</span>
                         </div>
                         ${inputHtml}
                     `;
@@ -367,7 +408,6 @@
                 document.getElementById('lblTotalSkorAuto').innerText = total + " Poin";
             },
 
-            // LOGIKA STOPWATCH TIMER
             startTimer: function() {
                 if (this.timerRunning) return;
                 this.timerRunning = true;
@@ -412,7 +452,6 @@
                 location.reload();
             },
 
-            // DIRECT WEB BLUETOOTH PRINTER THERMAL
             connectBT: async function() {
                 try {
                     const device = await navigator.bluetooth.requestDevice({
@@ -480,7 +519,6 @@
                     timestamp: new Date().toLocaleString('id-ID')
                 };
 
-                // Simpan ke Cache Lokal untuk Riwayat & Reprint Struk
                 this.simpanRiwayatLokal(payload);
 
                 try {
@@ -494,9 +532,8 @@
                         alert("✅ Data Nilai Berhasil Disimpan!");
                         await this.cetakStruk(payload);
                         
-                        this.init(); // Refresh data tracking
+                        this.init(); // Refresh tracking
 
-                        // Reset Form
                         document.getElementById('selKontingen').value = '';
                         document.getElementById('txtCatatan').value = '';
                         inputs.forEach(inp => inp.value = '');
@@ -506,7 +543,7 @@
                         alert("Gagal simpan: " + result.message);
                     }
                 } catch (e) {
-                    alert("Tersimpan di offline history (Error jaringan): " + e.message);
+                    alert("Tersimpan di offline history: " + e.message);
                     await this.cetakStruk(payload);
                 } finally {
                     btn.disabled = false;
@@ -514,7 +551,6 @@
                 }
             },
 
-            // RIWAYAT LOKAL & CETAK ULANG
             simpanRiwayatLokal: function(data) {
                 let list = JSON.parse(localStorage.getItem('sijum_history_v2')) || [];
                 list.unshift(data);
@@ -532,4 +568,115 @@
                 const container = document.getElementById('listHistoryContainer');
                 let list = JSON.parse(localStorage.getItem('sijum_history_v2')) || [];
 
-                if
+                if (list.length === 0) {
+                    container.innerHTML = `<div class="text-center text-slate-500 py-6">Belum ada riwayat penilaian di pos ini.</div>`;
+                } else {
+                    container.innerHTML = list.map((item, idx) => `
+                        <div class="bg-slate-900 border border-slate-700 rounded-xl p-3 space-y-1">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <strong class="text-slate-100 text-xs block">${item.kontingen}</strong>
+                                    <span class="text-[10px] text-slate-400">${item.timestamp} | Durasi: ${item.durasi}s</span>
+                                </div>
+                                <span class="bg-red-600 text-white font-black text-xs px-2 py-0.5 rounded">${item.total_skor} Pt</span>
+                            </div>
+                            <div class="flex justify-end pt-1">
+                                <button onclick="app.cetakDariRiwayat(${idx})" class="bg-amber-500 text-slate-900 text-[10px] px-2 py-1 rounded font-bold">
+                                    <i class="fa-solid fa-print"></i> Cetak Ulang
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+
+                document.getElementById('modalHistory').classList.remove('hidden');
+            },
+
+            tutupRiwayat: function() {
+                document.getElementById('modalHistory').classList.add('hidden');
+            },
+
+            cetakDariRiwayat: async function(index) {
+                let list = JSON.parse(localStorage.getItem('sijum_history_v2')) || [];
+                if (list[index]) {
+                    await this.cetakStruk(list[index]);
+                }
+            },
+
+            cetakStruk: async function(data) {
+                if (!this.btChar) {
+                    alert("⚠️ Data tersimpan, namun Printer Bluetooth belum terhubung.");
+                    return;
+                }
+
+                const ESC = '\x1B';
+                let cmd = ESC + '@';
+                
+                // Font B (42 Kolom per baris di kertas 58mm)
+                cmd += ESC + 'M' + '\x01';
+
+                cmd += ESC + 'a' + '\x01' + ESC + 'E' + '\x01';
+                cmd += "==========================================\n";
+                cmd += "           JUMBARA PMR MULA               \n";
+                cmd += "      KABUPATEN PURBALINGGA 2026          \n";
+                cmd += "         STRUK PENILAIAN POS              \n";
+                cmd += "==========================================\n";
+                cmd += ESC + 'E' + '\x00';
+
+                cmd += ESC + 'a' + '\x00';
+                cmd += `POS     : ${data.pos_lomba}\n`;
+                cmd += `JURI    : ${data.nama_juri}\n`;
+                cmd += `WAKTU   : ${data.timestamp || '-'}\n`;
+                cmd += `DURASI  : ${data.durasi} Detik\n`;
+                cmd += "------------------------------------------\n";
+                
+                // Layout 2 Baris Nama Tim
+                cmd += ESC + 'E' + '\x01';
+                cmd += `TIM     : ${data.kontingen}\n`;
+                cmd += ESC + 'E' + '\x00';
+                cmd += "------------------------------------------\n";
+
+                cmd += ESC + 'E' + '\x01' + "RINCIAN ITEM PENILAIAN:\n" + ESC + 'E' + '\x00';
+
+                let idx = 1;
+                for (const [item, nilai] of Object.entries(data.rincian_nilai)) {
+                    let label = `${idx}. ${item}`;
+                    if (label.length > 42) label = label.substring(0, 42);
+                    cmd += `${label}\n`;
+                    cmd += `   -> Skor: ${nilai} Poin\n`;
+                    idx++;
+                }
+
+                cmd += "------------------------------------------\n";
+                
+                cmd += ESC + 'a' + '\x02' + ESC + 'E' + '\x01';
+                cmd += `TOTAL SKOR AKHIR : [ ${data.total_skor} PT ]\n`;
+                cmd += ESC + 'E' + '\x00' + ESC + 'a' + '\x00';
+
+                if (data.catatan && data.catatan !== "-") {
+                    cmd += `CATATAN : ${data.catatan}\n`;
+                }
+
+                cmd += ESC + 'a' + '\x01';
+                cmd += "------------------------------------------\n";
+                cmd += "Tanda Tangan Juri,\n\n\n\n";
+                cmd += `( ${data.nama_juri} )\n`;
+                cmd += "==========================================\n";
+                cmd += "    Simpan struk ini sebagai bukti sah    \n";
+                cmd += "==========================================\n\n\n\n";
+
+                const encoder = new TextEncoder();
+                const buffer = encoder.encode(cmd);
+                
+                const CHUNK_SIZE = 100;
+                for (let i = 0; i < buffer.length; i += CHUNK_SIZE) {
+                    const chunk = buffer.slice(i, i + CHUNK_SIZE);
+                    await this.btChar.writeValue(chunk);
+                }
+            }
+        };
+
+        window.onload = () => app.init();
+    </script>
+</body>
+</html>
