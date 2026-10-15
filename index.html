@@ -98,10 +98,15 @@
             </div>
 
             <!-- CETAK ULANG -->
+        
             <div class="flex justify-between items-center gap-2">
-                <button onclick="app.cetakUlangTerakhir()" class="card-bg w-full bg-slate-800 border border-slate-700 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center space-x-2">
+                <button onclick="app.cetakUlangTerakhir()" class="card-bg w-1/2 bg-slate-800 border border-slate-700 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center space-x-1.5">
                     <i class="fa-solid fa-rotate-left text-amber-400"></i>
-                    <span>Cetak Struk Terakhir</span>
+                    <span>Struk Terakhir</span>
+                </button>
+                <button onclick="app.cetakRekapPos()" class="card-bg w-1/2 bg-slate-800 border border-slate-700 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center space-x-1.5">
+                    <i class="fa-solid fa-file-invoice text-emerald-400"></i>
+                    <span>Cetak Rekap Pos</span>
                 </button>
             </div>
 
@@ -732,6 +737,84 @@
                 if (!last) return alert("Belum ada riwayat cetak struk terakhir.");
                 await this.cetakStruk(JSON.parse(last));
             },
+            cetakRekapPos: async function() {
+    if (!this.btChar) {
+        return alert("⚠️ Printer Bluetooth belum terhubung! Konek printer terlebih dahulu.");
+    }
+
+    if (!this.masterData || !this.masterData.nilai) {
+        return alert("Data nilai dari server belum siap.");
+    }
+
+    const posJuri = this.currentJuri.KODE_POS;
+    const namaJuri = this.currentJuri.NAMA_JURI;
+
+    // Filter nilai khusus pos juri ini
+    const listNilaiPos = this.masterData.nilai.filter(n => {
+        const p = n.pos_lomba || n.POS_LOMBA || n.pos || "";
+        return p === posJuri;
+    });
+
+    if (listNilaiPos.length === 0) {
+        return alert(`Belum ada data nilai yang masuk untuk ${posJuri}.`);
+    }
+
+    // Urutkan berdasarkan skor tertinggi
+    listNilaiPos.sort((a, b) => (Number(b.total_skor || b.TOTAL_SKOR || 0) - Number(a.total_skor || a.TOTAL_SKOR || 0)));
+
+    const ESC = '\x1B';
+    let cmd = ESC + '@';
+    
+    // Header Struk Rekap
+    cmd += ESC + 'a' + '\x01' + ESC + 'E' + '\x01';
+    cmd += "================================\n";
+    cmd += "     REKAP NILAI POS LOMBA      \n";
+    cmd += "      JUMBARA PMR MULA IV       \n";
+    cmd += "================================\n";
+    cmd += ESC + 'E' + '\x00';
+
+    cmd += ESC + 'a' + '\x00';
+    cmd += `POS     : ${posJuri}\n`;
+    cmd += `JURI    : ${namaJuri}\n`;
+    cmd += `WAKTU   : ${new Date().toLocaleString('id-ID')}\n`;
+    cmd += "--------------------------------\n";
+    cmd += "NO KONTINGEN               SKOR \n";
+    cmd += "--------------------------------\n";
+
+    // Loop Daftar Nilai
+    listNilaiPos.forEach((item, idx) => {
+        let tim = item.kontingen || item.KONTINGEN || "-";
+        let skor = String(item.total_skor || item.TOTAL_SKOR || 0);
+        
+        let label = `${idx + 1}. ${tim}`;
+        if (label.length > 24) label = label.substring(0, 24);
+        
+        // Atur spasi rata kanan skor
+        let space = 32 - label.length - skor.length;
+        if (space < 1) space = 1;
+
+        cmd += label + " ".repeat(space) + skor + "\n";
+    });
+
+    cmd += "--------------------------------\n";
+    cmd += `TOTAL TIM DINILAI : ${listNilaiPos.length}\n`;
+    cmd += "--------------------------------\n";
+    cmd += ESC + 'a' + '\x01';
+    cmd += "Tanda Tangan Juri Pos,\n\n\n\n";
+    cmd += `( ${namaJuri} )\n`;
+    cmd += "================================\n";
+    cmd += " Diterima Oleh Panitia Pusat    \n";
+    cmd += "================================\n\n\n\n";
+
+    const encoder = new TextEncoder();
+    const buffer = encoder.encode(cmd);
+    
+    const CHUNK_SIZE = 100;
+    for (let i = 0; i < buffer.length; i += CHUNK_SIZE) {
+        const chunk = buffer.slice(i, i + CHUNK_SIZE);
+        await this.btChar.writeValue(chunk);
+    }
+},
 
             bukaRiwayat: function() {
                 const container = document.getElementById('listHistoryContainer');
