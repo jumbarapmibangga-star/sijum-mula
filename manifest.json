@@ -1,5 +1,5 @@
 {
-  "name": "Portal Juri Jumbara PMR Mula",
+  "name": "Jumbara PMR Mula Ke-4 Purbalingga",
   "short_name": "JuriPMR",
   "start_url": "./index.html",
   "display": "standalone",
@@ -8,9 +8,10 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/2966/2966327.png",
+      "src": "logo.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
