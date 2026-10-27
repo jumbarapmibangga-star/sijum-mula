@@ -722,11 +722,11 @@
                 const durasi = parseInt(document.getElementById('txtDurasi').value) || 0;
                 const catatan = document.getElementById('txtCatatan').value.trim();
 
-                // LOCK TOMBOL SIMPAN UTK MENCEGAH DOBEL CLICK/SUBMIT
+                // LOCK TOMBOL UNTUK PREVENT DOUBLE SUBMIT
                 const btnSimpan = document.getElementById('btnSimpan');
                 btnSimpan.disabled = true;
                 btnSimpan.classList.add('opacity-50', 'cursor-not-allowed');
-                btnSimpan.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>MENYIMPAN & MENCETAK...</span>`;
+                btnSimpan.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>PROSES PDF & SIMPAN...</span>`;
 
                 const payload = {
                     action: "SIMPAN_NILAI",
@@ -755,14 +755,15 @@
                             total_skor: totalSkor,
                             durasi: durasi,
                             catatan: catatan,
-                            rincian: rincian
+                            rincian: rincian,
+                            pdf_url: result.pdf_url || "" // DUKUNGAN LINK PDF
                         };
 
                         let history = JSON.parse(localStorage.getItem('sijum_history_v2')) || [];
                         history.unshift(itemRiwayat);
                         localStorage.setItem('sijum_history_v2', JSON.stringify(history));
 
-                        // CETAK STRUK THERMAL (Bluetooth atau Browser HP)
+                        // CETAK STRUK BESERTA QR CODE LINK PDF SAH
                         await this.cetakStruk(itemRiwayat);
 
                         alert("✅ Penilaian Berhasil Disimpan & Struk Dicetak!");
@@ -785,7 +786,7 @@
             },
 
             cetakStruk: async function(dataStruk) {
-                // A. UTAMA: JIKA PRINTER BLUETOOTH TERHUBUNG LANGSUNG
+                // A. UTAMA: JIKA PRINTER BLUETOOTH TERHUBUNG LANGSUNG VIA WEB BLUETOOTH
                 if (this.btChar) {
                     let encoder = new TextEncoder();
                     let esc = "";
@@ -820,6 +821,12 @@
                     esc += "TOTAL SKOR: " + dataStruk.total_skor + " PT\n";
                     esc += "\x1B\x45\x00\x1B\x61\x00";
                     esc += "Catatan: " + (dataStruk.catatan || "-") + "\n";
+
+                    if (dataStruk.pdf_url) {
+                        esc += "--------------------------------\n";
+                        esc += "Link PDF Sah:\n" + dataStruk.pdf_url + "\n";
+                    }
+
                     esc += "--------------------------------\n";
                     esc += "\x1B\x61\x01";
                     esc += "Terima Kasih & Selamat!\n\n\n\n";
@@ -829,7 +836,7 @@
                     if (success) return;
                 }
 
-                // B. CADANGAN (FALLBACK): JIKA BLUETOOTH BELUM TERHUBUNG / DISCONNECT
+                // B. CADANGAN (FALLBACK): BROWSER PRINT / RAWBT HP (DENGAN QR CODE IMAGE)
                 this.printViaBrowser(dataStruk);
             },
 
@@ -842,6 +849,17 @@
                         <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
                             <span>${item}</span>
                             <strong>${dataStruk.rincian[item]}</strong>
+                        </div>`;
+                }
+
+                // GENERATE QR CODE GAMBAR APABILA TERSEDIA LINK PDF
+                let qrHtml = "";
+                if (dataStruk.pdf_url) {
+                    const qrApi = `https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=${encodeURIComponent(dataStruk.pdf_url)}`;
+                    qrHtml = `
+                        <div style="text-align:center; margin:8px 0;">
+                            <img src="${qrApi}" style="width:110px; height:110px; margin:0 auto; display:block;" />
+                            <div style="font-size:7pt; margin-top:2px;">Scan QR untuk Unduh PDF Sah</div>
                         </div>`;
                 }
 
@@ -864,6 +882,7 @@
                         TOTAL: ${dataStruk.total_skor} PT
                     </div>
                     <div>Catatan: ${dataStruk.catatan || '-'}</div>
+                    ${qrHtml}
                     <div style="border-bottom:1px dashed #000; margin:4px 0;"></div>
                     <div style="text-align:center;">Simpan Struk Ini Sebagai Bukti Sah</div>
                 `;
