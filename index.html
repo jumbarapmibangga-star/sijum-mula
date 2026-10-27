@@ -756,7 +756,7 @@
                             durasi: durasi,
                             catatan: catatan,
                             rincian: rincian,
-                            pdf_url: result.pdf_url || "" // DUKUNGAN LINK PDF
+                            pdf_url: result.pdf_url || "" // DUKUNGAN LINK PDF GOOGLE DRIVE
                         };
 
                         let history = JSON.parse(localStorage.getItem('sijum_history_v2')) || [];
@@ -822,9 +822,23 @@
                     esc += "\x1B\x45\x00\x1B\x61\x00";
                     esc += "Catatan: " + (dataStruk.catatan || "-") + "\n";
 
+                    // CETAK QR CODE VIA PERINTAH ESC/POS PRINTER BLUETOOTH
                     if (dataStruk.pdf_url) {
                         esc += "--------------------------------\n";
-                        esc += "Link PDF Sah:\n" + dataStruk.pdf_url + "\n";
+                        esc += "\x1B\x61\x01"; // Center
+                        esc += "SCAN QR PDF DOKUMEN:\n\n";
+                        
+                        let url = dataStruk.pdf_url;
+                        let len = url.length + 3;
+                        let pL = len % 256;
+                        let pH = Math.floor(len / 256);
+                        
+                        esc += "\x1D\x28\x6B\x04\x00\x31\x41\x32\x00"; // Set Model 2
+                        esc += "\x1D\x28\x6B\x03\x00\x31\x43\x06"; // Set Module Size (6)
+                        esc += "\x1D\x28\x6B\x03\x00\x31\x4E\x30"; // Error Correction Level L
+                        esc += "\x1D\x28\x6B" + String.fromCharCode(pL, pH) + "\x31\x50\x30" + url; // Store Data
+                        esc += "\x1D\x28\x6B\x03\x00\x31\x51\x30"; // Print QR
+                        esc += "\n";
                     }
 
                     esc += "--------------------------------\n";
@@ -852,7 +866,7 @@
                         </div>`;
                 }
 
-                // GENERATE QR CODE GAMBAR APABILA TERSEDIA LINK PDF
+                // GENERATE GAMBAR QR CODE APABILA TERSEDIA LINK PDF GOOGLE DRIVE
                 let qrHtml = "";
                 if (dataStruk.pdf_url) {
                     const qrApi = `https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=${encodeURIComponent(dataStruk.pdf_url)}`;
