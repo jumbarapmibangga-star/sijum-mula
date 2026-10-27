@@ -18,6 +18,24 @@
         body.theme-light .input-bg { background-color: #f1f5f9 !important; border-color: #94a3b8 !important; color: #0f172a !important; }
         body.theme-light .text-sub { color: #475569 !important; }
         body.theme-light .btn-preset-off { background-color: #e2e8f0 !important; color: #1e293b !important; border-color: #cbd5e1 !important; }
+
+        /* PENGATURAN CETAK PRINTER THERMAL (58mm / 80mm) VIA BROWSER HP */
+        @media print {
+            @page { size: 58mm auto; margin: 0; }
+            body * { visibility: hidden; }
+            #areaCetakThermal, #areaCetakThermal * { visibility: visible; }
+            #areaCetakThermal {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 54mm;
+                font-family: monospace;
+                font-size: 8.5pt;
+                color: #000 !important;
+                background: #fff !important;
+                padding: 4px;
+            }
+        }
     </style>
 </head>
 <body id="appBody" class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between font-sans select-none">
@@ -98,7 +116,6 @@
             </div>
 
             <!-- CETAK ULANG -->
-        
             <div class="flex justify-between items-center gap-2">
                 <button onclick="app.cetakUlangTerakhir()" class="card-bg w-1/2 bg-slate-800 border border-slate-700 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center space-x-1.5">
                     <i class="fa-solid fa-rotate-left text-amber-400"></i>
@@ -180,6 +197,9 @@
 
     </main>
 
+    <!-- AREA TERSEMBUNYI UNTUK FORMAT CETAK PRINTER THERMAL HP (FALLBACK) -->
+    <div id="areaCetakThermal" class="hidden"></div>
+
     <!-- MODAL RIWAYAT -->
     <div id="modalHistory" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="card-bg bg-slate-800 w-full max-w-md rounded-2xl shadow-xl flex flex-col max-h-[80vh] border border-slate-700 overflow-hidden">
@@ -203,7 +223,7 @@
         &copy; Panitia Jumbara PMR Mula Ke-4 Purbalingga
     </footer>
 
-    <!-- LOGIKA UTAMA -->
+    <!-- LOGIKA UTAMA SCRIPT -->
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js');
@@ -617,32 +637,33 @@
                 location.reload();
             },
 
+            // =========================================================
+            // FUNGSI BLUETOOTH & CETAK PRINTER THERMAL
+            // =========================================================
             connectBT: async function() {
+                const lbl = document.getElementById('lblBT');
+                const btn = document.getElementById('btnBT');
                 try {
+                    lbl.innerText = "Mencari...";
                     this.btDevice = await navigator.bluetooth.requestDevice({
                         acceptAllDevices: true,
                         optionalServices: [
-                            '000018f0-0000-1000-8000-00805f9b34fb', 
-                            '00001101-0000-1000-8000-00805f9b34fb',
-                            '0000ff00-0000-1000-8000-00805f9b34fb'
+                            '000018f0-0000-1000-8000-00805f9b34fb',
+                            'e7810a71-73ae-499d-8c15-faa9aef0c3f2',
+                            '0000ff00-0000-1000-8000-00805f9b34fb',
+                            '49535343-fe7d-4ae5-8fa9-9fafd205e455'
                         ]
                     });
 
-                    this.btDevice.addEventListener('gattserverdisconnected', () => {
-                        this.btChar = null;
-                        document.getElementById('lblBT').innerText = "Konek Printer";
-                        document.getElementById('btnBT').className = "bg-amber-500 hover:bg-amber-600 text-slate-900 px-2 py-1 rounded-lg text-xs font-black flex items-center shadow";
-                        alert("⚠️ Koneksi Printer Bluetooth terputus!");
-                    });
-
+                    lbl.innerText = "Koneksi...";
                     const server = await this.btDevice.gatt.connect();
                     const services = await server.getPrimaryServices();
 
                     for (const service of services) {
-                        const chars = await service.getCharacteristics();
-                        for (const c of chars) {
-                            if (c.properties.write || c.properties.writeWithoutResponse) {
-                                this.btChar = c;
+                        const characteristics = await service.getCharacteristics();
+                        for (const char of characteristics) {
+                            if (char.properties.write || char.properties.writeWithoutResponse) {
+                                this.btChar = char;
                                 break;
                             }
                         }
@@ -650,46 +671,72 @@
                     }
 
                     if (this.btChar) {
-                        document.getElementById('lblBT').innerText = "Terhubung";
-                        document.getElementById('btnBT').className = "bg-emerald-500 text-slate-900 px-2 py-1 rounded-lg text-xs font-black flex items-center shadow";
-                        alert("✅ Printer RPP02N Berhasil Terhubung!");
+                        btn.className = "bg-emerald-500 hover:bg-emerald-600 text-white px-2 py-1 rounded-lg text-xs font-black flex items-center shadow";
+                        lbl.innerText = "Printer Konek!";
+                        alert("✅ Printer Thermal Bluetooth Berhasil Terhubung!");
+                    } else {
+                        throw new Error("Karakteristik Printer Bluetooth tidak ditemukan.");
                     }
                 } catch (e) {
-                    alert("Gagal menyambungkan Bluetooth: " + e.message);
+                    console.error(e);
+                    btn.className = "bg-amber-500 hover:bg-amber-600 text-slate-900 px-2 py-1 rounded-lg text-xs font-black flex items-center shadow";
+                    lbl.innerText = "Konek Printer";
+                    alert("⚠️ Bluetooth Printer gagal terhubung: " + e.message + "\n(Pencetakan akan otomatis beralih ke fitur cetak bawaan HP).");
+                }
+            },
+
+            sendBTData: async function(buffer) {
+                if (!this.btChar) return false;
+                try {
+                    const chunkSize = 100;
+                    for (let i = 0; i < buffer.length; i += chunkSize) {
+                        const chunk = buffer.slice(i, i + chunkSize);
+                        if (this.btChar.properties.writeWithoutResponse) {
+                            await this.btChar.writeValueWithoutResponse(chunk);
+                        } else {
+                            await this.btChar.writeValue(chunk);
+                        }
+                    }
+                    return true;
+                } catch (err) {
+                    console.error("BT Write Error:", err);
+                    return false;
                 }
             },
 
             simpan: async function() {
-                const kontingen = document.getElementById('selKontingen').value;
-                const durasi = document.getElementById('txtDurasi').value;
-                const catatan = document.getElementById('txtCatatan').value;
+                const selKont = document.getElementById('selKontingen');
+                const valKont = selKont.value;
 
-                if (!kontingen) return alert("Pilih Kontingen terlebih dahulu!");
+                if (!valKont) return alert("Pilih Kontingen / Tim terlebih dahulu!");
 
-                let rincianNilai = {};
-                let totalSkor = 0;
+                const rincian = {};
                 const inputs = document.querySelectorAll('.input-rubrik');
-                
-                inputs.forEach(input => {
-                    const itemNama = input.getAttribute('data-item');
-                    const itemNilai = parseFloat(input.value) || 0;
-                    rincianNilai[itemNama] = itemNilai;
-                    totalSkor += itemNilai;
+                inputs.forEach(inp => {
+                    const itemNama = inp.getAttribute('data-item');
+                    const val = parseFloat(inp.value) || 0;
+                    rincian[itemNama] = val;
                 });
 
-                const btn = document.getElementById('btnSimpan');
-                btn.disabled = true;
-                btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>MENYIMPAN & MEMBUAT PDF...</span>`;
+                const totalSkor = parseFloat(document.getElementById('lblTotalSkorAuto').innerText) || 0;
+                const durasi = parseInt(document.getElementById('txtDurasi').value) || 0;
+                const catatan = document.getElementById('txtCatatan').value.trim();
+
+                // LOCK TOMBOL SIMPAN UTK MENCEGAH DOBEL CLICK/SUBMIT
+                const btnSimpan = document.getElementById('btnSimpan');
+                btnSimpan.disabled = true;
+                btnSimpan.classList.add('opacity-50', 'cursor-not-allowed');
+                btnSimpan.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>MENYIMPAN & MENCETAK...</span>`;
 
                 const payload = {
+                    action: "SIMPAN_NILAI",
                     nama_juri: this.currentJuri.NAMA_JURI,
                     pos_lomba: this.currentJuri.KODE_POS,
-                    kontingen: kontingen,
+                    kontingen: valKont,
                     total_skor: totalSkor,
-                    durasi: durasi || "0",
-                    catatan: catatan || "-",
-                    rincian_nilai: rincianNilai,
-                    timestamp: new Date().toLocaleString('id-ID')
+                    durasi: durasi,
+                    catatan: catatan,
+                    rincian_nilai: rincian
                 };
 
                 try {
@@ -700,253 +747,207 @@
                     const result = await res.json();
 
                     if (result.status === "SUCCESS") {
-                        if (result.pdf_url) payload.pdf_url = result.pdf_url;
+                        const itemRiwayat = {
+                            timestamp: new Date().toLocaleString('id-ID'),
+                            pos_lomba: this.currentJuri.KODE_POS,
+                            nama_juri: this.currentJuri.NAMA_JURI,
+                            kontingen: valKont,
+                            total_skor: totalSkor,
+                            durasi: durasi,
+                            catatan: catatan,
+                            rincian: rincian
+                        };
 
-                        this.simpanRiwayatLokal(payload);
-                        await this.cetakStruk(payload);
-                        
-                        this.init();
+                        let history = JSON.parse(localStorage.getItem('sijum_history_v2')) || [];
+                        history.unshift(itemRiwayat);
+                        localStorage.setItem('sijum_history_v2', JSON.stringify(history));
 
-                        document.getElementById('selKontingen').value = '';
-                        document.getElementById('txtCatatan').value = '';
-                        inputs.forEach(inp => inp.value = '');
-                        document.getElementById('lblTotalSkorAuto').innerText = "0";
+                        // CETAK STRUK THERMAL (Bluetooth atau Browser HP)
+                        await this.cetakStruk(itemRiwayat);
+
+                        alert("✅ Penilaian Berhasil Disimpan & Struk Dicetak!");
+
+                        this.renderKontingenOptions();
+                        this.renderRubrikDinamis();
                         this.resetTimer();
+                        document.getElementById('txtCatatan').value = '';
+
                     } else {
-                        alert("Gagal simpan: " + result.message);
+                        alert("⚠️ " + (result.message || "Gagal menyimpan nilai!"));
                     }
                 } catch (e) {
-                    alert("⚠️ Simpan Mode Offline (PDF Drive akan ter-generate saat online): " + e.message);
-                    this.simpanRiwayatLokal(payload);
-                    await this.cetakStruk(payload);
+                    alert("⚠️ Terjadi kesalahan koneksi server: " + e.message);
                 } finally {
-                    btn.disabled = false;
-                    btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i><span>SIMPAN & CETAK STRUK</span>`;
+                    btnSimpan.disabled = false;
+                    btnSimpan.classList.remove('opacity-50', 'cursor-not-allowed');
+                    btnSimpan.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> <span>SIMPAN & CETAK STRUK</span>`;
                 }
             },
 
-            simpanRiwayatLokal: function(data) {
-                let list = JSON.parse(localStorage.getItem('sijum_history_v2')) || [];
-                list.unshift(data);
-                localStorage.setItem('sijum_history_v2', JSON.stringify(list));
-                localStorage.setItem('sijum_last_print_v2', JSON.stringify(data));
+            cetakStruk: async function(dataStruk) {
+                // A. UTAMA: JIKA PRINTER BLUETOOTH TERHUBUNG LANGSUNG
+                if (this.btChar) {
+                    let encoder = new TextEncoder();
+                    let esc = "";
+                    
+                    esc += "\x1B\x40"; // Reset
+                    esc += "\x1B\x61\x01"; // Center
+                    esc += "\x1B\x45\x01"; // Bold On
+                    esc += "JUMBARA PMR MULA KE-4\n";
+                    esc += "PMI KAB. PURBALINGGA 2026\n";
+                    esc += "--------------------------------\n";
+                    esc += "\x1B\x45\x00"; // Bold Off
+                    
+                    esc += "\x1B\x61\x00"; // Left Align
+                    esc += "Waktu : " + dataStruk.timestamp + "\n";
+                    esc += "Pos   : " + dataStruk.pos_lomba + "\n";
+                    esc += "Tim   : " + dataStruk.kontingen + "\n";
+                    esc += "Juri  : " + dataStruk.nama_juri + "\n";
+                    esc += "Durasi: " + dataStruk.durasi + " Detik\n";
+                    esc += "--------------------------------\n";
+                    esc += "RINCIAN RUBRIK PENILAIAN:\n";
+
+                    for (let k in dataStruk.rincian) {
+                        let itemStr = k.length > 20 ? k.substring(0, 18) + ".." : k;
+                        let valStr = String(dataStruk.rincian[k]);
+                        let spaceLen = 32 - itemStr.length - valStr.length;
+                        if (spaceLen < 1) spaceLen = 1;
+                        esc += itemStr + " ".repeat(spaceLen) + valStr + "\n";
+                    }
+
+                    esc += "--------------------------------\n";
+                    esc += "\x1B\x45\x01\x1B\x61\x01"; // Center & Bold
+                    esc += "TOTAL SKOR: " + dataStruk.total_skor + " PT\n";
+                    esc += "\x1B\x45\x00\x1B\x61\x00";
+                    esc += "Catatan: " + (dataStruk.catatan || "-") + "\n";
+                    esc += "--------------------------------\n";
+                    esc += "\x1B\x61\x01";
+                    esc += "Terima Kasih & Selamat!\n\n\n\n";
+
+                    let bytes = encoder.encode(esc);
+                    let success = await this.sendBTData(bytes);
+                    if (success) return;
+                }
+
+                // B. CADANGAN (FALLBACK): JIKA BLUETOOTH BELUM TERHUBUNG / DISCONNECT
+                this.printViaBrowser(dataStruk);
             },
 
-            cetakUlangTerakhir: async function() {
-                const last = localStorage.getItem('sijum_last_print_v2');
-                if (!last) return alert("Belum ada riwayat cetak struk terakhir.");
-                await this.cetakStruk(JSON.parse(last));
+            printViaBrowser: function(dataStruk) {
+                const area = document.getElementById('areaCetakThermal');
+                let rubrikHtml = "";
+                
+                for (let item in dataStruk.rincian) {
+                    rubrikHtml += `
+                        <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+                            <span>${item}</span>
+                            <strong>${dataStruk.rincian[item]}</strong>
+                        </div>`;
+                }
+
+                area.innerHTML = `
+                    <div style="text-align:center; font-weight:bold;">
+                        JUMBARA PMR MULA KE-4<br>
+                        PMI KAB. PURBALINGGA 2026
+                    </div>
+                    <div style="border-bottom:1px dashed #000; margin:4px 0;"></div>
+                    <div>Waktu : ${dataStruk.timestamp}</div>
+                    <div>Pos   : ${dataStruk.pos_lomba}</div>
+                    <div style="font-weight:bold;">Tim   : ${dataStruk.kontingen}</div>
+                    <div>Juri  : ${dataStruk.nama_juri}</div>
+                    <div>Durasi: ${dataStruk.durasi} Detik</div>
+                    <div style="border-bottom:1px dashed #000; margin:4px 0;"></div>
+                    <div style="font-weight:bold;">RINCIAN PENILAIAN:</div>
+                    ${rubrikHtml}
+                    <div style="border-bottom:1px dashed #000; margin:4px 0;"></div>
+                    <div style="font-size:12pt; font-weight:bold; text-align:center; border:1px solid #000; padding:3px; margin:6px 0;">
+                        TOTAL: ${dataStruk.total_skor} PT
+                    </div>
+                    <div>Catatan: ${dataStruk.catatan || '-'}</div>
+                    <div style="border-bottom:1px dashed #000; margin:4px 0;"></div>
+                    <div style="text-align:center;">Simpan Struk Ini Sebagai Bukti Sah</div>
+                `;
+
+                area.classList.remove('hidden');
+                window.print();
+                setTimeout(() => area.classList.add('hidden'), 1000);
             },
-            cetakRekapPos: async function() {
-    if (!this.btChar) {
-        return alert("⚠️ Printer Bluetooth belum terhubung! Konek printer terlebih dahulu.");
-    }
 
-    if (!this.masterData || !this.masterData.nilai) {
-        return alert("Data nilai dari server belum siap.");
-    }
+            cetakUlangTerakhir: function() {
+                let history = JSON.parse(localStorage.getItem('sijum_history_v2')) || [];
+                if (history.length === 0) return alert("Belum ada riwayat penilaian di perangkat ini!");
+                
+                let posJuri = this.currentJuri ? this.currentJuri.KODE_POS : null;
+                let itemTerakhir = history.find(h => h.pos_lomba === posJuri) || history[0];
+                
+                if (confirm(`Cetak ulang struk untuk: ${itemTerakhir.kontingen}?`)) {
+                    this.cetakStruk(itemTerakhir);
+                }
+            },
 
-    const posJuri = this.currentJuri.KODE_POS;
-    const namaJuri = this.currentJuri.NAMA_JURI;
+            cetakRekapPos: function() {
+                let history = JSON.parse(localStorage.getItem('sijum_history_v2')) || [];
+                let posJuri = this.currentJuri ? this.currentJuri.KODE_POS : null;
+                let filtered = history.filter(h => h.pos_lomba === posJuri);
 
-    // Filter nilai khusus pos juri ini
-    const listNilaiPos = this.masterData.nilai.filter(n => {
-        const p = n.pos_lomba || n.POS_LOMBA || n.pos || "";
-        return p === posJuri;
-    });
+                if (filtered.length === 0) return alert("Belum ada data nilai tersimpan untuk Pos ini!");
 
-    if (listNilaiPos.length === 0) {
-        return alert(`Belum ada data nilai yang masuk untuk ${posJuri}.`);
-    }
+                let dataRekap = {
+                    timestamp: new Date().toLocaleString('id-ID'),
+                    pos_lomba: posJuri,
+                    kontingen: `REKAP TOTAL (${filtered.length} TIM)`,
+                    nama_juri: this.currentJuri.NAMA_JURI,
+                    durasi: 0,
+                    total_skor: filtered.reduce((acc, curr) => acc + curr.total_skor, 0),
+                    catatan: "Laporan Rekapitulasi Pos",
+                    rincian: {}
+                };
 
-    // Urutkan berdasarkan skor tertinggi
-    listNilaiPos.sort((a, b) => (Number(b.total_skor || b.TOTAL_SKOR || 0) - Number(a.total_skor || a.TOTAL_SKOR || 0)));
+                filtered.forEach(item => {
+                    dataRekap.rincian[item.kontingen] = item.total_skor + " PT";
+                });
 
-    const ESC = '\x1B';
-    let cmd = ESC + '@';
-    
-    // Header Struk Rekap
-    cmd += ESC + 'a' + '\x01' + ESC + 'E' + '\x01';
-    cmd += "================================\n";
-    cmd += "     REKAP NILAI POS LOMBA      \n";
-    cmd += "      JUMBARA PMR MULA IV       \n";
-    cmd += "================================\n";
-    cmd += ESC + 'E' + '\x00';
-
-    cmd += ESC + 'a' + '\x00';
-    cmd += `POS     : ${posJuri}\n`;
-    cmd += `JURI    : ${namaJuri}\n`;
-    cmd += `WAKTU   : ${new Date().toLocaleString('id-ID')}\n`;
-    cmd += "--------------------------------\n";
-    cmd += "NO KONTINGEN               SKOR \n";
-    cmd += "--------------------------------\n";
-
-    // Loop Daftar Nilai
-    listNilaiPos.forEach((item, idx) => {
-        let tim = item.kontingen || item.KONTINGEN || "-";
-        let skor = String(item.total_skor || item.TOTAL_SKOR || 0);
-        
-        let label = `${idx + 1}. ${tim}`;
-        if (label.length > 24) label = label.substring(0, 24);
-        
-        // Atur spasi rata kanan skor
-        let space = 32 - label.length - skor.length;
-        if (space < 1) space = 1;
-
-        cmd += label + " ".repeat(space) + skor + "\n";
-    });
-
-    cmd += "--------------------------------\n";
-    cmd += `TOTAL TIM DINILAI : ${listNilaiPos.length}\n`;
-    cmd += "--------------------------------\n";
-    cmd += ESC + 'a' + '\x01';
-    cmd += "Tanda Tangan Juri Pos,\n\n\n\n";
-    cmd += `( ${namaJuri} )\n`;
-    cmd += "================================\n";
-    cmd += " Diterima Oleh Panitia Pusat    \n";
-    cmd += "================================\n\n\n\n";
-
-    const encoder = new TextEncoder();
-    const buffer = encoder.encode(cmd);
-    
-    const CHUNK_SIZE = 100;
-    for (let i = 0; i < buffer.length; i += CHUNK_SIZE) {
-        const chunk = buffer.slice(i, i + CHUNK_SIZE);
-        await this.btChar.writeValue(chunk);
-    }
-},
+                this.cetakStruk(dataRekap);
+            },
 
             bukaRiwayat: function() {
+                const modal = document.getElementById('modalHistory');
                 const container = document.getElementById('listHistoryContainer');
-                let list = JSON.parse(localStorage.getItem('sijum_history_v2')) || [];
+                modal.classList.remove('hidden');
 
-                if (list.length === 0) {
-                    container.innerHTML = `<div class="text-center text-slate-500 py-6">Belum ada riwayat penilaian di pos ini.</div>`;
-                } else {
-                    container.innerHTML = list.map((item, idx) => `
-                        <div class="input-bg bg-slate-900 border border-slate-700 rounded-xl p-3 space-y-1">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <strong class="text-sub text-xs block">${item.kontingen}</strong>
-                                    <span class="text-[10px] text-slate-400">${item.timestamp} | Durasi: ${item.durasi}s</span>
-                                </div>
-                                <span class="bg-red-600 text-white font-black text-xs px-2 py-0.5 rounded">${item.total_skor}</span>
-                            </div>
-                            <div class="flex justify-end pt-1">
-                                <button onclick="app.cetakDariRiwayat(${idx})" class="bg-amber-500 text-slate-900 text-[10px] px-2 py-1 rounded font-bold">
-                                    <i class="fa-solid fa-print"></i> Cetak Ulang
-                                </button>
-                            </div>
-                        </div>
-                    `).join('');
+                let history = JSON.parse(localStorage.getItem('sijum_history_v2')) || [];
+                let posJuri = this.currentJuri ? this.currentJuri.KODE_POS : null;
+                let filtered = history.filter(h => h.pos_lomba === posJuri);
+
+                if (filtered.length === 0) {
+                    container.innerHTML = '<p class="text-center text-slate-400 py-4">Belum ada riwayat penilaian.</p>';
+                    return;
                 }
 
-                document.getElementById('modalHistory').classList.remove('hidden');
+                container.innerHTML = filtered.map(h => `
+                    <div class="bg-slate-900 p-3 rounded-xl border border-slate-700 flex justify-between items-center">
+                        <div>
+                            <strong class="text-amber-400 block">${h.kontingen}</strong>
+                            <span class="text-[10px] text-slate-400">${h.timestamp} | Durasi: ${h.durasi}s</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-lg font-black text-emerald-400 block">${h.total_skor} PT</span>
+                            <button onclick="app.cetakStrukSpesifik('${h.kontingen}')" class="bg-slate-800 hover:bg-slate-700 text-xs text-amber-300 px-2 py-1 rounded border border-slate-600 mt-1">
+                                <i class="fa-solid fa-print"></i> Cetak
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            cetakStrukSpesifik: function(namaKontingen) {
+                let history = JSON.parse(localStorage.getItem('sijum_history_v2')) || [];
+                let item = history.find(h => h.kontingen === namaKontingen);
+                if (item) this.cetakStruk(item);
             },
 
             tutupRiwayat: function() {
                 document.getElementById('modalHistory').classList.add('hidden');
-            },
-
-            cetakDariRiwayat: async function(index) {
-                let list = JSON.parse(localStorage.getItem('sijum_history_v2')) || [];
-                if (list[index]) await this.cetakStruk(list[index]);
-            },
-
-            getQRCodeESCCommand: function(qrData) {
-                if (!qrData) return '';
-                const encoder = new TextEncoder();
-                const dataBytes = encoder.encode(qrData);
-                const len = dataBytes.length + 3;
-                const pL = len % 256;
-                const pH = Math.floor(len / 256);
-
-                let cmd = '';
-                cmd += '\x1D\x28\x6B\x04\x00\x31\x41\x32\x00';
-                cmd += '\x1D\x28\x6B\x03\x00\x31\x43\x05';
-                cmd += '\x1D\x28\x6B\x03\x00\x31\x45\x30';
-                cmd += '\x1D\x28\x6B' + String.fromCharCode(pL) + String.fromCharCode(pH) + '\x31\x50\x30' + qrData;
-                cmd += '\x1D\x28\x6B\x03\x00\x31\x51\x30';
-                return cmd;
-            },
-
-            cetakStruk: async function(data) {
-                if (!this.btChar) {
-                    alert("⚠️ Data tersimpan, namun Printer Bluetooth belum terhubung.");
-                    return;
-                }
-
-                const ESC = '\x1B';
-                let cmd = ESC + '@';
-                
-                cmd += ESC + 'a' + '\x01' + ESC + 'E' + '\x01';
-                cmd += "================================\n";
-                cmd += "      JUMBARA PMR MULA IV       \n";
-                cmd += "    KABUPATEN PURBALINGGA       \n";
-                cmd += "      STRUK PENILAIAN POS       \n";
-                cmd += "================================\n";
-                cmd += ESC + 'E' + '\x00';
-
-                cmd += ESC + 'a' + '\x00';
-                cmd += `POS     : ${data.pos_lomba}\n`;
-                cmd += `JURI    : ${data.nama_juri}\n`;
-                cmd += `WAKTU   : ${data.timestamp || '-'}\n`;
-                cmd += `DURASI  : ${data.durasi} Detik\n`;
-                cmd += "--------------------------------\n";
-                
-                cmd += ESC + 'E' + '\x01';
-                cmd += `TIM     : ${data.kontingen}\n`;
-                cmd += ESC + 'E' + '\x00';
-                cmd += "--------------------------------\n";
-
-                cmd += ESC + 'E' + '\x01' + "RINCIAN ITEM PENILAIAN:\n" + ESC + 'E' + '\x00';
-
-                let idx = 1;
-                for (const [item, nilai] of Object.entries(data.rincian_nilai)) {
-                    let label = `${idx}. ${item}`;
-                    if (label.length > 32) label = label.substring(0, 32);
-                    cmd += `${label}\n`;
-                    cmd += `   -> Skor: ${nilai}\n`;
-                    idx++;
-                }
-
-                cmd += "--------------------------------\n";
-                
-                cmd += ESC + 'a' + '\x02' + ESC + 'E' + '\x01';
-                cmd += `TOTAL SKOR : [ ${data.total_skor} ]\n`;
-                cmd += ESC + 'E' + '\x00' + ESC + 'a' + '\x00';
-
-                if (data.catatan && data.catatan !== "-") {
-                    cmd += `CATATAN : ${data.catatan}\n`;
-                }
-
-                cmd += "--------------------------------\n";
-                cmd += ESC + 'a' + '\x01';
-                if (data.pdf_url) {
-                    cmd += "SCAN BUKTI DIGITAL (DRIVE):\n\n";
-                    cmd += this.getQRCodeESCCommand(data.pdf_url) + "\n\n";
-                } else {
-                    cmd += "BUKTI PENILAIAN DIGITAL:\n";
-                    cmd += "( Offline - Belum Tersinkron )\n\n";
-                }
-
-                cmd += ESC + 'a' + '\x01';
-                cmd += "--------------------------------\n";
-                cmd += "Tanda Tangan Juri,\n\n\n\n";
-                cmd += `( ${data.nama_juri} )\n`;
-                cmd += "================================\n";
-                cmd += " Simpan struk ini sebagai bukti \n";
-                cmd += "        resmi penilaian.        \n";
-                cmd += "================================\n\n\n\n";
-
-                const encoder = new TextEncoder();
-                const buffer = encoder.encode(cmd);
-                
-                const CHUNK_SIZE = 100;
-                for (let i = 0; i < buffer.length; i += CHUNK_SIZE) {
-                    const chunk = buffer.slice(i, i + CHUNK_SIZE);
-                    await this.btChar.writeValue(chunk);
-                }
             }
         };
 
