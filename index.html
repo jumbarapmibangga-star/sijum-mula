@@ -12,14 +12,12 @@
         .pulse-dot { animation: pulse 1.5s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
         
-        /* TEMA TERANG KHUSUS OUTDOOR TERIK MATAHARI */
         body.theme-light { background-color: #f8fafc !important; color: #0f172a !important; }
         body.theme-light .card-bg { background-color: #ffffff !important; border-color: #cbd5e1 !important; color: #0f172a !important; }
         body.theme-light .input-bg { background-color: #f1f5f9 !important; border-color: #94a3b8 !important; color: #0f172a !important; }
         body.theme-light .text-sub { color: #475569 !important; }
         body.theme-light .btn-preset-off { background-color: #e2e8f0 !important; color: #1e293b !important; border-color: #cbd5e1 !important; }
 
-        /* PENGATURAN CETAK PRINTER THERMAL (58mm / 80mm) VIA BROWSER HP */
         @media print {
             @page { size: 58mm auto; margin: 0; }
             body * { visibility: hidden; }
@@ -52,7 +50,6 @@
             </div>
             
             <div class="flex items-center gap-1.5">
-                <!-- TOGGLE TEMA OUTDOOR TERANG/GELAP -->
                 <button onclick="app.toggleTheme()" class="bg-red-800 hover:bg-red-900 text-white p-1.5 rounded-lg text-xs" title="Mode Siang/Malam">
                     <i id="icoTheme" class="fa-solid fa-sun text-amber-300"></i>
                 </button>
@@ -75,7 +72,7 @@
     <!-- CONTAINER UTAMA -->
     <main class="max-w-md mx-auto p-4 w-full flex-grow flex flex-col justify-center space-y-4">
 
-        <!-- FORM LOGIN JURI SECURE -->
+        <!-- FORM LOGIN JURI -->
         <div id="secLogin" class="card-bg bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 space-y-4">
             <div class="text-center">
                 <img id="imgLogoLogin" src="logo.png" alt="Logo Jumbara" class="h-24 w-auto mx-auto mb-2 drop-shadow-lg object-contain transition-all duration-300">
@@ -103,7 +100,6 @@
         <!-- FORM PENILAIAN -->
         <div id="secForm" class="hidden space-y-4">
             
-            <!-- INFO JURI LOGGED IN -->
             <div class="card-bg bg-slate-800 p-3 rounded-xl border border-slate-700 flex justify-between items-center text-xs">
                 <div>
                     <span class="text-sub text-slate-400 block">Juri Tersetel:</span>
@@ -115,7 +111,6 @@
                 </div>
             </div>
 
-            <!-- CETAK ULANG -->
             <div class="flex justify-between items-center gap-2">
                 <button onclick="app.cetakUlangTerakhir()" class="card-bg w-1/2 bg-slate-800 border border-slate-700 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center space-x-1.5">
                     <i class="fa-solid fa-rotate-left text-amber-400"></i>
@@ -127,7 +122,6 @@
                 </button>
             </div>
 
-            <!-- DROPDOWN KONTINGEN (AUTOMATIC FILTERING) -->
             <div class="card-bg bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-3">
                 <div>
                     <label class="text-xs font-bold text-sub text-slate-300 mb-1 block">PILIH KONTINGEN / TIM (BELUM DINILAI)</label>
@@ -137,7 +131,6 @@
                 </div>
             </div>
 
-            <!-- STOPWATCH TIMER TOGGLE -->
             <div class="card-bg bg-slate-800 p-4 rounded-xl border border-slate-700 text-center space-y-3">
                 <div class="flex justify-between items-center border-b border-slate-700/60 pb-2">
                     <span class="text-xs font-bold text-sub text-slate-400 uppercase">Stopwatch Durasi</span>
@@ -153,21 +146,17 @@
                 </button>
             </div>
 
-            <!-- PERINGATAN KUNCI FORM -->
             <div id="msgFormLocked" class="bg-amber-950/80 border border-amber-800 p-2.5 rounded-xl text-center text-xs text-amber-300 font-bold flex items-center justify-center space-x-2">
                 <i class="fa-solid fa-lock text-amber-400"></i>
                 <span>Jalankan Stopwatch untuk membuka Form Penilaian</span>
             </div>
 
-            <!-- RUBRIK HYBRID (PRESET + MANUAL) -->
             <div class="card-bg bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-3">
                 <label class="text-xs font-bold text-amber-400 block border-b border-slate-700/60 pb-1">
                     <i class="fa-solid fa-list-check mr-1"></i> RUBRIK PENILAIAN (<span id="lblKodePosRubrik"></span>)
                 </label>
                 
-                <div id="containerRubrik" class="space-y-3">
-                    <!-- Terisi Otomatis -->
-                </div>
+                <div id="containerRubrik" class="space-y-3"></div>
 
                 <div class="input-bg bg-slate-900 p-3 rounded-xl border border-slate-700 flex justify-between items-center mt-3">
                     <span class="text-xs font-bold text-sub text-slate-300">TOTAL SKOR:</span>
@@ -175,7 +164,6 @@
                 </div>
             </div>
 
-            <!-- SIMPAN & CETAK -->
             <div class="card-bg bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-3">
                 <div class="grid grid-cols-1 gap-3">
                     <div>
@@ -197,10 +185,8 @@
 
     </main>
 
-    <!-- AREA TERSEMBUNYI UNTUK FORMAT CETAK PRINTER THERMAL HP (FALLBACK) -->
     <div id="areaCetakThermal" class="hidden"></div>
 
-    <!-- MODAL RIWAYAT -->
     <div id="modalHistory" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="card-bg bg-slate-800 w-full max-w-md rounded-2xl shadow-xl flex flex-col max-h-[80vh] border border-slate-700 overflow-hidden">
             <div class="p-4 border-b border-slate-700 flex justify-between items-center">
@@ -223,7 +209,6 @@
         &copy; Panitia Jumbara PMR Mula Ke-4 Purbalingga
     </footer>
 
-    <!-- LOGIKA UTAMA SCRIPT -->
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js');
@@ -266,19 +251,25 @@
                 }
             },
 
-            // FUNGSI UNTUK MENGAMBIL NAMA POS BERDASARKAN KODE POS
+            // DUKUNGAN RESPONSIF DENGAN TEORI & PRAKTIK (POS 3 & POS 4)
             getNamaPos: function(kode) {
                 if (!kode) return "-";
                 if (!this.masterData || !this.masterData.pos) return kode;
+                
                 const norm = (str) => String(str || "").toUpperCase().replace(/^POS-?0*/, "POS").trim();
                 const kodeClean = norm(kode);
+                const baseKode = kodeClean.replace(/\s*(TEORI|PRAKTIK|PRAKTEK).*/i, '').trim();
                 
                 const found = this.masterData.pos.find(p => {
                     const pKode = norm(p.KODE_POS || p.kode_pos || p.POS || p.pos);
-                    return pKode === kodeClean;
+                    return pKode === kodeClean || pKode === baseKode;
                 });
+                
                 if (found) {
-                    return found.NAMA_POS || found.nama_pos || found.NAMA_LOMBA || found.nama_lomba || found.NAMA || found.nama || kode;
+                    let baseName = found.NAMA_POS || found.nama_pos || found.NAMA_LOMBA || found.nama_lomba || found.NAMA || found.nama || kode;
+                    if (kodeClean.includes("TEORI")) return baseName + " (Teori)";
+                    if (kodeClean.includes("PRAKTIK") || kodeClean.includes("PRAKTEK")) return baseName + " (Praktik)";
+                    return baseName;
                 }
                 return kode;
             },
@@ -380,7 +371,7 @@
                 
                 if (!this.masterData || !this.masterData.kontingen) return;
 
-                const posJuri = String(this.currentJuri ? (this.currentJuri.KODE_POS || this.currentJuri.kode_pos) : '').toUpperCase().trim();
+                const posJuriRaw = String(this.currentJuri ? (this.currentJuri.KODE_POS || this.currentJuri.kode_pos) : '').toUpperCase().trim();
                 const listLokal = JSON.parse(localStorage.getItem('sijum_history_v2')) || [];
                 let countTampil = 0;
 
@@ -391,23 +382,20 @@
 
                     if (id || nama) {
                         let sudah = false;
-                        if (posJuri && this.masterData.tracking) {
-                            const trackItem = this.masterData.tracking.find(t => 
-                                String(t.id_kontingen || '').trim() === String(id).trim() ||
-                                String(t.nama_tim || '').toLowerCase().trim() === String(nama).toLowerCase().trim()
-                            );
-                            if (trackItem && trackItem.pos_sudah) {
-                                const posSudahUpper = trackItem.pos_sudah.map(p => String(p).toUpperCase().trim());
-                                if (posSudahUpper.includes(posJuri)) sudah = true;
-                            }
+                        if (posJuriRaw && this.masterData.nilai) {
+                            sudah = this.masterData.nilai.some(n => {
+                                const nPos = String(n.POS_LOMBA || n.pos_lomba || '').toUpperCase().trim();
+                                const nKont = String(n.KONTINGEN || n.kontingen || '').toLowerCase().trim();
+                                const fullLabel = (id ? `${id} - ${nama}` : nama).toLowerCase().trim();
+                                return nPos === posJuriRaw && (nKont === fullLabel || (nama && nKont.includes(nama.toLowerCase())));
+                            });
                         }
 
-                        if (!sudah && posJuri) {
-                            const diLokal = listLokal.some(h => 
-                                String(h.pos_lomba || '').toUpperCase().trim() === posJuri && 
+                        if (!sudah && posJuriRaw) {
+                            sudah = listLokal.some(h => 
+                                String(h.pos_lomba || '').toUpperCase().trim() === posJuriRaw && 
                                 (h.kontingen.includes(id) || h.kontingen.includes(nama))
                             );
-                            if (diLokal) sudah = true;
                         }
 
                         if (!sudah) {
@@ -711,9 +699,6 @@
                 location.reload();
             },
 
-            // =========================================================
-            // FUNGSI BLUETOOTH & CETAK PRINTER THERMAL
-            // =========================================================
             connectBT: async function() {
                 const lbl = document.getElementById('lblBT');
                 const btn = document.getElementById('btnBT');
@@ -893,22 +878,21 @@
             },
 
             cetakStruk: async function(dataStruk) {
-                // AMBIL NAMA POS SAH UNTUK CETAK STRUK
                 const posDisplay = dataStruk.nama_pos || this.getNamaPos(dataStruk.pos_lomba);
 
                 if (this.btChar) {
                     let encoder = new TextEncoder();
                     let esc = "";
                     
-                    esc += "\x1B\x40"; // Reset
-                    esc += "\x1B\x61\x01"; // Center
-                    esc += "\x1B\x45\x01"; // Bold On
+                    esc += "\x1B\x40";
+                    esc += "\x1B\x61\x01";
+                    esc += "\x1B\x45\x01";
                     esc += "JUMBARA PMR MULA KE-4\n";
                     esc += "PMI KAB. PURBALINGGA 2026\n";
                     esc += "--------------------------------\n";
-                    esc += "\x1B\x45\x00"; // Bold Off
+                    esc += "\x1B\x45\x00";
                     
-                    esc += "\x1B\x61\x00"; // Left Align
+                    esc += "\x1B\x61\x00";
                     esc += "Waktu : " + dataStruk.timestamp + "\n";
                     esc += "Pos   : " + posDisplay + "\n";
                     esc += "Tim   : " + dataStruk.kontingen + "\n";
@@ -946,7 +930,7 @@
                     }
 
                     esc += "--------------------------------\n";
-                    esc += "\x1B\x45\x01\x1B\x61\x01"; // Center & Bold
+                    esc += "\x1B\x45\x01\x1B\x61\x01";
                     esc += "TOTAL SKOR: " + dataStruk.total_skor + "\n";
                     esc += "\x1B\x45\x00\x1B\x61\x00";
                     esc += "Catatan: " + (dataStruk.catatan || "-") + "\n";
