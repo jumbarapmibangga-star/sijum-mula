@@ -256,7 +256,8 @@
                 }
 
                 try {
-                    const res = await fetch(GAS_API_URL);
+                    // PERBAIKAN: Sertakan parameter action=getData
+                    const res = await fetch(GAS_API_URL + "?action=getData");
                     this.masterData = await res.json();
                     this.renderJuriOptions();
                     this.checkSession();
@@ -431,10 +432,8 @@
                     const namaItem = item.NAMA_TANTANGAN || item.NAMA_ITEM || item.nama_item || item.item || item.NO_SOAL || `Item ${index + 1}`;
                     const bobotMaks = parseFloat(item.SKOR_MAKSIMAL || item.BOBOT_MAKS || item.bobot_maks || item.maks || 100);
                     
-                    // CEK KHUSUS ITEM BIDAK (POS-05 ULAR TANGGA)
                     const isBidak = namaItem.toUpperCase().includes('BIDAK');
 
-                    // DUKUNGAN OPSI A, B, C, D DARI GOOGLE SHEETS RUBRIK
                     let presets = [];
                     if (item.OPSI_A || item.A) {
                         const oA = parseFloat(item.OPSI_A || item.A);
@@ -474,7 +473,6 @@
                     div.className = "input-bg bg-slate-900 p-3 rounded-xl border border-slate-700 space-y-2.5";
 
                     if (isBidak) {
-                        // TAMPILAN KHUSUS PETAK BIDAK (TIDAK HITUNG SKOR UTAMA)
                         div.innerHTML = `
                             <div class="flex justify-between items-center border-b border-slate-800 pb-1.5">
                                 <span class="text-xs font-bold text-amber-400 flex items-center gap-1">
@@ -497,7 +495,6 @@
                             </div>
                         `;
                     } else {
-                        // TAMPILAN KRITERIA RUBRIK REGULER
                         div.innerHTML = `
                             <div class="flex justify-between items-center border-b border-slate-800 pb-1.5">
                                 <span class="text-xs font-bold text-sub">${namaItem}</span>
@@ -677,7 +674,6 @@
                 let total = 0;
                 const inputs = document.querySelectorAll('.input-rubrik');
                 inputs.forEach(input => {
-                    // NOMOR BIDAK DIABAIKAN DARI PERHITUNGAN TOTAL SKOR UTAMA
                     if (input.getAttribute('data-is-bidak') === 'true') return;
 
                     let val = parseFloat(input.value) || 0;
@@ -790,7 +786,6 @@
                 const posJuri = this.currentJuri.KODE_POS || this.currentJuri.kode_pos;
                 const namaJuri = this.currentJuri.NAMA_JURI || this.currentJuri.nama_juri;
 
-                // LOCK TOMBOL UNTUK PREVENT DOUBLE SUBMIT
                 const btnSimpan = document.getElementById('btnSimpan');
                 btnSimpan.disabled = true;
                 btnSimpan.classList.add('opacity-50', 'cursor-not-allowed');
@@ -824,14 +819,13 @@
                             durasi: durasi,
                             catatan: catatan,
                             rincian: rincian,
-                            pdf_url: result.pdf_url || "" // LINK PDF GOOGLE DRIVE UNTUK QR CODE
+                            pdf_url: result.pdf_url || ""
                         };
 
                         let history = JSON.parse(localStorage.getItem('sijum_history_v2')) || [];
                         history.unshift(itemRiwayat);
                         localStorage.setItem('sijum_history_v2', JSON.stringify(history));
 
-                        // CETAK STRUK THERMAL BESERTA QR CODE LINK PDF SAH
                         await this.cetakStruk(itemRiwayat);
 
                         alert("✅ Penilaian Berhasil Disimpan & Struk Dicetak!");
@@ -854,92 +848,142 @@
             },
 
             cetakStruk: async function(dataStruk) {
-    if (this.btChar) {
-        let encoder = new TextEncoder();
-        let esc = "";
-        
-        esc += "\x1B\x40"; // Reset
-        esc += "\x1B\x61\x01"; // Center
-        esc += "\x1B\x45\x01"; // Bold On
-        esc += "JUMBARA PMR MULA KE-4\n";
-        esc += "PMI KAB. PURBALINGGA 2026\n";
-        esc += "--------------------------------\n";
-        esc += "\x1B\x45\x00"; // Bold Off
-        
-        esc += "\x1B\x61\x00"; // Left Align
-        esc += "Waktu : " + dataStruk.timestamp + "\n";
-        esc += "Pos   : " + dataStruk.pos_lomba + "\n";
-        esc += "Tim   : " + dataStruk.kontingen + "\n";
-        esc += "Juri  : " + dataStruk.nama_juri + "\n";
-        esc += "Durasi: " + dataStruk.durasi + " Detik\n";
-        esc += "--------------------------------\n";
-        esc += "RINCIAN RUBRIK PENILAIAN:\n";
+                if (this.btChar) {
+                    let encoder = new TextEncoder();
+                    let esc = "";
+                    
+                    esc += "\x1B\x40"; // Reset
+                    esc += "\x1B\x61\x01"; // Center
+                    esc += "\x1B\x45\x01"; // Bold On
+                    esc += "JUMBARA PMR MULA KE-4\n";
+                    esc += "PMI KAB. PURBALINGGA 2026\n";
+                    esc += "--------------------------------\n";
+                    esc += "\x1B\x45\x00"; // Bold Off
+                    
+                    esc += "\x1B\x61\x00"; // Left Align
+                    esc += "Waktu : " + dataStruk.timestamp + "\n";
+                    esc += "Pos   : " + dataStruk.pos_lomba + "\n";
+                    esc += "Tim   : " + dataStruk.kontingen + "\n";
+                    esc += "Juri  : " + dataStruk.nama_juri + "\n";
+                    esc += "Durasi: " + dataStruk.durasi + " Detik\n";
+                    esc += "--------------------------------\n";
+                    esc += "RINCIAN RUBRIK PENILAIAN:\n";
 
-        // LOGIKA BARU: MULTI-LINE TEXT WRAPPING UNTUK PRINTER THERMAL (32 CHAR)
-        const maxChar = 32;
-        for (let k in dataStruk.rincian) {
-            let valObj = dataStruk.rincian[k];
-            let valStr = (typeof valObj === 'object') ? `[Bidak:${valObj.no_bidak}]` : String(valObj);
-            let valWidth = valStr.length;
-            let maxFirstLine = maxChar - valWidth - 1;
+                    const maxChar = 32;
+                    for (let k in dataStruk.rincian) {
+                        let valObj = dataStruk.rincian[k];
+                        let valStr = (typeof valObj === 'object') ? `[Bidak:${valObj.no_bidak}]` : String(valObj);
+                        let valWidth = valStr.length;
+                        let maxFirstLine = maxChar - valWidth - 1;
 
-            if (k.length <= maxFirstLine) {
-                // Teks muat 1 baris
-                let spaceLen = maxChar - k.length - valWidth;
-                esc += k + " ".repeat(spaceLen) + valStr + "\n";
-            } else {
-                // Teks panjang: potong baris pertama (sejajar skor), sisanya ke bawah
-                let line1 = k.substring(0, maxFirstLine);
-                let rem = k.substring(maxFirstLine);
-                let spaceLen = maxChar - line1.length - valWidth;
-                
-                esc += line1 + " ".repeat(spaceLen) + valStr + "\n";
-                
-                while (rem.length > 0) {
-                    let chunk = rem.substring(0, maxChar);
-                    rem = rem.substring(maxChar);
-                    esc += chunk + "\n";
+                        if (k.length <= maxFirstLine) {
+                            let spaceLen = maxChar - k.length - valWidth;
+                            esc += k + " ".repeat(spaceLen) + valStr + "\n";
+                        } else {
+                            let line1 = k.substring(0, maxFirstLine);
+                            let rem = k.substring(maxFirstLine);
+                            let spaceLen = maxChar - line1.length - valWidth;
+                            
+                            esc += line1 + " ".repeat(spaceLen) + valStr + "\n";
+                            
+                            while (rem.length > 0) {
+                                let chunk = rem.substring(0, maxChar);
+                                rem = rem.substring(maxChar);
+                                esc += chunk + "\n";
+                            }
+                        }
+                    }
+
+                    esc += "--------------------------------\n";
+                    esc += "\x1B\x45\x01\x1B\x61\x01"; // Center & Bold
+                    esc += "TOTAL SKOR: " + dataStruk.total_skor + " PT\n";
+                    esc += "\x1B\x45\x00\x1B\x61\x00";
+                    esc += "Catatan: " + (dataStruk.catatan || "-") + "\n";
+
+                    if (dataStruk.pdf_url) {
+                        esc += "--------------------------------\n";
+                        esc += "\x1B\x61\x01";
+                        esc += "SCAN QR PDF DOKUMEN:\n\n";
+                        
+                        let url = dataStruk.pdf_url;
+                        let len = url.length + 3;
+                        let pL = len % 256;
+                        let pH = Math.floor(len / 256);
+                        
+                        esc += "\x1D\x28\x6B\x04\x00\x31\x41\x32\x00";
+                        esc += "\x1D\x28\x6B\x03\x00\x31\x43\x06";
+                        esc += "\x1D\x28\x6B\x03\x00\x31\x4E\x30";
+                        esc += "\x1D\x28\x6B" + String.fromCharCode(pL, pH) + "\x31\x50\x30" + url;
+                        esc += "\x1D\x28\x6B\x03\x00\x31\x51\x30";
+                        esc += "\n";
+                    }
+
+                    esc += "--------------------------------\n";
+                    esc += "\x1B\x61\x01";
+                    esc += "Terima Kasih & Selamat!\n\n\n\n";
+
+                    let bytes = encoder.encode(esc);
+                    let success = await this.sendBTData(bytes);
+                    if (success) return;
                 }
-            }
-        }
 
-        esc += "--------------------------------\n";
-        esc += "\x1B\x45\x01\x1B\x61\x01"; // Center & Bold
-        esc += "TOTAL SKOR: " + dataStruk.total_skor + " PT\n";
-        esc += "\x1B\x45\x00\x1B\x61\x00";
-        esc += "Catatan: " + (dataStruk.catatan || "-") + "\n";
+                this.printViaBrowser(dataStruk);
+            },
 
-        if (dataStruk.pdf_url) {
-            esc += "--------------------------------\n";
-            esc += "\x1B\x61\x01";
-            esc += "SCAN QR PDF DOKUMEN:\n\n";
-            
-            let url = dataStruk.pdf_url;
-            let len = url.length + 3;
-            let pL = len % 256;
-            let pH = Math.floor(len / 256);
-            
-            esc += "\x1D\x28\x6B\x04\x00\x31\x41\x32\x00";
-            esc += "\x1D\x28\x6B\x03\x00\x31\x43\x06";
-            esc += "\x1D\x28\x6B\x03\x00\x31\x4E\x30";
-            esc += "\x1D\x28\x6B" + String.fromCharCode(pL, pH) + "\x31\x50\x30" + url;
-            esc += "\x1D\x28\x6B\x03\x00\x31\x51\x30";
-            esc += "\n";
-        }
+            // PERBAIKAN: Fungsi Cetak Browser Rata Kanan-Atas Utuh
+            printViaBrowser: function(dataStruk) {
+                const area = document.getElementById('areaCetakThermal');
+                let rubrikHtml = "";
+                
+                for (let item in dataStruk.rincian) {
+                    let valObj = dataStruk.rincian[item];
+                    let valStr = (typeof valObj === 'object') ? `[Bidak: ${valObj.no_bidak}]` : valObj;
 
-        esc += "--------------------------------\n";
-        esc += "\x1B\x61\x01";
-        esc += "Terima Kasih & Selamat!\n\n\n\n";
+                    rubrikHtml += `
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 3px; font-size: 8.5pt;">
+                            <span style="flex: 1; padding-right: 6px; word-break: break-word; text-align: left;">${item}</span>
+                            <strong style="white-space: nowrap; text-align: right; min-width: 35px;">${valStr}</strong>
+                        </div>`;
+                }
 
-        let bytes = encoder.encode(esc);
-        let success = await this.sendBTData(bytes);
-        if (success) return;
-    }
+                let qrHtml = "";
+                if (dataStruk.pdf_url) {
+                    const qrApi = `https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=${encodeURIComponent(dataStruk.pdf_url)}`;
+                    qrHtml = `
+                        <div style="text-align:center; margin:8px 0;">
+                            <img src="${qrApi}" style="width:110px; height:110px; margin:0 auto; display:block;" />
+                            <div style="font-size:7pt; margin-top:2px;">Scan QR untuk Unduh PDF Sah</div>
+                        </div>`;
+                }
 
-    this.printViaBrowser(dataStruk);
-},
+                area.innerHTML = `
+                    <div style="text-align:center; font-weight:bold;">
+                        JUMBARA PMR MULA KE-4<br>
+                        PMI KAB. PURBALINGGA 2026
+                    </div>
+                    <div style="border-bottom:1px dashed #000; margin:4px 0;"></div>
+                    <div>Waktu : ${dataStruk.timestamp}</div>
+                    <div>Pos   : ${dataStruk.pos_lomba}</div>
+                    <div style="font-weight:bold;">Tim   : ${dataStruk.kontingen}</div>
+                    <div>Juri  : ${dataStruk.nama_juri}</div>
+                    <div>Durasi: ${dataStruk.durasi} Detik</div>
+                    <div style="border-bottom:1px dashed #000; margin:4px 0;"></div>
+                    <div style="font-weight:bold; margin-bottom:4px;">RINCIAN PENILAIAN:</div>
+                    ${rubrikHtml}
+                    <div style="border-bottom:1px dashed #000; margin:4px 0;"></div>
+                    <div style="font-size:12pt; font-weight:bold; text-align:center; border:1px solid #000; padding:3px; margin:6px 0;">
+                        TOTAL: ${dataStruk.total_skor} PT
+                    </div>
+                    <div>Catatan: ${dataStruk.catatan || '-'}</div>
+                    ${qrHtml}
+                    <div style="border-bottom:1px dashed #000; margin:4px 0;"></div>
+                    <div style="text-align:center;">Simpan Struk Ini Sebagai Bukti Sah</div>
+                `;
 
-            printViaBrowser,
+                area.classList.remove('hidden');
+                window.print();
+                setTimeout(() => area.classList.add('hidden'), 1000);
+            },
 
             cetakUlangTerakhir: function() {
                 let history = JSON.parse(localStorage.getItem('sijum_history_v2')) || [];
@@ -972,7 +1016,7 @@
                 };
 
                 filtered.forEach(item => {
-                    dataRekap.rincian[item.kontingen] = item.total_skor ;
+                    dataRekap.rincian[item.kontingen] = item.total_skor + " PT";
                 });
 
                 this.cetakStruk(dataRekap);
@@ -999,7 +1043,7 @@
                             <span class="text-[10px] text-slate-400">${h.timestamp} | Durasi: ${h.durasi}s</span>
                         </div>
                         <div class="text-right">
-                            <span class="text-lg font-black text-emerald-400 block">${h.total_skor} </span>
+                            <span class="text-lg font-black text-emerald-400 block">${h.total_skor} PT</span>
                             <button onclick="app.cetakStrukSpesifik('${h.kontingen}')" class="bg-slate-800 hover:bg-slate-700 text-xs text-amber-300 px-2 py-1 rounded border border-slate-600 mt-1">
                                 <i class="fa-solid fa-print"></i> Cetak
                             </button>
