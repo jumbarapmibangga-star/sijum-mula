@@ -46,14 +46,14 @@
         </div>
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 rounded-xl shadow">
             <span class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Total Pos Utama</span>
-            <span id="statPos" class="text-2xl font-black text-[#FF0040]">-</span>
+            <span id="statPos" class="text-2xl font-black text-[#FF0040]">6</span>
         </div>
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 rounded-xl shadow">
             <span class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Penilaian Masuk</span>
             <span id="statNilai" class="text-2xl font-black text-[#FF0040]">-</span>
         </div>
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 rounded-xl shadow">
-            <span class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Progres Rata-rata</span>
+            <span class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Kontingen Berjalan</span>
             <span id="statProgres" class="text-2xl font-black text-[#FF0040]">-</span>
         </div>
     </div>
@@ -167,24 +167,19 @@
 
         function renderStatistik(data) {
             const totalKontingen = (data.kontingen || []).length;
-            
-            // SOLUSI: Kunci 6 Pos Utama
-            const posUtama = ["POS-01", "POS-02", "POS-03", "POS-04", "POS-05", "POS-06"];
-            const totalPos = posUtama.length; 
-            
             const totalNilai = (data.nilai || []).length;
 
-            let totalProgres = 0;
+            // Hitung berapa kontingen yang sudah mulai dinilai (selesai > 0)
+            let kontingenBerjalan = 0;
             const tracking = data.tracking || [];
             tracking.forEach(t => {
-                if (t.total_pos > 0) totalProgres += (t.selesai_count / t.total_pos) * 100;
+                if (t.selesai_count > 0) kontingenBerjalan++;
             });
-            const avgProgres = tracking.length > 0 ? Math.round(totalProgres / tracking.length) : 0;
 
             document.getElementById('statKontingen').innerText = totalKontingen;
-            document.getElementById('statPos').innerText = totalPos;
+            document.getElementById('statPos').innerText = "6"; // Fix 6 Pos Utama
             document.getElementById('statNilai').innerText = totalNilai;
-            document.getElementById('statProgres').innerText = avgProgres + '%';
+            document.getElementById('statProgres').innerText = kontingenBerjalan + " Tim";
         }
 
         function renderJuaraUmumFull(list) {
@@ -249,14 +244,13 @@
                 const teamList = grouped[posKode];
                 const isPos5 = posKode === 'POS-05';
                 
-                // Ambil nama pos dari map
                 let posName = posNameMap[posKode];
                 if (!posName) {
                     const fallbackKey = Object.keys(posNameMap).find(k => k.startsWith(posKode));
                     posName = fallbackKey ? posNameMap[fallbackKey] : posKode;
                 }
                 
-                // Bersihkan akhiran (T) atau (P) agar judul lebih rapi
+                // Bersihkan akhiran (T) atau (P)
                 posName = posName.replace(/\s*\(T\)$/i, '').replace(/\s*\(P\)$/i, '').trim();
 
                 const box = document.createElement('div');
