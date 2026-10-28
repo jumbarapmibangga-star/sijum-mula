@@ -874,27 +874,31 @@
                         let valObj = dataStruk.rincian[k];
                         let valStr = (typeof valObj === 'object') ? `[Bidak:${valObj.no_bidak}]` : String(valObj);
                         
-                        // PENAMBAHAN PENOMORAN ITEM UNTUK CETAK THERMAL BLUETOOTH
-                        let itemNama = `${noItem}. ${k}`;
+                        let prefix = `${noItem}. `;
+                        let indent = " ".repeat(prefix.length);
                         noItem++;
 
-                        let valWidth = valStr.length;
-                        let maxFirstLine = maxChar - valWidth - 1;
+                        let rightColWidth = valStr.length;
+                        let leftColWidth = maxChar - rightColWidth - 1; // Spasi sebelum skor
+                        let firstLineMaxText = leftColWidth - prefix.length;
+                        let subLineMaxText = leftColWidth - indent.length;
 
-                        if (itemNama.length <= maxFirstLine) {
-                            let spaceLen = maxChar - itemNama.length - valWidth;
-                            esc += itemNama + " ".repeat(spaceLen) + valStr + "\n";
+                        let fullText = String(k).trim();
+
+                        if (fullText.length <= firstLineMaxText) {
+                            let spaceLen = leftColWidth - (prefix.length + fullText.length);
+                            esc += prefix + fullText + " ".repeat(spaceLen) + " " + valStr + "\n";
                         } else {
-                            let line1 = itemNama.substring(0, maxFirstLine);
-                            let rem = itemNama.substring(maxFirstLine);
-                            let spaceLen = maxChar - line1.length - valWidth;
+                            let line1Text = fullText.substring(0, firstLineMaxText);
+                            let remText = fullText.substring(firstLineMaxText);
+                            let spaceLen = leftColWidth - (prefix.length + line1Text.length);
                             
-                            esc += line1 + " ".repeat(spaceLen) + valStr + "\n";
+                            esc += prefix + line1Text + " ".repeat(spaceLen) + " " + valStr + "\n";
                             
-                            while (rem.length > 0) {
-                                let chunk = rem.substring(0, maxChar);
-                                rem = rem.substring(maxChar);
-                                esc += chunk + "\n";
+                            while (remText.length > 0) {
+                                let chunk = remText.substring(0, subLineMaxText);
+                                remText = remText.substring(subLineMaxText);
+                                esc += indent + chunk + "\n";
                             }
                         }
                     }
@@ -944,11 +948,14 @@
                     let valObj = dataStruk.rincian[item];
                     let valStr = (typeof valObj === 'object') ? `[Bidak: ${valObj.no_bidak}]` : valObj;
 
-                    // PENAMBAHAN PENOMORAN ITEM UNTUK CETAK BROWSER HP
+                    // HANGING INDENT DAN PEMBATASAN KOLOM KANAN BROWSER HP
                     rubrikHtml += `
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 3px; font-size: 8.5pt;">
-                            <span style="flex: 1; padding-right: 6px; word-break: break-word; text-align: left;">${noItem}. ${item}</span>
-                            <strong style="white-space: nowrap; text-align: right; min-width: 35px;">${valStr}</strong>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; font-size: 8.5pt;">
+                            <div style="display: flex; flex: 1; padding-right: 6px; overflow: hidden;">
+                                <span style="min-width: 18px; text-align: left; flex-shrink: 0; font-weight: bold;">${noItem}.</span>
+                                <span style="flex: 1; word-break: break-word; text-align: left;">${item}</span>
+                            </div>
+                            <strong style="white-space: nowrap; text-align: right; min-width: 32px; flex-shrink: 0;">${valStr}</strong>
                         </div>`;
                     noItem++;
                 }
