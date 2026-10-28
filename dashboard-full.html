@@ -15,7 +15,6 @@
 </head>
 <body class="bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen p-4 md:p-6 font-sans transition-colors duration-300">
 
-    <!-- HEADER -->
     <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl mb-4 shadow-xl">
         <div class="flex items-center space-x-3">
             <img id="dashLogo" src="logo.png" alt="Logo" class="h-10 w-auto">
@@ -38,14 +37,13 @@
         </div>
     </header>
 
-    <!-- STATISTIK RINGKAS -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 rounded-xl shadow">
             <span class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Total Kontingen</span>
             <span id="statKontingen" class="text-2xl font-black text-[#FF0040]">-</span>
         </div>
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 rounded-xl shadow">
-            <span class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Total Pos</span>
+            <span class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Total Pos Utama</span>
             <span id="statPos" class="text-2xl font-black text-[#FF0040]">-</span>
         </div>
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 rounded-xl shadow">
@@ -58,7 +56,6 @@
         </div>
     </div>
 
-    <!-- KLASEMEN JUARA UMUM (SEMUA) -->
     <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-xl mb-4">
         <h2 class="text-sm font-black text-[#FF0040] flex items-center border-b border-slate-200 dark:border-slate-800 pb-2 mb-3">
             <i class="fa-solid fa-crown mr-2"></i> KLASEMEN JUARA UMUM (SEMUA KONTINGEN)
@@ -86,7 +83,6 @@
         </div>
     </section>
 
-    <!-- PERINGKAT PER POS (SEMUA) -->
     <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-xl">
         <h2 class="text-sm font-black text-[#FF0040] flex items-center border-b border-slate-200 dark:border-slate-800 pb-2 mb-3">
             <i class="fa-solid fa-list-ol mr-2"></i> PERINGKAT PER POS (SEMUA KONTINGEN)
@@ -104,7 +100,6 @@
     </footer>
 
     <script>
-        // ============ THEME ============
         const htmlElement = document.documentElement;
         const themeIcon = document.getElementById('themeIcon');
         const dashLogo = document.getElementById('dashLogo');
@@ -137,7 +132,6 @@
             updateLogoAndThemeUI();
         }
 
-        // ============ API ============
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxty9GSbJQtMy-Z21ffd1H3fuOgPh8FgliuiZVGvpLutDwsHp9rnz2Dk_y8eS8-tirb/exec";
 
         let pollingInterval = null;
@@ -167,7 +161,14 @@
 
         function renderStatistik(data) {
             const totalKontingen = (data.kontingen || []).length;
-            const totalPos = (data.pos || []).length;
+            
+            // Filter: Hanya hitung pos utama (abaikan yang berakhiran -T atau -P)
+            const posUtama = (data.pos || []).filter(p => {
+                const k = String(p.KODE_POS || p.kode_pos).toUpperCase();
+                return !k.includes('-T') && !k.includes('-P');
+            });
+            const totalPos = posUtama.length; 
+            
             const totalNilai = (data.nilai || []).length;
 
             let totalProgres = 0;
@@ -201,7 +202,6 @@
             list.forEach((item, index) => {
                 const tr = document.createElement('tr');
                 tr.className = 'border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition';
-
                 const rankClass = medalColors[index] || 'text-slate-600 dark:text-slate-400 font-bold';
 
                 tr.innerHTML = `
@@ -244,8 +244,15 @@
 
             sortedPos.forEach(posKode => {
                 const teamList = grouped[posKode];
-                const posName = posNameMap[posKode] || posKode;
                 const isPos5 = posKode === 'POS-05';
+                
+                // Ambil nama pos dari map
+                let posName = posNameMap[posKode];
+                if (!posName) {
+                    // Cari fallback berdasarkan awalan
+                    const fallbackKey = Object.keys(posNameMap).find(k => k.startsWith(posKode));
+                    posName = fallbackKey ? posNameMap[fallbackKey] : posKode;
+                }
 
                 const box = document.createElement('div');
                 box.className = "bg-slate-50 dark:bg-slate-950/60 p-3 rounded-xl border border-slate-200 dark:border-slate-800";
@@ -273,12 +280,7 @@
                 teamList.forEach((t, idx) => {
                     const tr = document.createElement('tr');
                     tr.className = 'border-b border-slate-100 dark:border-slate-800/40 hover:bg-white dark:hover:bg-slate-800/30 transition';
-
-                    const rankClass = idx === 0 ? 'text-amber-500 dark:text-amber-400 font-black' 
-                                    : idx === 1 ? 'text-slate-500 dark:text-slate-300 font-bold'
-                                    : idx === 2 ? 'text-amber-700 dark:text-amber-600 font-bold'
-                                    : 'text-slate-600 dark:text-slate-400';
-
+                    const rankClass = idx === 0 ? 'text-amber-500 dark:text-amber-400 font-black' : idx === 1 ? 'text-slate-500 dark:text-slate-300 font-bold' : idx === 2 ? 'text-amber-700 dark:text-amber-600 font-bold' : 'text-slate-600 dark:text-slate-400';
                     const bidakCell = isPos5 ? `<td class="py-1 px-1 text-right text-purple-600 dark:text-purple-400 font-bold">${t.no_bidak || '-'}</td>` : '';
 
                     tr.innerHTML = `
@@ -297,7 +299,6 @@
             });
         }
 
-        // ============ POLLING ============
         function startPolling() {
             if (pollingInterval) clearInterval(pollingInterval);
             pollingInterval = setInterval(loadDashboard, 30000);
