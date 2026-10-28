@@ -46,7 +46,7 @@
         </div>
     </header>
 
-    <!-- TRACKING PROGRES POS KONTINGEN (SEKARANG DIATAS) -->
+    <!-- TRACKING PROGRES POS KONTINGEN -->
     <div class="mb-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-xl space-y-4 transition-colors duration-300">
         <h2 class="text-base font-black text-[#FF0040] flex items-center border-b border-slate-200 dark:border-slate-800 pb-2">
             <i class="fa-solid fa-route mr-2"></i> MONITORING PROGRES POS KONTINGEN
@@ -93,14 +93,13 @@
         function updateLogoAndThemeUI() {
             if (htmlElement.classList.contains('dark')) {
                 themeIcon.className = "fa-solid fa-moon";
-                dashboardLogo.src = "logo.png"; // Logo untuk Dark Mode
+                dashboardLogo.src = "logo.png";
             } else {
                 themeIcon.className = "fa-solid fa-sun";
-                dashboardLogo.src = "logo1.png"; // Logo untuk Light Mode
+                dashboardLogo.src = "logo1.png";
             }
         }
 
-        // Cek saved preference atau default ke dark
         if (localStorage.getItem('theme') === 'light') {
             htmlElement.classList.remove('dark');
         } else {
@@ -119,12 +118,13 @@
             updateLogoAndThemeUI();
         }
 
-        // URL ENDPOINT APPS SCRIPT
+        // URL ENDPOINT APPS SCRIPT DENGAN PARAMETER ACTION=GETDATA
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxty9GSbJQtMy-Z21ffd1H3fuOgPh8FgliuiZVGvpLutDwsHp9rnz2Dk_y8eS8-tirb/exec";
 
         async function loadDashboard() {
             try {
-                const res = await fetch(GAS_API_URL);
+                // PERBAIKAN KRUSIAL: Tambahkan ?action=getData
+                const res = await fetch(GAS_API_URL + "?action=getData");
                 const data = await res.json();
 
                 renderJuaraUmum(data.juara_umum || []);
@@ -140,7 +140,7 @@
             container.innerHTML = '';
 
             if (list.length === 0) {
-                container.innerHTML = '<p class="text-xs text-slate-400 dark:text-slate-500">Belum ada rekap nilai masuk.</p>';
+                container.innerHTML = '<p class="text-xs text-slate-400 dark:text-slate-500 py-2">Belum ada rekap nilai masuk.</p>';
                 return;
             }
 
@@ -152,9 +152,8 @@
             ];
 
             list.forEach((item, index) => {
-                const keys = Object.keys(item);
-                const tim = item[keys[0]];
-                const skor = item[keys[1]];
+                const tim = item.kontingen || item.KONTINGEN || '-';
+                const skor = item.total_skor !== undefined ? item.total_skor : (item.TOTAL_SKOR || 0);
 
                 const div = document.createElement('div');
                 div.className = `p-3.5 rounded-xl border flex items-center justify-between ${badges[index] || 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`;
@@ -166,7 +165,7 @@
                             <span class="text-[10px] text-slate-500 dark:text-slate-400 block">Kandidat Juara Umum</span>
                         </div>
                     </div>
-                    <span class="text-2xl font-black text-[#FF0040]">${skor} </span>
+                    <span class="text-2xl font-black text-[#FF0040]">${skor} <span class="text-xs font-normal">PT</span></span>
                 `;
                 container.appendChild(div);
             });
@@ -177,14 +176,13 @@
             container.innerHTML = '';
 
             if (list.length === 0) {
-                container.innerHTML = '<p class="text-xs text-slate-400 dark:text-slate-500 col-span-2">Belum ada nilai pos masuk.</p>';
+                container.innerHTML = '<p class="text-xs text-slate-400 dark:text-slate-500 col-span-2 py-2">Belum ada nilai pos masuk.</p>';
                 return;
             }
 
             const grouped = {};
             list.forEach(row => {
-                const keys = Object.keys(row);
-                const pos = row[keys[0]];
+                const pos = row.pos_lomba || row.POS_LOMBA || 'LAINNYA';
                 if (!grouped[pos]) grouped[pos] = [];
                 if (grouped[pos].length < 3) grouped[pos].push(row);
             });
@@ -195,11 +193,14 @@
                 
                 let rowsHtml = '';
                 teamList.forEach((t, idx) => {
-                    const keys = Object.keys(t);
+                    const timName = t.kontingen || t.KONTINGEN || '-';
+                    const totalSkor = t.total_skor !== undefined ? t.total_skor : (t.TOTAL_SKOR || 0);
+                    const bidakInfo = t.no_bidak ? `<span class="text-[10px] text-amber-500 font-bold ml-1">(Bidak: ${t.no_bidak})</span>` : '';
+
                     rowsHtml += `
                         <div class="flex justify-between items-center text-xs border-b border-slate-200 dark:border-slate-800/60 pb-1">
-                            <span class="font-bold text-slate-700 dark:text-slate-300">${idx + 1}. ${t[keys[1]]}</span>
-                            <span class="font-black text-[#FF0040]">${t[keys[2]]} </span>
+                            <span class="font-bold text-slate-700 dark:text-slate-300">${idx + 1}. ${timName} ${bidakInfo}</span>
+                            <span class="font-black text-[#FF0040]">${totalSkor} <span class="text-[10px] font-normal">PT</span></span>
                         </div>
                     `;
                 });
@@ -217,7 +218,7 @@
             container.innerHTML = '';
 
             if (!list || list.length === 0) {
-                container.innerHTML = '<p class="text-xs text-slate-400 dark:text-slate-500 col-span-3">Data tracking belum tersedia.</p>';
+                container.innerHTML = '<p class="text-xs text-slate-400 dark:text-slate-500 col-span-3 py-2">Data tracking belum tersedia.</p>';
                 return;
             }
 
