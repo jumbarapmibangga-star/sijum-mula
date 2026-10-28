@@ -256,7 +256,6 @@
                 }
 
                 try {
-                    // PERBAIKAN: Sertakan parameter action=getData
                     const res = await fetch(GAS_API_URL + "?action=getData");
                     this.masterData = await res.json();
                     this.renderJuriOptions();
@@ -870,18 +869,24 @@
                     esc += "RINCIAN RUBRIK PENILAIAN:\n";
 
                     const maxChar = 32;
+                    let noItem = 1;
                     for (let k in dataStruk.rincian) {
                         let valObj = dataStruk.rincian[k];
                         let valStr = (typeof valObj === 'object') ? `[Bidak:${valObj.no_bidak}]` : String(valObj);
+                        
+                        // PENAMBAHAN PENOMORAN ITEM UNTUK CETAK THERMAL BLUETOOTH
+                        let itemNama = `${noItem}. ${k}`;
+                        noItem++;
+
                         let valWidth = valStr.length;
                         let maxFirstLine = maxChar - valWidth - 1;
 
-                        if (k.length <= maxFirstLine) {
-                            let spaceLen = maxChar - k.length - valWidth;
-                            esc += k + " ".repeat(spaceLen) + valStr + "\n";
+                        if (itemNama.length <= maxFirstLine) {
+                            let spaceLen = maxChar - itemNama.length - valWidth;
+                            esc += itemNama + " ".repeat(spaceLen) + valStr + "\n";
                         } else {
-                            let line1 = k.substring(0, maxFirstLine);
-                            let rem = k.substring(maxFirstLine);
+                            let line1 = itemNama.substring(0, maxFirstLine);
+                            let rem = itemNama.substring(maxFirstLine);
                             let spaceLen = maxChar - line1.length - valWidth;
                             
                             esc += line1 + " ".repeat(spaceLen) + valStr + "\n";
@@ -930,20 +935,22 @@
                 this.printViaBrowser(dataStruk);
             },
 
-            // PERBAIKAN: Fungsi Cetak Browser Rata Kanan-Atas Utuh
             printViaBrowser: function(dataStruk) {
                 const area = document.getElementById('areaCetakThermal');
                 let rubrikHtml = "";
-                
+                let noItem = 1;
+
                 for (let item in dataStruk.rincian) {
                     let valObj = dataStruk.rincian[item];
                     let valStr = (typeof valObj === 'object') ? `[Bidak: ${valObj.no_bidak}]` : valObj;
 
+                    // PENAMBAHAN PENOMORAN ITEM UNTUK CETAK BROWSER HP
                     rubrikHtml += `
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 3px; font-size: 8.5pt;">
-                            <span style="flex: 1; padding-right: 6px; word-break: break-word; text-align: left;">${item}</span>
+                            <span style="flex: 1; padding-right: 6px; word-break: break-word; text-align: left;">${noItem}. ${item}</span>
                             <strong style="white-space: nowrap; text-align: right; min-width: 35px;">${valStr}</strong>
                         </div>`;
+                    noItem++;
                 }
 
                 let qrHtml = "";
