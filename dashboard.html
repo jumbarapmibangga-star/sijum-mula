@@ -119,6 +119,7 @@
             updateLogoAndThemeUI();
         }
 
+        // URL ENDPOINT APPS SCRIPT
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxty9GSbJQtMy-Z21ffd1H3fuOgPh8FgliuiZVGvpLutDwsHp9rnz2Dk_y8eS8-tirb/exec";
 
         async function loadDashboard() {
@@ -165,7 +166,7 @@
                             <span class="text-[10px] text-slate-500 dark:text-slate-400 block">Kandidat Juara Umum</span>
                         </div>
                     </div>
-                    <span class="text-2xl font-black text-[#FF0040]">${skor}</span>
+                    <span class="text-2xl font-black text-[#FF0040]">${skor} PT</span>
                 `;
                 container.appendChild(div);
             });
@@ -198,7 +199,7 @@
                     rowsHtml += `
                         <div class="flex justify-between items-center text-xs border-b border-slate-200 dark:border-slate-800/60 pb-1">
                             <span class="font-bold text-slate-700 dark:text-slate-300">${idx + 1}. ${t[keys[1]]}</span>
-                            <span class="font-black text-[#FF0040]">${t[keys[2]]}</span>
+                            <span class="font-black text-[#FF0040]">${t[keys[2]]} PT</span>
                         </div>
                     `;
                 });
@@ -221,10 +222,11 @@
             }
 
             list.forEach(item => {
-                const persen = Math.round((item.selesai_count / item.total_pos) * 100);
+                const totalPos = item.total_pos || 7;
+                const persen = Math.round((item.selesai_count / totalPos) * 100);
 
-                let badgesSudah = item.pos_sudah.map(p => `<span class="bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 dark:border-emerald-500/40 text-[10px] font-bold px-1.5 py-0.5 rounded">✓ ${p}</span>`).join(' ');
-                let badgesBelum = item.pos_belum.map(p => `<span class="bg-red-500/10 dark:bg-red-500/20 text-red-700 dark:text-red-400 border border-red-500/30 dark:border-red-500/40 text-[10px] font-bold px-1.5 py-0.5 rounded">✗ ${p}</span>`).join(' ');
+                let badgesSudah = (item.pos_sudah || []).map(p => `<span class="bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 dark:border-emerald-500/40 text-[10px] font-bold px-1.5 py-0.5 rounded">✓ ${p}</span>`).join(' ');
+                let badgesBelum = (item.pos_belum || []).map(p => `<span class="bg-red-500/10 dark:bg-red-500/20 text-red-700 dark:text-red-400 border border-red-500/30 dark:border-red-500/40 text-[10px] font-bold px-1.5 py-0.5 rounded">✗ ${p}</span>`).join(' ');
 
                 const card = document.createElement('div');
                 card.className = "bg-slate-50 dark:bg-slate-950 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2";
