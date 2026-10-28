@@ -38,8 +38,8 @@
                 <span class="inline-flex items-center text-xs font-bold text-emerald-600 dark:text-emerald-400">
                     <span class="w-2 h-2 bg-emerald-500 rounded-full mr-1.5 animate-ping"></span> Live Auto-Update (15s)
                 </span>
+                <span id="lastUpdate" class="text-[10px] text-slate-400 dark:text-slate-500 block mt-0.5">Terakhir: --:--:--</span>
             </div>
-            <!-- TOMBOL TOGGLE THEME -->
             <button onclick="toggleTheme()" id="themeToggleBtn" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-[#FF0040] hover:bg-slate-200 dark:hover:bg-slate-700 transition-all shadow-sm" title="Ubah Tema">
                 <i id="themeIcon" class="fa-solid fa-moon"></i>
             </button>
@@ -69,6 +69,10 @@
             <div id="containerJuaraUmum" class="space-y-3">
                 <p class="text-xs text-slate-400 dark:text-slate-500 animate-pulse">Memuat data klasemen...</p>
             </div>
+
+            <div class="text-[10px] text-slate-400 dark:text-slate-500 border-t border-slate-200 dark:border-slate-800 pt-2 leading-relaxed">
+                <strong>Tie-breaker:</strong> Nilai → POS-03 → POS-04 → Timer
+            </div>
         </div>
 
         <!-- KARTU KLASEMEN PER POS LOMBA -->
@@ -80,12 +84,16 @@
             <div id="containerJuaraPos" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <p class="text-xs text-slate-400 dark:text-slate-500 animate-pulse col-span-2">Memuat data pos...</p>
             </div>
+
+            <div class="text-[10px] text-slate-400 dark:text-slate-500 border-t border-slate-200 dark:border-slate-800 pt-2 leading-relaxed">
+                <strong>Tie-breaker:</strong> POS-05: Nilai → Bidak → Timer · POS lain: Nilai → Timer
+            </div>
         </div>
 
     </div>
 
     <script>
-        // Setup Theme & Logo Handler
+        // Setup Theme & Logo
         const htmlElement = document.documentElement;
         const themeIcon = document.getElementById('themeIcon');
         const dashboardLogo = document.getElementById('dashboardLogo');
@@ -118,20 +126,36 @@
             updateLogoAndThemeUI();
         }
 
-        // URL ENDPOINT APPS SCRIPT DENGAN PARAMETER ACTION=GETDATA
+        // URL ENDPOINT APPS SCRIPT
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxty9GSbJQtMy-Z21ffd1H3fuOgPh8FgliuiZVGvpLutDwsHp9rnz2Dk_y8eS8-tirb/exec";
+
+        let pollingInterval = null;
+        let failCount = 0;
 
         async function loadDashboard() {
             try {
-                // PERBAIKAN KRUSIAL: Tambahkan ?action=getData
                 const res = await fetch(GAS_API_URL + "?action=getData");
                 const data = await res.json();
+
+                // Update timestamp
+                const now = new Date();
+                document.getElementById('lastUpdate').innerText = 
+                    'Terakhir: ' + now.toLocaleTimeString('id-ID');
+
+                // Reset fail counter
+                failCount = 0;
 
                 renderJuaraUmum(data.juara_umum || []);
                 renderJuaraPos(data.juara_pos || []);
                 renderTracking(data.tracking || []);
             } catch (e) {
+                failCount++;
                 console.error("Gagal update dashboard:", e);
+
+                if (failCount >= 3) {
+                    document.getElementById('lastUpdate').innerText = '⚠️ Koneksi terputus';
+                    document.getElementById('lastUpdate').className = 'text-[10px] text-red-500 font-bold block mt-0.5';
+                }
             }
         }
 
@@ -151,9 +175,13 @@
                 'bg-amber-700/10 dark:bg-amber-700/20 text-amber-800 dark:text-amber-500 border-amber-700/30 dark:border-amber-700/40'
             ];
 
-            list.forEach((item, index) => {
+            // Tampilkan hanya top 10 (agar tidak terlalu panjang)
+            list.slice(0, 10).forEach((item, index) => {
                 const tim = item.kontingen || item.KONTINGEN || '-';
                 const skor = item.total_skor !== undefined ? item.total_skor : (item.TOTAL_SKOR || 0);
+                const pos3 = item.skor_pos03 || 0;
+                const pos4 = item.skor_pos04 || 0;
+                const timer = item.total_durasi || 0;
 
                 const div = document.createElement('div');
                 div.className = `p-3.5 rounded-xl border flex items-center justify-between ${badges[index] || 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`;
@@ -162,10 +190,12 @@
                         <span class="text-2xl font-black ${medals[index] || 'text-slate-400 dark:text-slate-500'}">#${index + 1}</span>
                         <div>
                             <strong class="text-sm block font-bold text-slate-900 dark:text-white">${tim}</strong>
-                            <span class="text-[10px] text-slate-500 dark:text-slate-400 block">Kandidat Juara Umum</span>
+                            <span class="text-[10px] text-slate-500 dark:text-slate-400 block">
+                                P3: ${pos3} · P4: ${pos4} · ⏱ ${timer}s
+                            </span>
                         </div>
                     </div>
-                    <span class="text-2xl font-black text-[#FF0040]">${skor} <span class="text-xs font-normal"></span></span>
+                    <span class="text-2xl font-black text-[#FF0040]">${skor}</span>
                 `;
                 container.appendChild(div);
             });
@@ -187,7 +217,11 @@
                 if (grouped[pos].length < 3) grouped[pos].push(row);
             });
 
-            for (const [posName, teamList] of Object.entries(grouped)) {
+            // Sort pos agar urut POS-01, POS-02, dst
+            const sortedPos = Object.keys(grouped).sort();
+
+            for (const posName of sortedPos) {
+                const teamList = grouped[posName];
                 const box = document.createElement('div');
                 box.className = "bg-slate-50 dark:bg-slate-950/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2";
                 
@@ -195,12 +229,13 @@
                 teamList.forEach((t, idx) => {
                     const timName = t.kontingen || t.KONTINGEN || '-';
                     const totalSkor = t.total_skor !== undefined ? t.total_skor : (t.TOTAL_SKOR || 0);
-                    const bidakInfo = t.no_bidak ? `<span class="text-[10px] text-amber-500 font-bold ml-1">(Bidak: ${t.no_bidak})</span>` : '';
+                    const bidakInfo = t.no_bidak ? `<span class="text-[10px] text-amber-500 font-bold ml-1">🎲${t.no_bidak}</span>` : '';
+                    const timerInfo = t.total_durasi ? `<span class="text-[10px] text-slate-400 ml-1">⏱${t.total_durasi}s</span>` : '';
 
                     rowsHtml += `
                         <div class="flex justify-between items-center text-xs border-b border-slate-200 dark:border-slate-800/60 pb-1">
-                            <span class="font-bold text-slate-700 dark:text-slate-300">${idx + 1}. ${timName} ${bidakInfo}</span>
-                            <span class="font-black text-[#FF0040]">${totalSkor} <span class="text-[10px] font-normal"></span></span>
+                            <span class="font-bold text-slate-700 dark:text-slate-300">${idx + 1}. ${timName} ${bidakInfo} ${timerInfo}</span>
+                            <span class="font-black text-[#FF0040]">${totalSkor}</span>
                         </div>
                     `;
                 });
@@ -253,8 +288,24 @@
             });
         }
 
+        // Polling dengan pause saat tab hidden
+        function startPolling() {
+            if (pollingInterval) clearInterval(pollingInterval);
+            pollingInterval = setInterval(loadDashboard, 15000);
+        }
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                if (pollingInterval) clearInterval(pollingInterval);
+            } else {
+                loadDashboard();
+                startPolling();
+            }
+        });
+
+        // Initial load
         loadDashboard();
-        setInterval(loadDashboard, 15000);
+        startPolling();
     </script>
 </body>
 </html>
