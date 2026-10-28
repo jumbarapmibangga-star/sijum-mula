@@ -854,130 +854,92 @@
             },
 
             cetakStruk: async function(dataStruk) {
-                // A. UTAMA: JIKA PRINTER BLUETOOTH TERHUBUNG LANGSUNG VIA WEB BLUETOOTH
-                if (this.btChar) {
-                    let encoder = new TextEncoder();
-                    let esc = "";
-                    
-                    esc += "\x1B\x40"; // Reset
-                    esc += "\x1B\x61\x01"; // Center
-                    esc += "\x1B\x45\x01"; // Bold On
-                    esc += "JUMBARA PMR MULA KE-4\n";
-                    esc += "PMI KAB. PURBALINGGA 2026\n";
-                    esc += "--------------------------------\n";
-                    esc += "\x1B\x45\x00"; // Bold Off
-                    
-                    esc += "\x1B\x61\x00"; // Left Align
-                    esc += "Waktu : " + dataStruk.timestamp + "\n";
-                    esc += "Pos   : " + dataStruk.pos_lomba + "\n";
-                    esc += "Tim   : " + dataStruk.kontingen + "\n";
-                    esc += "Juri  : " + dataStruk.nama_juri + "\n";
-                    esc += "Durasi: " + dataStruk.durasi + " Detik\n";
-                    esc += "--------------------------------\n";
-                    esc += "RINCIAN RUBRIK PENILAIAN:\n";
+    if (this.btChar) {
+        let encoder = new TextEncoder();
+        let esc = "";
+        
+        esc += "\x1B\x40"; // Reset
+        esc += "\x1B\x61\x01"; // Center
+        esc += "\x1B\x45\x01"; // Bold On
+        esc += "JUMBARA PMR MULA KE-4\n";
+        esc += "PMI KAB. PURBALINGGA 2026\n";
+        esc += "--------------------------------\n";
+        esc += "\x1B\x45\x00"; // Bold Off
+        
+        esc += "\x1B\x61\x00"; // Left Align
+        esc += "Waktu : " + dataStruk.timestamp + "\n";
+        esc += "Pos   : " + dataStruk.pos_lomba + "\n";
+        esc += "Tim   : " + dataStruk.kontingen + "\n";
+        esc += "Juri  : " + dataStruk.nama_juri + "\n";
+        esc += "Durasi: " + dataStruk.durasi + " Detik\n";
+        esc += "--------------------------------\n";
+        esc += "RINCIAN RUBRIK PENILAIAN:\n";
 
-                    for (let k in dataStruk.rincian) {
-                        let itemStr = k.length > 20 ? k.substring(0, 18) + ".." : k;
-                        let valObj = dataStruk.rincian[k];
-                        let valStr = (typeof valObj === 'object') ? `[Bidak:${valObj.no_bidak}]` : String(valObj);
-                        
-                        let spaceLen = 32 - itemStr.length - valStr.length;
-                        if (spaceLen < 1) spaceLen = 1;
-                        esc += itemStr + " ".repeat(spaceLen) + valStr + "\n";
-                    }
+        // LOGIKA BARU: MULTI-LINE TEXT WRAPPING UNTUK PRINTER THERMAL (32 CHAR)
+        const maxChar = 32;
+        for (let k in dataStruk.rincian) {
+            let valObj = dataStruk.rincian[k];
+            let valStr = (typeof valObj === 'object') ? `[Bidak:${valObj.no_bidak}]` : String(valObj);
+            let valWidth = valStr.length;
+            let maxFirstLine = maxChar - valWidth - 1;
 
-                    esc += "--------------------------------\n";
-                    esc += "\x1B\x45\x01\x1B\x61\x01"; // Center & Bold
-                    esc += "TOTAL SKOR: " + dataStruk.total_skor + " \n";
-                    esc += "\x1B\x45\x00\x1B\x61\x00";
-                    esc += "Catatan: " + (dataStruk.catatan || "-") + "\n";
-
-                    // CETAK QR CODE VIA PERINTAH ESC/POS PRINTER BLUETOOTH
-                    if (dataStruk.pdf_url) {
-                        esc += "--------------------------------\n";
-                        esc += "\x1B\x61\x01"; // Center
-                        esc += "SCAN QR PDF DOKUMEN:\n\n";
-                        
-                        let url = dataStruk.pdf_url;
-                        let len = url.length + 3;
-                        let pL = len % 256;
-                        let pH = Math.floor(len / 256);
-                        
-                        esc += "\x1D\x28\x6B\x04\x00\x31\x41\x32\x00"; // Set Model 2
-                        esc += "\x1D\x28\x6B\x03\x00\x31\x43\x06"; // Set Module Size (6)
-                        esc += "\x1D\x28\x6B\x03\x00\x31\x4E\x30"; // Error Correction Level L
-                        esc += "\x1D\x28\x6B" + String.fromCharCode(pL, pH) + "\x31\x50\x30" + url; // Store Data
-                        esc += "\x1D\x28\x6B\x03\x00\x31\x51\x30"; // Print QR
-                        esc += "\n";
-                    }
-
-                    esc += "--------------------------------\n";
-                    esc += "\x1B\x61\x01";
-                    esc += "Jumpa, Bakti, dan Gembira\n\n\n\n";
-
-                    let bytes = encoder.encode(esc);
-                    let success = await this.sendBTData(bytes);
-                    if (success) return;
-                }
-
-                // B. CADANGAN (FALLBACK): BROWSER PRINT / RAWBT HP (DENGAN QR CODE IMAGE)
-                this.printViaBrowser(dataStruk);
-            },
-
-            printViaBrowser: function(dataStruk) {
-                const area = document.getElementById('areaCetakThermal');
-                let rubrikHtml = "";
+            if (k.length <= maxFirstLine) {
+                // Teks muat 1 baris
+                let spaceLen = maxChar - k.length - valWidth;
+                esc += k + " ".repeat(spaceLen) + valStr + "\n";
+            } else {
+                // Teks panjang: potong baris pertama (sejajar skor), sisanya ke bawah
+                let line1 = k.substring(0, maxFirstLine);
+                let rem = k.substring(maxFirstLine);
+                let spaceLen = maxChar - line1.length - valWidth;
                 
-                for (let item in dataStruk.rincian) {
-                    let valObj = dataStruk.rincian[item];
-                    let valStr = (typeof valObj === 'object') ? `[Bidak: ${valObj.no_bidak}]` : valObj;
-
-                    rubrikHtml += `
-                        <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
-                            <span>${item}</span>
-                            <strong>${valStr}</strong>
-                        </div>`;
+                esc += line1 + " ".repeat(spaceLen) + valStr + "\n";
+                
+                while (rem.length > 0) {
+                    let chunk = rem.substring(0, maxChar);
+                    rem = rem.substring(maxChar);
+                    esc += chunk + "\n";
                 }
+            }
+        }
 
-                // GENERATE GAMBAR QR CODE APABILA TERSEDIA LINK PDF GOOGLE DRIVE
-                let qrHtml = "";
-                if (dataStruk.pdf_url) {
-                    const qrApi = `https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=${encodeURIComponent(dataStruk.pdf_url)}`;
-                    qrHtml = `
-                        <div style="text-align:center; margin:8px 0;">
-                            <img src="${qrApi}" style="width:110px; height:110px; margin:0 auto; display:block;" />
-                            <div style="font-size:7pt; margin-top:2px;">Scan QR untuk Unduh PDF Sah</div>
-                        </div>`;
-                }
+        esc += "--------------------------------\n";
+        esc += "\x1B\x45\x01\x1B\x61\x01"; // Center & Bold
+        esc += "TOTAL SKOR: " + dataStruk.total_skor + " PT\n";
+        esc += "\x1B\x45\x00\x1B\x61\x00";
+        esc += "Catatan: " + (dataStruk.catatan || "-") + "\n";
 
-                area.innerHTML = `
-                    <div style="text-align:center; font-weight:bold;">
-                        JUMBARA PMR MULA KE-4<br>
-                        PMI KAB. PURBALINGGA 2026
-                    </div>
-                    <div style="border-bottom:1px dashed #000; margin:4px 0;"></div>
-                    <div>Waktu : ${dataStruk.timestamp}</div>
-                    <div>Pos   : ${dataStruk.pos_lomba}</div>
-                    <div style="font-weight:bold;">Tim   : ${dataStruk.kontingen}</div>
-                    <div>Juri  : ${dataStruk.nama_juri}</div>
-                    <div>Durasi: ${dataStruk.durasi} Detik</div>
-                    <div style="border-bottom:1px dashed #000; margin:4px 0;"></div>
-                    <div style="font-weight:bold;">RINCIAN PENILAIAN:</div>
-                    ${rubrikHtml}
-                    <div style="border-bottom:1px dashed #000; margin:4px 0;"></div>
-                    <div style="font-size:12pt; font-weight:bold; text-align:center; border:1px solid #000; padding:3px; margin:6px 0;">
-                        TOTAL: ${dataStruk.total_skor} 
-                    </div>
-                    <div>Catatan: ${dataStruk.catatan || '-'}</div>
-                    ${qrHtml}
-                    <div style="border-bottom:1px dashed #000; margin:4px 0;"></div>
-                    <div style="text-align:center;">Simpan Struk Ini Sebagai Bukti Sah</div>
-                `;
+        if (dataStruk.pdf_url) {
+            esc += "--------------------------------\n";
+            esc += "\x1B\x61\x01";
+            esc += "SCAN QR PDF DOKUMEN:\n\n";
+            
+            let url = dataStruk.pdf_url;
+            let len = url.length + 3;
+            let pL = len % 256;
+            let pH = Math.floor(len / 256);
+            
+            esc += "\x1D\x28\x6B\x04\x00\x31\x41\x32\x00";
+            esc += "\x1D\x28\x6B\x03\x00\x31\x43\x06";
+            esc += "\x1D\x28\x6B\x03\x00\x31\x4E\x30";
+            esc += "\x1D\x28\x6B" + String.fromCharCode(pL, pH) + "\x31\x50\x30" + url;
+            esc += "\x1D\x28\x6B\x03\x00\x31\x51\x30";
+            esc += "\n";
+        }
 
-                area.classList.remove('hidden');
-                window.print();
-                setTimeout(() => area.classList.add('hidden'), 1000);
-            },
+        esc += "--------------------------------\n";
+        esc += "\x1B\x61\x01";
+        esc += "Terima Kasih & Selamat!\n\n\n\n";
+
+        let bytes = encoder.encode(esc);
+        let success = await this.sendBTData(bytes);
+        if (success) return;
+    }
+
+    this.printViaBrowser(dataStruk);
+},
+
+            printViaBrowser,
 
             cetakUlangTerakhir: function() {
                 let history = JSON.parse(localStorage.getItem('sijum_history_v2')) || [];
