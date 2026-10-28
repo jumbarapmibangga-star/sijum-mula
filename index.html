@@ -266,6 +266,23 @@
                 }
             },
 
+            // FUNGSI UNTUK MENGAMBIL NAMA POS BERDASARKAN KODE POS
+            getNamaPos: function(kode) {
+                if (!kode) return "-";
+                if (!this.masterData || !this.masterData.pos) return kode;
+                const norm = (str) => String(str || "").toUpperCase().replace(/^POS-?0*/, "POS").trim();
+                const kodeClean = norm(kode);
+                
+                const found = this.masterData.pos.find(p => {
+                    const pKode = norm(p.KODE_POS || p.kode_pos || p.POS || p.pos);
+                    return pKode === kodeClean;
+                });
+                if (found) {
+                    return found.NAMA_POS || found.nama_pos || found.NAMA_LOMBA || found.nama_lomba || found.NAMA || found.nama || kode;
+                }
+                return kode;
+            },
+
             toggleTheme: function() {
                 this.isLightMode = !this.isLightMode;
                 const body = document.getElementById('appBody');
@@ -294,7 +311,8 @@
                         const id = j.ID_JURI || j.id_juri || j.ID || j.id;
                         const nama = j.NAMA_JURI || j.nama_juri || j.NAMA || j.nama;
                         const pos = j.KODE_POS || j.kode_pos || j.POS || j.pos;
-                        sel.innerHTML += `<option value="${id}">${nama} (${pos})</option>`;
+                        const namaPos = this.getNamaPos(pos);
+                        sel.innerHTML += `<option value="${id}">${nama} (${namaPos})</option>`;
                     });
                 }
             },
@@ -346,9 +364,10 @@
 
                 const namaJuri = this.currentJuri.NAMA_JURI || this.currentJuri.nama_juri || '';
                 const kodePos = this.currentJuri.KODE_POS || this.currentJuri.kode_pos || '';
+                const namaPos = this.getNamaPos(kodePos);
 
                 document.getElementById('lblNamaJuri').innerText = namaJuri;
-                document.getElementById('lblPosJuri').innerText = kodePos;
+                document.getElementById('lblPosJuri').innerText = namaPos;
 
                 this.renderKontingenOptions();
                 this.renderRubrikDinamis();
@@ -409,7 +428,8 @@
             renderRubrikDinamis: function() {
                 const container = document.getElementById('containerRubrik');
                 const posJuri = String(this.currentJuri ? (this.currentJuri.KODE_POS || this.currentJuri.kode_pos) : '').toUpperCase().trim();
-                document.getElementById('lblKodePosRubrik').innerText = posJuri;
+                const namaPos = this.getNamaPos(posJuri);
+                document.getElementById('lblKodePosRubrik').innerText = namaPos;
                 container.innerHTML = '';
 
                 if (!this.masterData || !this.masterData.rubrik) {
@@ -784,6 +804,7 @@
 
                 const posJuri = this.currentJuri.KODE_POS || this.currentJuri.kode_pos;
                 const namaJuri = this.currentJuri.NAMA_JURI || this.currentJuri.nama_juri;
+                const namaPos = this.getNamaPos(posJuri);
 
                 const btnSimpan = document.getElementById('btnSimpan');
                 btnSimpan.disabled = true;
@@ -794,6 +815,7 @@
                     action: "SIMPAN_NILAI",
                     nama_juri: namaJuri,
                     pos_lomba: posJuri,
+                    nama_pos: namaPos,
                     kontingen: valKont,
                     total_skor: totalSkor,
                     durasi: durasi,
@@ -812,6 +834,7 @@
                         const itemRiwayat = {
                             timestamp: new Date().toLocaleString('id-ID'),
                             pos_lomba: posJuri,
+                            nama_pos: namaPos,
                             nama_juri: namaJuri,
                             kontingen: valKont,
                             total_skor: totalSkor,
@@ -846,7 +869,33 @@
                 }
             },
 
+            formatTextWordWrap: function(text, maxLenFirst, maxLenSub) {
+                const words = String(text).trim().split(/\s+/);
+                const lines = [];
+                let currentLine = "";
+                let limit = maxLenFirst;
+
+                for (let word of words) {
+                    if ((currentLine + (currentLine ? " " : "") + word).length <= limit) {
+                        currentLine += (currentLine ? " " : "") + word;
+                    } else {
+                        if (currentLine) lines.push(currentLine);
+                        currentLine = word;
+                        limit = maxLenSub;
+                        while (currentLine.length > limit) {
+                            lines.push(currentLine.substring(0, limit));
+                            currentLine = currentLine.substring(limit);
+                        }
+                    }
+                }
+                if (currentLine) lines.push(currentLine);
+                return lines;
+            },
+
             cetakStruk: async function(dataStruk) {
+                // AMBIL NAMA POS SAH UNTUK CETAK STRUK
+                const posDisplay = dataStruk.nama_pos || this.getNamaPos(dataStruk.pos_lomba);
+
                 if (this.btChar) {
                     let encoder = new TextEncoder();
                     let esc = "";
@@ -861,7 +910,7 @@
                     
                     esc += "\x1B\x61\x00"; // Left Align
                     esc += "Waktu : " + dataStruk.timestamp + "\n";
-                    esc += "Pos   : " + dataStruk.pos_lomba + "\n";
+                    esc += "Pos   : " + posDisplay + "\n";
                     esc += "Tim   : " + dataStruk.kontingen + "\n";
                     esc += "Juri  : " + dataStruk.nama_juri + "\n";
                     esc += "Durasi: " + dataStruk.durasi + " Detik\n";
@@ -879,26 +928,19 @@
                         noItem++;
 
                         let rightColWidth = valStr.length;
-                        let leftColWidth = maxChar - rightColWidth - 1; // Spasi sebelum skor
+                        let leftColWidth = maxChar - rightColWidth - 1;
                         let firstLineMaxText = leftColWidth - prefix.length;
                         let subLineMaxText = leftColWidth - indent.length;
 
-                        let fullText = String(k).trim();
+                        let textLines = this.formatTextWordWrap(k, firstLineMaxText, subLineMaxText);
 
-                        if (fullText.length <= firstLineMaxText) {
-                            let spaceLen = leftColWidth - (prefix.length + fullText.length);
-                            esc += prefix + fullText + " ".repeat(spaceLen) + " " + valStr + "\n";
-                        } else {
-                            let line1Text = fullText.substring(0, firstLineMaxText);
-                            let remText = fullText.substring(firstLineMaxText);
+                        if (textLines.length > 0) {
+                            let line1Text = textLines[0];
                             let spaceLen = leftColWidth - (prefix.length + line1Text.length);
-                            
-                            esc += prefix + line1Text + " ".repeat(spaceLen) + " " + valStr + "\n";
-                            
-                            while (remText.length > 0) {
-                                let chunk = remText.substring(0, subLineMaxText);
-                                remText = remText.substring(subLineMaxText);
-                                esc += indent + chunk + "\n";
+                            esc += prefix + line1Text + " ".repeat(Math.max(0, spaceLen)) + " " + valStr + "\n";
+
+                            for (let i = 1; i < textLines.length; i++) {
+                                esc += indent + textLines[i] + "\n";
                             }
                         }
                     }
@@ -941,6 +983,7 @@
 
             printViaBrowser: function(dataStruk) {
                 const area = document.getElementById('areaCetakThermal');
+                const posDisplay = dataStruk.nama_pos || this.getNamaPos(dataStruk.pos_lomba);
                 let rubrikHtml = "";
                 let noItem = 1;
 
@@ -948,12 +991,11 @@
                     let valObj = dataStruk.rincian[item];
                     let valStr = (typeof valObj === 'object') ? `[Bidak: ${valObj.no_bidak}]` : valObj;
 
-                    // HANGING INDENT DAN PEMBATASAN KOLOM KANAN BROWSER HP
                     rubrikHtml += `
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; font-size: 8.5pt;">
-                            <div style="display: flex; flex: 1; padding-right: 6px; overflow: hidden;">
-                                <span style="min-width: 18px; text-align: left; flex-shrink: 0; font-weight: bold;">${noItem}.</span>
-                                <span style="flex: 1; word-break: break-word; text-align: left;">${item}</span>
+                            <div style="display: flex; flex: 1; padding-right: 8px; overflow: hidden;">
+                                <span style="min-width: 20px; text-align: left; flex-shrink: 0; font-weight: bold;">${noItem}.</span>
+                                <span style="flex: 1; word-break: break-word; text-align: left; padding-left: 2px;">${item}</span>
                             </div>
                             <strong style="white-space: nowrap; text-align: right; min-width: 32px; flex-shrink: 0;">${valStr}</strong>
                         </div>`;
@@ -977,7 +1019,7 @@
                     </div>
                     <div style="border-bottom:1px dashed #000; margin:4px 0;"></div>
                     <div>Waktu : ${dataStruk.timestamp}</div>
-                    <div>Pos   : ${dataStruk.pos_lomba}</div>
+                    <div>Pos   : ${posDisplay}</div>
                     <div style="font-weight:bold;">Tim   : ${dataStruk.kontingen}</div>
                     <div>Juri  : ${dataStruk.nama_juri}</div>
                     <div>Durasi: ${dataStruk.durasi} Detik</div>
@@ -1014,6 +1056,7 @@
             cetakRekapPos: function() {
                 let history = JSON.parse(localStorage.getItem('sijum_history_v2')) || [];
                 let posJuri = String(this.currentJuri ? (this.currentJuri.KODE_POS || this.currentJuri.kode_pos) : '').toUpperCase().trim();
+                let namaPos = this.getNamaPos(posJuri);
                 let filtered = history.filter(h => String(h.pos_lomba || '').toUpperCase().trim() === posJuri);
 
                 if (filtered.length === 0) return alert("Belum ada data nilai tersimpan untuk Pos ini!");
@@ -1021,6 +1064,7 @@
                 let dataRekap = {
                     timestamp: new Date().toLocaleString('id-ID'),
                     pos_lomba: posJuri,
+                    nama_pos: namaPos,
                     kontingen: `REKAP TOTAL (${filtered.length} TIM)`,
                     nama_juri: this.currentJuri.NAMA_JURI || this.currentJuri.nama_juri,
                     durasi: 0,
