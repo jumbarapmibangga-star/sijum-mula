@@ -209,6 +209,7 @@
         &copy; Panitia Jumbara PMR Mula Ke-4 Purbalingga
     </footer>
 
+    <!-- LOGIKA UTAMA SCRIPT -->
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js');
@@ -251,24 +252,45 @@
                 }
             },
 
-            // DUKUNGAN RESPONSIF DENGAN TEORI & PRAKTIK (POS 3 & POS 4)
+            // =====================================================================
+            // PATCH: getNamaPos versi robust
+            // - Handle "POS-03 TEORI", "POS 03 TEORI", "POS3 TEORI", "POS-3 TEORI"
+            // - Fallback ke base code jika suffix tidak ketemu
+            // - Logika disamakan dengan backend gsnew.txt (normalizePosGroup)
+            // =====================================================================
             getNamaPos: function(kode) {
                 if (!kode) return "-";
                 if (!this.masterData || !this.masterData.pos) return kode;
-                
-                const norm = (str) => String(str || "").toUpperCase().replace(/^POS-?0*/, "POS").trim();
-                const kodeClean = norm(kode);
-                const baseKode = kodeClean.replace(/\s*(TEORI|PRAKTIK|PRAKTEK).*/i, '').trim();
-                
+
+                const raw = String(kode).toUpperCase().trim();
+
+                // Deteksi suffix Teori/Praktik
+                const isTeori = /\bTEORI\b/.test(raw);
+                const isPraktik = /\bPRAKTIK\b|\bPRAKTEK\b/.test(raw);
+
+                // Normalisasi ke base code: "POS-03", "POS 03", "POS3", "POS-3" → "POS-03"
+                const normalize = (s) => {
+                    const u = String(s || "").toUpperCase().trim();
+                    if (/POS[\s\-]?0?3/.test(u)) return "POS-03";
+                    if (/POS[\s\-]?0?4/.test(u)) return "POS-04";
+                    // Untuk pos lain (01, 02, 05, 06, 07)
+                    const m = u.match(/POS[\s\-]?0*(\d+)/);
+                    if (m) return "POS-" + String(m[1]).padStart(2, "0");
+                    return u;
+                };
+
+                const kodeNorm = normalize(raw);
+
                 const found = this.masterData.pos.find(p => {
-                    const pKode = norm(p.KODE_POS || p.kode_pos || p.POS || p.pos);
-                    return pKode === kodeClean || pKode === baseKode;
+                    const pKode = normalize(p.KODE_POS || p.kode_pos || p.POS || p.pos);
+                    return pKode === kodeNorm;
                 });
-                
+
                 if (found) {
-                    let baseName = found.NAMA_POS || found.nama_pos || found.NAMA_LOMBA || found.nama_lomba || found.NAMA || found.nama || kode;
-                    if (kodeClean.includes("TEORI")) return baseName + " (Teori)";
-                    if (kodeClean.includes("PRAKTIK") || kodeClean.includes("PRAKTEK")) return baseName + " (Praktik)";
+                    const baseName = found.NAMA_POS || found.nama_pos || found.NAMA_LOMBA ||
+                                     found.nama_lomba || found.NAMA || found.nama || kode;
+                    if (isTeori) return baseName + " (Teori)";
+                    if (isPraktik) return baseName + " (Praktik)";
                     return baseName;
                 }
                 return kode;
@@ -382,6 +404,7 @@
 
                     if (id || nama) {
                         let sudah = false;
+                        // Cek dari masterData.nilai (data server, paling akurat)
                         if (posJuriRaw && this.masterData.nilai) {
                             sudah = this.masterData.nilai.some(n => {
                                 const nPos = String(n.POS_LOMBA || n.pos_lomba || '').toUpperCase().trim();
@@ -391,6 +414,7 @@
                             });
                         }
 
+                        // Cek dari localStorage (cadangan jika server lambat update)
                         if (!sudah && posJuriRaw) {
                             sudah = listLokal.some(h => 
                                 String(h.pos_lomba || '').toUpperCase().trim() === posJuriRaw && 
@@ -695,6 +719,11 @@
             },
 
             logout: function() {
+                // Stop timer dulu sebelum logout
+                if (this.timerRunning) {
+                    this.timerRunning = false;
+                    clearInterval(this.timerInterval);
+                }
                 sessionStorage.clear();
                 location.reload();
             },
@@ -769,6 +798,25 @@
 
                 if (!valKont) return alert("Pilih Kontingen / Tim terlebih dahulu!");
 
+                // =====================================================
+                // PATCH A: Auto-stop timer sebelum proses simpan
+                // =====================================================
+                if (this.timerRunning) {
+                    this.timerRunning = false;
+                    clearInterval(this.timerInterval);
+
+                    const badge = document.getElementById('lblTimerBadge');
+                    if (badge) {
+                        badge.className = 'bg-amber-950 text-amber-400 text-[10px] px-2 py-0.5 rounded-full font-bold';
+                        badge.innerText = 'Selesai';
+                    }
+                    const timerBtn = document.getElementById('btnTimerStart');
+                    if (timerBtn) {
+                        timerBtn.className = "w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-3 rounded-xl transition flex items-center justify-center space-x-2 shadow-lg";
+                        timerBtn.innerHTML = `<i class="fa-solid fa-play"></i> <span>MULAI STOPWATCH</span>`;
+                    }
+                }
+
                 const rincian = {};
                 const inputs = document.querySelectorAll('.input-rubrik');
                 inputs.forEach(inp => {
@@ -789,18 +837,22 @@
 
                 const posJuri = this.currentJuri.KODE_POS || this.currentJuri.kode_pos;
                 const namaJuri = this.currentJuri.NAMA_JURI || this.currentJuri.nama_juri;
-                const namaPos = this.getNamaPos(posJuri);
 
                 const btnSimpan = document.getElementById('btnSimpan');
                 btnSimpan.disabled = true;
                 btnSimpan.classList.add('opacity-50', 'cursor-not-allowed');
                 btnSimpan.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>PROSES PDF & SIMPAN...</span>`;
 
+                // =====================================================
+                // PATCH B: nama_pos DIHAPUS dari payload
+                // Backend (getNamaPosFromSheet) yang menentukan nama resmi.
+                // Ini double safety jika ada HP yang masih pakai index.html lama.
+                // =====================================================
                 const payload = {
                     action: "SIMPAN_NILAI",
                     nama_juri: namaJuri,
                     pos_lomba: posJuri,
-                    nama_pos: namaPos,
+                    // nama_pos: namaPos,  ← DIHAPUS
                     kontingen: valKont,
                     total_skor: totalSkor,
                     durasi: durasi,
@@ -816,10 +868,13 @@
                     const result = await res.json();
 
                     if (result.status === "SUCCESS") {
+                        // Nama pos untuk struk lokal — tetap pakai getNamaPos frontend
+                        const namaPosLocal = this.getNamaPos(posJuri);
+
                         const itemRiwayat = {
                             timestamp: new Date().toLocaleString('id-ID'),
                             pos_lomba: posJuri,
-                            nama_pos: namaPos,
+                            nama_pos: namaPosLocal,
                             nama_juri: namaJuri,
                             kontingen: valKont,
                             total_skor: totalSkor,
@@ -831,6 +886,10 @@
 
                         let history = JSON.parse(localStorage.getItem('sijum_history_v2')) || [];
                         history.unshift(itemRiwayat);
+                        // =====================================================
+                        // PATCH C: Batasi history max 50 entri
+                        // =====================================================
+                        if (history.length > 50) history = history.slice(0, 50);
                         localStorage.setItem('sijum_history_v2', JSON.stringify(history));
 
                         await this.cetakStruk(itemRiwayat);
