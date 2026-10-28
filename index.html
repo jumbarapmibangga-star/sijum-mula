@@ -1,342 +1,560 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Penilaian Jumbara PMR Mula 2026</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body { background-color: #f8fafc; font-family: 'Segoe UI', Roboto, sans-serif; }
-    .card-custom { border-radius: 12px; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-    .header-pos { background: linear-gradient(135deg, #FF0040, #dc2626); color: white; border-radius: 12px 12px 0 0; padding: 20px; }
-    .badge-score { background-color: #fef2f2; color: #FF0040; border: 1px solid #fca5a5; font-size: 1.2rem; font-weight: bold; }
-    .timer-display { font-family: monospace; font-size: 1.5rem; font-weight: bold; }
-  </style>
-</head>
-<body class="py-4">
-
-<div class="container" style="max-width: 720px;">
-  <!-- FORM LOGIN JURI -->
-  <div id="loginCard" class="card card-custom">
-    <div class="header-pos text-center">
-      <h4 class="m-0 font-weight-bold">LOGIN JURI PENILAI</h4>
-      <small>Jumbara PMR Mula Kabupaten Purbalingga 2026</small>
-    </div>
-    <div class="card-body p-4">
-      <form id="formLogin">
-        <div class="mb-3">
-          <label class="form-label font-weight-bold">ID JURI</label>
-          <input type="text" id="loginIdJuri" class="form-control" placeholder="Contoh: JURI05" required>
-        </div>
-        <div class="mb-3">
-          <label class="form-label font-weight-bold">PIN RAHASIA</label>
-          <input type="password" id="loginPin" class="form-control" placeholder="Masukkan PIN" required>
-        </div>
-        <button type="submit" id="btnLoginSubmit" class="btn btn-danger w-100 py-2 font-weight-bold" style="background-color: #FF0040; border: none;">MASUK APLIKASI</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- MAIN SCORING APP CARD -->
-  <div id="scoringCard" class="card card-custom d-none">
-    <div class="header-pos d-flex justify-content-between align-items-center">
-      <div>
-        <h5 class="m-0 font-weight-bold" id="dispPos">POS LOMBA</h5>
-        <small id="dispJuri">Juri: -</small>
-      </div>
-      <button class="btn btn-sm btn-outline-light" onclick="logout()">Keluar</button>
-    </div>
-
-    <div class="card-body p-4">
-      <!-- KONTINGEN & TIMER -->
-      <div class="row g-3 mb-4">
-        <div class="col-md-7">
-          <label class="form-label font-weight-bold">PILIH KONTINGEN / TIM</label>
-          <select id="selectKontingen" class="form-select" required>
-            <option value="">-- Pilih Kontingen --</option>
-          </select>
-        </div>
-        <div class="col-md-5 text-center">
-          <label class="form-label font-weight-bold">DURASI TAMPIL</label>
-          <div class="d-flex align-items-center justify-content-center gap-2">
-            <span id="dispTimer" class="timer-display text-danger">00:00</span>
-            <button id="btnTimer" type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleTimer()">Start</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- FORM RUBRIK PENILAIAN -->
-      <form id="formPenilaian">
-        <h6 class="font-weight-bold border-bottom pb-2 text-danger" style="color: #FF0040 !important;">LEMBAR PENILAIAN RUBRIK</h6>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Portal Juri - Jumbara PMR Mula Ke-4</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#dc2626">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .pulse-dot { animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
         
-        <div class="table-responsive">
-          <table class="table table-bordered align-middle mt-2" id="tableRubrik">
-            <thead class="table-light text-center">
-              <tr id="tableHeaderRow"></tr>
-            </thead>
-            <tbody id="rubrikBody"></tbody>
-          </table>
+        /* TEMA TERANG KHUSUS OUTDOOR TERIK MATAHARI */
+        body.theme-light { background-color: #f8fafc !important; color: #0f172a !important; }
+        body.theme-light .card-bg { background-color: #ffffff !important; border-color: #cbd5e1 !important; color: #0f172a !important; }
+        body.theme-light .input-bg { background-color: #f1f5f9 !important; border-color: #94a3b8 !important; color: #0f172a !important; }
+        body.theme-light .text-sub { color: #475569 !important; }
+        body.theme-light .btn-preset-off { background-color: #e2e8f0 !important; color: #1e293b !important; border-color: #cbd5e1 !important; }
+
+        /* PENGATURAN CETAK PRINTER THERMAL (58mm / 80mm) VIA BROWSER HP */
+        @media print {
+            @page { size: 58mm auto; margin: 0; }
+            body * { visibility: hidden; }
+            #areaCetakThermal, #areaCetakThermal * { visibility: visible; }
+            #areaCetakThermal {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 54mm;
+                font-family: monospace;
+                font-size: 8.5pt;
+                color: #000 !important;
+                background: #fff !important;
+                padding: 4px;
+            }
+        }
+    </style>
+</head>
+<body id="appBody" class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between font-sans select-none">
+
+    <!-- HEADER / NAVBAR -->
+    <header class="bg-red-700 text-white shadow-md sticky top-0 z-30">
+        <div class="max-w-md mx-auto px-4 py-2.5 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <img id="imgLogoHeader" src="logo.png" alt="Logo Jumbara" class="h-8 w-auto object-contain transition-all duration-300">
+                <div>
+                    <h1 class="text-xs font-black tracking-wide leading-tight">JUMBARA PMR MULA KE-4</h1>
+                    <p class="text-[9px] text-red-200">PMI Kab. Purbalingga 2026</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-1.5">
+                <!-- TOGGLE TEMA OUTDOOR TERANG/GELAP -->
+                <button onclick="app.toggleTheme()" class="bg-red-800 hover:bg-red-900 text-white p-1.5 rounded-lg text-xs" title="Mode Siang/Malam">
+                    <i id="icoTheme" class="fa-solid fa-sun text-amber-300"></i>
+                </button>
+
+                <div id="navActions" class="hidden flex items-center gap-1.5">
+                    <button id="btnBT" onclick="app.connectBT()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 px-2 py-1 rounded-lg text-xs font-black flex items-center shadow">
+                        <i class="fa-solid fa-print mr-1"></i> <span id="lblBT">Konek Printer</span>
+                    </button>
+                    <button onclick="app.bukaRiwayat()" class="bg-red-900/60 text-amber-300 p-1.5 rounded-lg text-xs font-bold" title="Riwayat">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </button>
+                    <button onclick="app.logout()" class="bg-red-900/60 text-red-200 p-1.5 rounded-lg text-xs font-bold" title="Keluar">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTAINER UTAMA -->
+    <main class="max-w-md mx-auto p-4 w-full flex-grow flex flex-col justify-center space-y-4">
+
+        <!-- FORM LOGIN JURI SECURE -->
+        <div id="secLogin" class="card-bg bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 space-y-4">
+            <div class="text-center">
+                <img id="imgLogoLogin" src="logo.png" alt="Logo Jumbara" class="h-24 w-auto mx-auto mb-2 drop-shadow-lg object-contain transition-all duration-300">
+                <h2 class="text-lg font-black">LOGIN JURI POS</h2>
+                <p class="text-xs text-sub text-slate-400">Pilih ID Juri & Masukkan PIN</p>
+            </div>
+
+            <div>
+                <label class="text-xs font-bold text-sub text-slate-300 mb-1 block">PILIH NAMA JURI</label>
+                <select id="selJuri" class="input-bg w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm focus:border-red-500 outline-none">
+                    <option value="">-- Memuat Data Juri... --</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="text-xs font-bold text-sub text-slate-300 mb-1 block">PIN RAHASIA</label>
+                <input id="txtPin" type="password" maxlength="6" inputmode="numeric" class="input-bg w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-center text-lg font-bold tracking-widest focus:border-red-500 outline-none text-amber-400" placeholder="****">
+            </div>
+
+            <button id="btnLogin" onclick="app.login()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-xl shadow-lg transition">
+                MASUK PORTAL
+            </button>
         </div>
 
-        <!-- TOTAL SKOR -->
-        <div class="d-flex justify-content-between align-items-center p-3 badge-score rounded mb-3">
-          <span>TOTAL SKOR UTAMA</span>
-          <span id="dispTotalSkor">0 PT</span>
+        <!-- FORM PENILAIAN -->
+        <div id="secForm" class="hidden space-y-4">
+            
+            <!-- INFO JURI LOGGED IN -->
+            <div class="card-bg bg-slate-800 p-3 rounded-xl border border-slate-700 flex justify-between items-center text-xs">
+                <div>
+                    <span class="text-sub text-slate-400 block">Juri Tersetel:</span>
+                    <strong id="lblNamaJuri" class="text-red-500 font-bold text-sm"></strong>
+                </div>
+                <div class="text-right">
+                    <span class="text-sub text-slate-400 block">Pos Tugas:</span>
+                    <span id="lblPosJuri" class="bg-red-950 text-red-300 border border-red-800 px-2 py-0.5 rounded font-mono font-bold"></span>
+                </div>
+            </div>
+
+            <!-- CETAK ULANG -->
+            <div class="flex justify-between items-center gap-2">
+                <button onclick="app.cetakUlangTerakhir()" class="card-bg w-1/2 bg-slate-800 border border-slate-700 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center space-x-1.5">
+                    <i class="fa-solid fa-rotate-left text-amber-400"></i>
+                    <span>Struk Terakhir</span>
+                </button>
+                <button onclick="app.cetakRekapPos()" class="card-bg w-1/2 bg-slate-800 border border-slate-700 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center space-x-1.5">
+                    <i class="fa-solid fa-file-invoice text-emerald-400"></i>
+                    <span>Cetak Rekap Pos</span>
+                </button>
+            </div>
+
+            <!-- DROPDOWN KONTINGEN (AUTOMATIC FILTERING) -->
+            <div class="card-bg bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-3">
+                <div>
+                    <label class="text-xs font-bold text-sub text-slate-300 mb-1 block">PILIH KONTINGEN / TIM (BELUM DINILAI)</label>
+                    <select id="selKontingen" class="input-bg w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm font-bold focus:border-red-500 outline-none">
+                        <option value="">-- Pilih Tim --</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- STOPWATCH TIMER TOGGLE -->
+            <div class="card-bg bg-slate-800 p-4 rounded-xl border border-slate-700 text-center space-y-3">
+                <div class="flex justify-between items-center border-b border-slate-700/60 pb-2">
+                    <span class="text-xs font-bold text-sub text-slate-400 uppercase">Stopwatch Durasi</span>
+                    <span id="lblTimerBadge" class="bg-slate-900 text-slate-400 text-[10px] px-2 py-0.5 rounded-full font-bold">Standby</span>
+                </div>
+                
+                <div id="lblTimerDisplay" class="font-mono text-4xl font-extrabold tracking-widest text-emerald-400 my-1">
+                    00:00
+                </div>
+
+                <button id="btnTimerStart" onclick="app.toggleTimer()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-3 rounded-xl transition flex items-center justify-center space-x-2 shadow-lg">
+                    <i class="fa-solid fa-play"></i> <span>MULAI STOPWATCH (Buka Form)</span>
+                </button>
+            </div>
+
+            <!-- PERINGATAN KUNCI FORM -->
+            <div id="msgFormLocked" class="bg-amber-950/80 border border-amber-800 p-2.5 rounded-xl text-center text-xs text-amber-300 font-bold flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-lock text-amber-400"></i>
+                <span>Jalankan Stopwatch untuk membuka Form Penilaian</span>
+            </div>
+
+            <!-- RUBRIK HYBRID (PRESET + MANUAL) -->
+            <div class="card-bg bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-3">
+                <label class="text-xs font-bold text-amber-400 block border-b border-slate-700/60 pb-1">
+                    <i class="fa-solid fa-list-check mr-1"></i> RUBRIK PENILAIAN (<span id="lblKodePosRubrik"></span>)
+                </label>
+                
+                <div id="containerRubrik" class="space-y-3">
+                    <!-- Terisi Otomatis -->
+                </div>
+
+                <div class="input-bg bg-slate-900 p-3 rounded-xl border border-slate-700 flex justify-between items-center mt-3">
+                    <span class="text-xs font-bold text-sub text-slate-300">TOTAL SKOR:</span>
+                    <span id="lblTotalSkorAuto" class="text-2xl font-black text-amber-400">0</span>
+                </div>
+            </div>
+
+            <!-- SIMPAN & CETAK -->
+            <div class="card-bg bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-3">
+                <div class="grid grid-cols-1 gap-3">
+                    <div>
+                        <label class="text-xs font-bold text-sub text-slate-300 mb-1 block">DURASI PENAMPILAN (DETIK)</label>
+                        <input id="txtDurasi" type="number" readonly class="input-bg w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-lg font-black text-emerald-400 text-center outline-none" placeholder="0">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-sub text-slate-300 mb-1 block">CATATAN EVALUASI JURI</label>
+                        <textarea id="txtCatatan" rows="2" class="input-bg w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs outline-none" placeholder="Masukkan catatan evaluasi jika ada..."></textarea>
+                    </div>
+                </div>
+
+                <button id="btnSimpan" onclick="app.simpan()" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-3.5 rounded-xl shadow-lg flex items-center justify-center space-x-2 text-sm transition">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    <span>SIMPAN & CETAK STRUK</span>
+                </button>
+            </div>
         </div>
 
-        <div class="mb-3">
-          <label class="form-label font-weight-bold">CATATAN / EVALUASI JURI</label>
-          <textarea id="inputCatatan" class="form-control" rows="2" placeholder="Tuliskan catatan juri jika ada..."></textarea>
-        </div>
+    </main>
 
-        <button type="submit" id="btnSubmit" class="btn btn-danger w-100 py-3 font-weight-bold" style="background-color: #FF0040; border: none;">SIMPAN & CETAK HASIL</button>
-      </form>
+    <!-- AREA TERSEMBUNYI UNTUK FORMAT CETAK PRINTER THERMAL HP (FALLBACK) -->
+    <div id="areaCetakThermal" class="hidden"></div>
+
+    <!-- MODAL RIWAYAT -->
+    <div id="modalHistory" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="card-bg bg-slate-800 w-full max-w-md rounded-2xl shadow-xl flex flex-col max-h-[80vh] border border-slate-700 overflow-hidden">
+            <div class="p-4 border-b border-slate-700 flex justify-between items-center">
+                <h3 class="font-bold text-sm text-amber-400 flex items-center space-x-2">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span>Riwayat Penilaian Pos</span>
+                </h3>
+                <button onclick="app.tutupRiwayat()" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div id="listHistoryContainer" class="p-4 overflow-y-auto space-y-2.5 flex-grow text-xs"></div>
+            <div class="p-3 border-t border-slate-700 bg-slate-900 flex justify-end">
+                <button onclick="app.tutupRiwayat()" class="bg-slate-700 text-white text-xs px-4 py-2 rounded-lg font-bold">Tutup</button>
+            </div>
+        </div>
     </div>
-  </div>
-</div>
 
-<script>
-  let activeJuri = null;
-  let rubrikData = [];
-  let timerInterval = null;
-  let timerSeconds = 0;
-  let isPos5 = false;
+    <footer class="p-3 text-center text-xs text-sub text-slate-500">
+        &copy; Panitia Jumbara PMR Mula Ke-4 Purbalingga
+    </footer>
 
-  // GANTI URL DEPLOY APPS SCRIPT ANDA DI SINI
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxty9GSbJQtMy-Z21ffd1H3fuOgPh8FgliuiZVGvpLutDwsHp9rnz2Dk_y8eS8-tirb/exec";
-
-  document.getElementById('formLogin').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const idJuri = document.getElementById('loginIdJuri').value.trim();
-    const pin = document.getElementById('loginPin').value.trim();
-    const btn = document.getElementById('btnLoginSubmit');
-
-    btn.disabled = true;
-    btn.innerText = "Memverifikasi...";
-
-    fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'LOGIN', id_juri: idJuri, pin: pin })
-    })
-    .then(res => res.json())
-    .then(res => {
-      btn.disabled = false;
-      btn.innerText = "MASUK APLIKASI";
-      if(res.status === 'SUCCESS') {
-        activeJuri = res.juri;
-        initApp();
-      } else {
-        alert(res.message);
-      }
-    })
-    .catch(err => {
-      btn.disabled = false;
-      btn.innerText = "MASUK APLIKASI";
-      alert("Gagal koneksi ke server!");
-    });
-  });
-
-  function initApp() {
-    document.getElementById('loginCard').classList.add('d-none');
-    document.getElementById('scoringCard').classList.remove('d-none');
-    
-    document.getElementById('dispPos').innerText = activeJuri.KODE_POS;
-    document.getElementById('dispJuri').innerText = "Juri: " + activeJuri.NAMA_JURI;
-
-    const posCode = String(activeJuri.KODE_POS).toUpperCase();
-    isPos5 = posCode.includes('POS5') || posCode.includes('POS-05') || posCode.includes('ULAR') || posCode === '5';
-
-    // Set Header Tabel
-    const headerRow = document.getElementById('tableHeaderRow');
-    if (isPos5) {
-      headerRow.innerHTML = `
-        <th style="width: 8%;">No</th>
-        <th style="width: 42%;">Soal / Tantangan</th>
-        <th style="width: 25%;">No. Bidak</th>
-        <th style="width: 25%;">Skor Jawaban</th>
-      `;
-    } else {
-      headerRow.innerHTML = `
-        <th style="width: 10%;">No</th>
-        <th style="width: 65%;">Kriteria / Aspek Penilaian</th>
-        <th style="width: 25%;">Skor (0 - Max)</th>
-      `;
-    }
-
-    loadInitialData();
-  }
-
-  function loadInitialData() {
-    fetch(SCRIPT_URL)
-    .then(res => res.json())
-    .then(data => {
-      // Load Dropdown Kontingen
-      const selectK = document.getElementById('selectKontingen');
-      selectK.innerHTML = '<option value="">-- Pilih Kontingen --</option>';
-      data.kontingen.forEach(k => {
-        const idKont = k.ID_KONTINGEN || k.id_kontingen || '';
-        const nameKont = k.NAMA_TIM || k.nama_tim || k.NAMA || k.nama || '';
-        const fullName = (idKont ? idKont + " - " : "") + nameKont;
-        selectK.innerHTML += `<option value="${fullName}">${fullName}</option>`;
-      });
-
-      // Render Rubrik untuk Pos Login
-      const rubrikBody = document.getElementById('rubrikBody');
-      rubrikBody.innerHTML = '';
-      
-      rubrikData = data.rubrik.filter(r => {
-        const rPos = String(r.KODE_POS || r.kode_pos || r.POS || '').toUpperCase().trim();
-        return rPos === String(activeJuri.KODE_POS).toUpperCase().trim();
-      });
-
-      if (rubrikData.length === 0) {
-        rubrikBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Rubrik pos ini belum diinput di sheet RUBRIK.</td></tr>';
-        return;
-      }
-
-      rubrikData.forEach((item, index) => {
-        const itemTitle = item.NAMA_TANTANGAN || item.NAMA_ITEM || item.NO_SOAL || `Item ${index + 1}`;
-        const maxScore = Number(item.SKOR_MAKSIMAL || item.BOBOT_MAKS || 100);
-
-        // Petunjuk Opsi Nilai (A/B/C/D) jika ada
-        let opsiHint = '';
-        if (item.OPSI_A || item.A) {
-          opsiHint = `<br/><small class="text-muted">Pilihan Skor: A=${item.OPSI_A||item.A}, B=${item.OPSI_B||item.B}, C=${item.OPSI_C||item.C}${item.OPSI_D||item.D ? ', D='+(item.OPSI_D||item.D):''}</small>`;
+    <!-- LOGIKA UTAMA SCRIPT -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
         }
 
-        if (isPos5) {
-          rubrikBody.innerHTML += `
-            <tr>
-              <td class="text-center font-weight-bold">${index + 1}</td>
-              <td>${itemTitle} <small class="text-danger font-weight-bold">(Max: ${maxScore})</small>${opsiHint}</td>
-              <td>
-                <input type="number" class="form-control text-center input-bidak" data-title="${itemTitle}" placeholder="Bidak" min="1">
-              </td>
-              <td>
-                <input type="number" class="form-control text-center input-skor" data-title="${itemTitle}" data-max="${maxScore}" placeholder="0 - ${maxScore}" min="0" max="${maxScore}" required onchange="hitungTotal()">
-              </td>
-            </tr>
-          `;
-        } else {
-          rubrikBody.innerHTML += `
-            <tr>
-              <td class="text-center font-weight-bold">${index + 1}</td>
-              <td>${itemTitle} <small class="text-danger font-weight-bold">(Max: ${maxScore})</small>${opsiHint}</td>
-              <td>
-                <input type="number" class="form-control text-center input-skor" data-title="${itemTitle}" data-max="${maxScore}" placeholder="0 - ${maxScore}" min="0" max="${maxScore}" required onchange="hitungTotal()">
-              </td>
-            </tr>
-          `;
-        }
-      });
-    });
-  }
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxty9GSbJQtMy-Z21ffd1H3fuOgPh8FgliuiZVGvpLutDwsHp9rnz2Dk_y8eS8-tirb/exec";
 
-  function hitungTotal() {
-    let total = 0;
-    const inputsSkor = document.querySelectorAll('.input-skor');
-    inputsSkor.forEach(input => {
-      let val = Number(input.value || 0);
-      const max = Number(input.dataset.max || 100);
-      
-      if (val > max) {
-        alert(`Skor melebihi batas nilai maksimal (${max})!`);
-        input.value = max;
-        val = max;
-      }
-      if (val < 0) {
-        input.value = 0;
-        val = 0;
-      }
-      total += val;
-    });
-    document.getElementById('dispTotalSkor').innerText = total + " PT";
-  }
+        const app = {
+            masterData: null,
+            btDevice: null,
+            btChar: null,
+            currentJuri: null,
+            timerInterval: null,
+            timerSeconds: 0,
+            timerRunning: false,
+            isLightMode: false,
 
-  function toggleTimer() {
-    const btn = document.getElementById('btnTimer');
-    if (timerInterval) {
-      clearInterval(timerInterval);
-      timerInterval = null;
-      btn.innerText = "Start";
-      btn.className = "btn btn-sm btn-outline-secondary";
-    } else {
-      timerInterval = setInterval(() => {
-        timerSeconds++;
-        const m = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
-        const s = String(timerSeconds % 60).padStart(2, '0');
-        document.getElementById('dispTimer').innerText = `${m}:${s}`;
-      }, 1000);
-      btn.innerText = "Pause";
-      btn.className = "btn btn-sm btn-warning";
-    }
-  }
+            init: async function() {
+                window.addEventListener('beforeunload', (e) => {
+                    if (this.timerRunning) {
+                        e.preventDefault();
+                        e.returnValue = '';
+                    }
+                });
 
-  document.getElementById('formPenilaian').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const kontingen = document.getElementById('selectKontingen').value;
-    if (!kontingen) return alert("Pilih kontingen terlebih dahulu!");
+                const sel = document.getElementById('selJuri');
+                if (!GAS_API_URL || GAS_API_URL.includes("GANTI_DENGAN_URL")) {
+                    sel.innerHTML = '<option value="">⚠️ Isikan URL Apps Script di index.html</option>';
+                    return;
+                }
 
-    const rincianNilai = {};
-    let totalSkor = 0;
+                try {
+                    const res = await fetch(GAS_API_URL);
+                    this.masterData = await res.json();
+                    this.renderJuriOptions();
+                    this.checkSession();
+                } catch (e) {
+                    console.error(e);
+                    sel.innerHTML = '<option value="">⚠️ Gagal terhubung ke server</option>';
+                }
+            },
 
-    const inputsSkor = document.querySelectorAll('.input-skor');
-    inputsSkor.forEach(input => {
-      const title = input.dataset.title;
-      const skorVal = Number(input.value || 0);
-      totalSkor += skorVal;
+            toggleTheme: function() {
+                this.isLightMode = !this.isLightMode;
+                const body = document.getElementById('appBody');
+                const ico = document.getElementById('icoTheme');
+                const imgHeader = document.getElementById('imgLogoHeader');
+                const imgLogin = document.getElementById('imgLogoLogin');
 
-      if (isPos5) {
-        const inputBidak = document.querySelector(`.input-bidak[data-title="${title}"]`);
-        const bidakVal = inputBidak ? (inputBidak.value || "-") : "-";
-        rincianNilai[title] = { no_bidak: bidakVal, skor: skorVal };
-      } else {
-        rincianNilai[title] = { skor: skorVal };
-      }
-    });
+                if (this.isLightMode) {
+                    body.classList.add('theme-light');
+                    ico.className = "fa-solid fa-moon text-slate-200";
+                    if (imgHeader) imgHeader.src = "logo1.png";
+                    if (imgLogin) imgLogin.src = "logo1.png";
+                } else {
+                    body.classList.remove('theme-light');
+                    ico.className = "fa-solid fa-sun text-amber-300";
+                    if (imgHeader) imgHeader.src = "logo.png";
+                    if (imgLogin) imgLogin.src = "logo.png";
+                }
+            },
 
-    const payload = {
-      nama_juri: activeJuri.NAMA_JURI,
-      pos_lomba: activeJuri.KODE_POS,
-      kontingen: kontingen,
-      total_skor: totalSkor,
-      durasi: timerSeconds,
-      catatan: document.getElementById('inputCatatan').value,
-      rincian_nilai: rincianNilai
-    };
+            renderJuriOptions: function() {
+                const sel = document.getElementById('selJuri');
+                sel.innerHTML = '<option value="">-- Pilih Nama Juri --</option>';
+                if (this.masterData && this.masterData.juri) {
+                    this.masterData.juri.forEach(j => {
+                        const id = j.ID_JURI || j.id_juri || j.ID || j.id;
+                        const nama = j.NAMA_JURI || j.nama_juri || j.NAMA || j.nama;
+                        const pos = j.KODE_POS || j.kode_pos || j.POS || j.pos;
+                        sel.innerHTML += `<option value="${id}">${nama} (${pos})</option>`;
+                    });
+                }
+            },
 
-    const btnSubmit = document.getElementById('btnSubmit');
-    btnSubmit.disabled = true;
-    btnSubmit.innerText = "Menyimpan Data...";
+            login: async function() {
+                const idJuri = document.getElementById('selJuri').value;
+                const pin = document.getElementById('txtPin').value;
 
-    fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify(payload)
-    })
-    .then(res => res.json())
-    .then(res => {
-      btnSubmit.disabled = false;
-      btnSubmit.innerText = "SIMPAN & CETAK HASIL";
+                if (!idJuri || !pin) return alert("Pilih Juri dan masukkan PIN!");
 
-      if (res.status === 'SUCCESS') {
-        alert("Penilaian berhasil disimpan!");
-        if (res.pdf_url) window.open(res.pdf_url, '_blank');
-        location.reload();
-      } else {
-        alert(res.message);
-      }
-    })
-    .catch(err => {
-      btnSubmit.disabled = false;
-      btnSubmit.innerText = "SIMPAN & CETAK HASIL";
-      alert("Gagal menyimpan data nilai!");
-    });
-  });
+                const btn = document.getElementById('btnLogin');
+                btn.disabled = true;
+                btn.innerText = "VERIFIKASI PIN...";
 
-  function logout() {
-    location.reload();
-  }
-</script>
-</body>
-</html>
+                try {
+                    const res = await fetch(GAS_API_URL, {
+                        method: "POST",
+                        body: JSON.stringify({ action: "LOGIN", id_juri: idJuri, pin: pin })
+                    });
+                    const result = await res.json();
+
+                    if (result.status === "SUCCESS") {
+                        this.currentJuri = result.juri;
+                        sessionStorage.setItem('juriSession', JSON.stringify(this.currentJuri));
+                        this.showDashboard();
+                    } else {
+                        alert("⚠️ " + (result.message || "PIN Salah!"));
+                    }
+                } catch(e) {
+                    alert("Gagal koneksi server: " + e.message);
+                } finally {
+                    btn.disabled = false;
+                    btn.innerText = "MASUK PORTAL";
+                }
+            },
+
+            checkSession: function() {
+                const sess = sessionStorage.getItem('juriSession');
+                if (sess) {
+                    this.currentJuri = JSON.parse(sess);
+                    this.showDashboard();
+                }
+            },
+
+            showDashboard: function() {
+                document.getElementById('secLogin').classList.add('hidden');
+                document.getElementById('secForm').classList.remove('hidden');
+                document.getElementById('navActions').classList.remove('hidden');
+
+                const namaJuri = this.currentJuri.NAMA_JURI || this.currentJuri.nama_juri || '';
+                const kodePos = this.currentJuri.KODE_POS || this.currentJuri.kode_pos || '';
+
+                document.getElementById('lblNamaJuri').innerText = namaJuri;
+                document.getElementById('lblPosJuri').innerText = kodePos;
+
+                this.renderKontingenOptions();
+                this.renderRubrikDinamis();
+                this.resetTimer();
+            },
+
+            renderKontingenOptions: function() {
+                const sel = document.getElementById('selKontingen');
+                sel.innerHTML = '<option value="">-- Pilih Tim (Belum Dinilai) --</option>';
+                
+                if (!this.masterData || !this.masterData.kontingen) return;
+
+                const posJuri = String(this.currentJuri ? (this.currentJuri.KODE_POS || this.currentJuri.kode_pos) : '').toUpperCase().trim();
+                const listLokal = JSON.parse(localStorage.getItem('sijum_history_v2')) || [];
+                let countTampil = 0;
+
+                this.masterData.kontingen.forEach(k => {
+                    const id = k.ID_KONTINGEN || k.id_kontingen || k.ID || k.id;
+                    const nama = k.NAMA_TIM || k.nama_tim || k.NAMA || k.nama;
+                    const kec = k.KECAMATAN || k.kecamatan || '';
+
+                    if (id || nama) {
+                        let sudah = false;
+                        if (posJuri && this.masterData.tracking) {
+                            const trackItem = this.masterData.tracking.find(t => 
+                                String(t.id_kontingen || '').trim() === String(id).trim() ||
+                                String(t.nama_tim || '').toLowerCase().trim() === String(nama).toLowerCase().trim()
+                            );
+                            if (trackItem && trackItem.pos_sudah) {
+                                const posSudahUpper = trackItem.pos_sudah.map(p => String(p).toUpperCase().trim());
+                                if (posSudahUpper.includes(posJuri)) sudah = true;
+                            }
+                        }
+
+                        if (!sudah && posJuri) {
+                            const diLokal = listLokal.some(h => 
+                                String(h.pos_lomba || '').toUpperCase().trim() === posJuri && 
+                                (h.kontingen.includes(id) || h.kontingen.includes(nama))
+                            );
+                            if (diLokal) sudah = true;
+                        }
+
+                        if (!sudah) {
+                            const displayLabel = id ? `${id} - ${nama}` : nama;
+                            sel.innerHTML += `<option value="${displayLabel}">${displayLabel} (${kec})</option>`;
+                            countTampil++;
+                        }
+                    }
+                });
+
+                if (countTampil === 0) {
+                    sel.innerHTML = '<option value="">🎉 Semua kontingen telah selesai dinilai di pos ini!</option>';
+                }
+
+                sel.onchange = () => this.resetTimer();
+            },
+
+            renderRubrikDinamis: function() {
+                const container = document.getElementById('containerRubrik');
+                const posJuri = String(this.currentJuri ? (this.currentJuri.KODE_POS || this.currentJuri.kode_pos) : '').toUpperCase().trim();
+                document.getElementById('lblKodePosRubrik').innerText = posJuri;
+                container.innerHTML = '';
+
+                if (!this.masterData || !this.masterData.rubrik) {
+                    container.innerHTML = '<p class="text-xs text-red-400">Data rubrik tidak ditemukan.</p>';
+                    return;
+                }
+
+                const items = this.masterData.rubrik.filter(r => {
+                    const rPos = String(r.KODE_POS || r.kode_pos || r.POS || r.pos || '').toUpperCase().trim();
+                    return rPos === posJuri;
+                });
+
+                if (items.length === 0) {
+                    container.innerHTML = '<p class="text-xs text-amber-400">Pos ini belum memiliki kriteria rubrik di tab RUBRIK.</p>';
+                    return;
+                }
+
+                items.forEach((item, index) => {
+                    const namaItem = item.NAMA_TANTANGAN || item.NAMA_ITEM || item.nama_item || item.item || item.NO_SOAL || `Item ${index + 1}`;
+                    const bobotMaks = parseFloat(item.SKOR_MAKSIMAL || item.BOBOT_MAKS || item.bobot_maks || item.maks || 100);
+                    
+                    // CEK KHUSUS ITEM BIDAK (POS-05 ULAR TANGGA)
+                    const isBidak = namaItem.toUpperCase().includes('BIDAK');
+
+                    // DUKUNGAN OPSI A, B, C, D DARI GOOGLE SHEETS RUBRIK
+                    let presets = [];
+                    if (item.OPSI_A || item.A) {
+                        const oA = parseFloat(item.OPSI_A || item.A);
+                        const oB = parseFloat(item.OPSI_B || item.B);
+                        const oC = parseFloat(item.OPSI_C || item.C);
+                        const oD = parseFloat(item.OPSI_D || item.D);
+                        if (!isNaN(oA)) presets.push(oA);
+                        if (!isNaN(oB)) presets.push(oB);
+                        if (!isNaN(oC)) presets.push(oC);
+                        if (!isNaN(oD)) presets.push(oD);
+                    } else if (item.OPTIONS || item.options) {
+                        const opts = item.OPTIONS || item.options;
+                        presets = opts.split(',').map(o => {
+                            const raw = o.trim();
+                            return raw.includes(':') ? parseFloat(raw.split(':')[1]) : parseFloat(raw);
+                        }).filter(n => !isNaN(n));
+                    }
+
+                    if (presets.length === 0 && !isBidak) {
+                        presets = [
+                            Math.round(bobotMaks * 0.25),
+                            Math.round(bobotMaks * 0.50),
+                            Math.round(bobotMaks * 0.75),
+                            bobotMaks
+                        ];
+                    }
+
+                    const buttonsHtml = presets.map(val => `
+                        <button type="button" 
+                                onclick="app.pilihPresetRubrik(this, 'inp_rubrik_${index}', ${val})" 
+                                class="btn-preset-${index} btn-opt-rubrik btn-preset-off flex-1 py-2 px-1 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg text-xs font-bold transition text-center shadow-sm">
+                            ${val}
+                        </button>
+                    `).join('');
+
+                    const div = document.createElement('div');
+                    div.className = "input-bg bg-slate-900 p-3 rounded-xl border border-slate-700 space-y-2.5";
+
+                    if (isBidak) {
+                        // TAMPILAN KHUSUS PETAK BIDAK (TIDAK HITUNG SKOR UTAMA)
+                        div.innerHTML = `
+                            <div class="flex justify-between items-center border-b border-slate-800 pb-1.5">
+                                <span class="text-xs font-bold text-amber-400 flex items-center gap-1">
+                                    <i class="fa-solid fa-dice text-amber-500"></i> ${namaItem} (Tie-Breaker)
+                                </span>
+                                <span class="text-[10px] bg-amber-950 text-amber-300 border border-amber-800 px-2 py-0.5 rounded font-mono">Bidak Petak Dadu</span>
+                            </div>
+                            <div class="flex justify-between items-center pt-1">
+                                <span class="text-[11px] text-sub text-slate-400">Nomor Bidak Terakhir:</span>
+                                <input id="inp_rubrik_${index}"
+                                       type="number" 
+                                       min="1" 
+                                       max="${bobotMaks}" 
+                                       data-item="${namaItem}" 
+                                       data-maks="${bobotMaks}" 
+                                       data-group="${index}"
+                                       data-is-bidak="true"
+                                       class="input-rubrik input-bg bg-slate-800 border border-amber-600 rounded-lg p-1.5 w-24 text-center font-bold text-amber-300 text-sm focus:border-red-500 outline-none" 
+                                       placeholder="No. Bidak">
+                            </div>
+                        `;
+                    } else {
+                        // TAMPILAN KRITERIA RUBRIK REGULER
+                        div.innerHTML = `
+                            <div class="flex justify-between items-center border-b border-slate-800 pb-1.5">
+                                <span class="text-xs font-bold text-sub">${namaItem}</span>
+                                <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono">Maks: ${bobotMaks}</span>
+                            </div>
+                            
+                            ${presets.length > 0 ? `<div class="flex gap-1.5">${buttonsHtml}</div>` : ''}
+
+                            <div class="flex justify-between items-center pt-1 border-t border-slate-800/60">
+                                <span class="text-[11px] text-sub text-slate-400">Atau Ketik Manual:</span>
+                                <input id="inp_rubrik_${index}"
+                                       type="number" 
+                                       min="0" 
+                                       max="${bobotMaks}" 
+                                       data-item="${namaItem}" 
+                                       data-maks="${bobotMaks}" 
+                                       data-group="${index}"
+                                       oninput="app.inputManualRubrik(this)" 
+                                       class="input-rubrik input-bg bg-slate-800 border border-slate-600 rounded-lg p-1.5 w-20 text-center font-bold text-amber-400 text-sm focus:border-red-500 outline-none" 
+                                       placeholder="0">
+                            </div>
+                        `;
+                    }
+                    container.appendChild(div);
+                });
+
+                this.setFormDisabled(true);
+            },
+
+            pilihPresetRubrik: function(btnElement, inputId, nilai) {
+                const inputElem = document.getElementById(inputId);
+                if (inputElem) {
+                    inputElem.value = nilai;
+                    const max = parseFloat(inputElem.getAttribute('data-maks')) || 100;
+                    if (nilai > max) inputElem.value = max;
+                }
+
+                const groupIndex = inputElem.getAttribute('data-group');
+                const allGroupBtns = document.querySelectorAll(`.btn-preset-${groupIndex}`);
+                allGroupBtns.forEach(b => {
+                    b.classList.remove('bg-amber-500', 'text-slate-900', 'border-amber-400', 'font-black');
+                    b.classList.add('btn-preset-off');
+                });
+
+                btnElement.classList.remove('btn-preset-off');
+                btnElement.classList.add('bg-amber-500', 'text-slate-900', 'border-amber-400', 'font-black');
+
+                this.hitungTotalAuto();
+            },
+
+            inputManualRubrik: function(inputElem) {
+                let val = parseFloat(inputElem.value) || 0;
+                const max = parseFloat(inputElem.getAttribute('data-maks')) || 100;
+                
+                if (val > max) {
+                    val = max;
+                    inputElem.value = max;
+                }
+
+                const groupIndex = inputElem.getAttribute
