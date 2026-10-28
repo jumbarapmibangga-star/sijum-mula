@@ -62,8 +62,6 @@
         .slide.active .anim-row:nth-child(1) { animation-delay: 0.1s; }
         .slide.active .anim-row:nth-child(2) { animation-delay: 0.2s; }
         .slide.active .anim-row:nth-child(3) { animation-delay: 0.3s; }
-        .slide.active .anim-row:nth-child(4) { animation-delay: 0.4s; }
-        .slide.active .anim-row:nth-child(5) { animation-delay: 0.5s; }
 
         /* ====== HIGHLIGHT BARU ====== */
         @keyframes highlight {
@@ -75,32 +73,38 @@
         }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans overflow-hidden">
+<body class="bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen font-sans overflow-hidden transition-colors duration-300">
 
     <!-- CONTAINER SLIDESHOW -->
     <div id="slideshow" class="relative w-full h-screen flex flex-col">
 
-        <!-- HEADER (tetap di semua slide) -->
-        <header class="flex justify-between items-center px-8 py-4 bg-slate-900/80 backdrop-blur border-b border-slate-800 z-20 flex-shrink-0">
+        <!-- HEADER -->
+        <header class="flex justify-between items-center px-8 py-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200 dark:border-slate-800 z-20 flex-shrink-0 transition-colors duration-300">
             <div class="flex items-center space-x-4">
-                <img id="slideLogo" src="logo.png" alt="Logo" class="h-12 w-auto">
+                <img id="slideLogo" src="logo.png" alt="Logo" class="h-12 w-auto transition-all">
                 <div>
-                    <h1 class="text-xl font-black tracking-wide text-white">JUMBARA PMR MULA KE-4</h1>
-                    <p class="text-xs text-slate-400">PMI Kab. Purbalingga 2026</p>
+                    <h1 class="text-xl font-black tracking-wide text-slate-900 dark:text-white">JUMBARA PMR MULA KE-4</h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">PMI Kab. Purbalingga 2026</p>
                 </div>
             </div>
-            <div class="flex items-center space-x-6">
+            <div class="flex items-center space-x-5">
                 <div class="text-right">
                     <span class="text-xs text-slate-500 block">Status</span>
-                    <span class="text-sm font-bold text-emerald-400 inline-flex items-center">
+                    <span class="text-sm font-bold text-emerald-600 dark:text-emerald-400 inline-flex items-center">
                         <span class="w-2 h-2 bg-emerald-500 rounded-full mr-2 animate-ping"></span> Live
                     </span>
                 </div>
-                <div class="text-right">
+                <div class="text-right hidden sm:block">
                     <span class="text-xs text-slate-500 block">Waktu</span>
-                    <span id="clockDisplay" class="text-sm font-mono font-bold text-white">--:--:--</span>
+                    <span id="clockDisplay" class="text-sm font-mono font-bold text-slate-900 dark:text-white">--:--:--</span>
                 </div>
-                <a href="dashboard-full.html" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded-lg font-bold transition" title="Mode Tabel Panitia">
+                
+                <!-- TOMBOL TEMA -->
+                <button onclick="toggleTheme()" id="themeToggleBtn" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-[#FF0040] hover:bg-slate-200 dark:hover:bg-slate-700 transition-all shadow-sm" title="Ubah Tema">
+                    <i id="themeIcon" class="fa-solid fa-moon"></i>
+                </button>
+
+                <a href="dashboard-full.html" class="text-xs bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-3 py-2 rounded-lg font-bold transition" title="Mode Tabel Panitia">
                     <i class="fa-solid fa-table-list mr-1"></i> Tabel
                 </a>
             </div>
@@ -114,25 +118,25 @@
             </div>
         </div>
 
-        <!-- FOOTER: PROGRESS BAR + DOTS + KONTROL -->
-        <footer class="bg-slate-900/80 backdrop-blur border-t border-slate-800 px-8 py-3 z-20 flex-shrink-0">
+        <!-- FOOTER -->
+        <footer class="bg-white/90 dark:bg-slate-900/90 backdrop-blur border-t border-slate-200 dark:border-slate-800 px-8 py-3 z-20 flex-shrink-0 transition-colors duration-300">
             <div class="flex items-center justify-between mb-2">
-                <div id="slideTitle" class="text-xs font-bold text-slate-400 uppercase tracking-wider"></div>
-                <div id="slideCounter" class="text-xs text-slate-500 font-mono"></div>
+                <div id="slideTitle" class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider"></div>
+                <div id="slideCounter" class="text-xs text-slate-400 dark:text-slate-500 font-mono"></div>
             </div>
-            <div class="w-full bg-slate-800 rounded-full overflow-hidden mb-3">
+            <div class="w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden mb-3">
                 <div id="progressBar"></div>
             </div>
             <div class="flex items-center justify-between">
                 <div id="dots" class="flex items-center space-x-2"></div>
                 <div class="flex items-center space-x-2">
-                    <button onclick="slideshow.togglePause()" id="btnPause" class="bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition" title="Pause/Play">
+                    <button onclick="slideshow.togglePause()" id="btnPause" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition" title="Pause/Play">
                         <i class="fa-solid fa-pause"></i>
                     </button>
-                    <button onclick="slideshow.prev()" class="bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition" title="Sebelumnya">
+                    <button onclick="slideshow.prev()" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition" title="Sebelumnya">
                         <i class="fa-solid fa-chevron-left"></i>
                     </button>
-                    <button onclick="slideshow.next()" class="bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition" title="Berikutnya">
+                    <button onclick="slideshow.next()" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition" title="Berikutnya">
                         <i class="fa-solid fa-chevron-right"></i>
                     </button>
                 </div>
@@ -141,6 +145,40 @@
     </div>
 
     <script>
+        // ============ SETUP THEME ============
+        const htmlElement = document.documentElement;
+        const themeIcon = document.getElementById('themeIcon');
+        const slideLogo = document.getElementById('slideLogo');
+
+        function updateLogoAndThemeUI() {
+            if (htmlElement.classList.contains('dark')) {
+                themeIcon.className = "fa-solid fa-moon";
+                slideLogo.src = "logo.png";
+            } else {
+                themeIcon.className = "fa-solid fa-sun";
+                slideLogo.src = "logo1.png";
+            }
+        }
+
+        // Load tema dari memori browser
+        if (localStorage.getItem('theme') === 'light') {
+            htmlElement.classList.remove('dark');
+        } else {
+            htmlElement.classList.add('dark');
+        }
+        updateLogoAndThemeUI();
+
+        function toggleTheme() {
+            if (htmlElement.classList.contains('dark')) {
+                htmlElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                htmlElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+            updateLogoAndThemeUI();
+        }
+
         // ============ API ============
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxty9GSbJQtMy-Z21ffd1H3fuOgPh8FgliuiZVGvpLutDwsHp9rnz2Dk_y8eS8-tirb/exec";
 
@@ -150,7 +188,7 @@
 
         // ============ SLIDESHOW ENGINE ============
         const slideshow = {
-            slides: [],         // array { title, html, duration }
+            slides: [],
             currentIndex: 0,
             isPaused: false,
             timer: null,
@@ -160,14 +198,14 @@
             build: function(data) {
                 this.slides = [];
 
-                // --- SLIDE 1: JUARA UMUM TOP 3 ---
+                // SLIDE 1: JUARA UMUM TOP 3
                 this.slides.push({
                     title: '🏆 Klasemen Juara Umum',
                     html: this.buildJuaraUmum(data.juara_umum || []),
                     duration: 15000
                 });
 
-                // --- SLIDE 2..N: PER POS (TOP 3) ---
+                // SLIDE 2..N: PER POS (TOP 3)
                 const posGroups = this.groupByPos(data.juara_pos || []);
                 const sortedPos = Object.keys(posGroups).sort();
 
@@ -180,7 +218,7 @@
                     });
                 });
 
-                // --- SLIDE TERAKHIR: TRACKING PROGRES ---
+                // SLIDE TERAKHIR: TRACKING PROGRES
                 this.slides.push({
                     title: '📊 Progres Penilaian Kontingen',
                     html: this.buildTracking(data.tracking || []),
@@ -209,14 +247,13 @@
                     if (!groups[pos]) groups[pos] = [];
                     groups[pos].push(row);
                 });
-                // Ambil top 3 per pos
                 for (const pos in groups) {
-                    groups[pos] = groups[pos].slice(0, 3);
+                    groups[pos] = groups[pos].slice(0, 3); // Ambil Top 3
                 }
                 return groups;
             },
 
-            // ============ BUILD JUARA UMUM (TOP 3) ============
+            // BUILD JUARA UMUM
             buildJuaraUmum: function(list) {
                 const top3 = list.slice(0, 3);
                 if (top3.length === 0) {
@@ -224,10 +261,11 @@
                 }
 
                 const medals = ['🥇', '🥈', '🥉'];
+                // Kartu menyesuaikan tema gelap/terang
                 const cardStyles = [
-                    'border-amber-500 bg-gradient-to-br from-amber-950/60 to-slate-900',
-                    'border-slate-400 bg-gradient-to-br from-slate-800/60 to-slate-900',
-                    'border-amber-700 bg-gradient-to-br from-amber-950/40 to-slate-900'
+                    'border-amber-500 bg-amber-50 dark:bg-gradient-to-br dark:from-amber-950/60 dark:to-slate-900 text-slate-900 dark:text-white',
+                    'border-slate-400 bg-slate-100 dark:bg-gradient-to-br dark:from-slate-800/60 dark:to-slate-900 text-slate-900 dark:text-white',
+                    'border-amber-700 bg-orange-50 dark:bg-gradient-to-br dark:from-amber-950/40 dark:to-slate-900 text-slate-900 dark:text-white'
                 ];
 
                 let rowsHtml = '';
@@ -241,48 +279,38 @@
                     const isNew = previousScores[tim] !== undefined && skor > previousScores[tim];
                     const highlightClass = isNew ? 'highlight-new' : '';
 
-                    // Ukuran berbeda untuk juara 1 (paling besar)
                     const cardSize = idx === 0 ? 'py-8' : 'py-5';
                     const medalSize = idx === 0 ? 'text-6xl' : 'text-5xl';
                     const nameSize = idx === 0 ? 'text-4xl' : 'text-3xl';
                     const scoreSize = idx === 0 ? 'text-6xl' : 'text-4xl';
 
                     rowsHtml += `
-                        <div class="anim-row ${highlightClass} border-l-8 ${cardStyles[idx]} ${cardSize} px-8 rounded-2xl shadow-2xl flex items-center justify-between transition-all">
+                        <div class="anim-row ${highlightClass} border-l-8 ${cardStyles[idx]} ${cardSize} px-8 rounded-2xl shadow-xl flex items-center justify-between transition-all">
                             <div class="flex items-center space-x-6">
                                 <span class="${medalSize}">${medals[idx]}</span>
                                 <div>
-                                    <h3 class="${nameSize} font-black text-white leading-tight">${tim}</h3>
-                                    <p class="text-sm text-slate-400 mt-1">
-                                        POS-03: <b class="text-slate-300">${pos3}</b>
-                                        · POS-04: <b class="text-slate-300">${pos4}</b>
-                                        · ⏱ <b class="text-slate-300">${timer}s</b>
+                                    <h3 class="${nameSize} font-black leading-tight">${tim}</h3>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                                        POS-03: <b class="text-slate-700 dark:text-slate-300">${pos3}</b>
+                                        · POS-04: <b class="text-slate-700 dark:text-slate-300">${pos4}</b>
+                                        · ⏱ <b class="text-slate-700 dark:text-slate-300">${timer}s</b>
                                     </p>
                                 </div>
                             </div>
                             <div class="text-right">
-                                <div class="text-xs text-slate-500 uppercase font-bold tracking-wider">Total Skor</div>
+                                <div class="text-xs text-slate-500 dark:text-slate-500 uppercase font-bold tracking-wider">Total Skor</div>
                                 <div class="${scoreSize} font-black text-[#FF0040] leading-none">${skor}</div>
                             </div>
                         </div>
                     `;
                 });
 
-                // Update previous scores untuk highlight di refresh berikutnya
-                top3.forEach(item => {
-                    previousScores[item.kontingen] = item.total_skor;
-                });
+                top3.forEach(item => { previousScores[item.kontingen] = item.total_skor; });
 
-                return `
-                    <div class="h-full flex flex-col justify-center px-12 py-6">
-                        <div class="space-y-4">
-                            ${rowsHtml}
-                        </div>
-                    </div>
-                `;
+                return `<div class="h-full flex flex-col justify-center px-12 py-6"><div class="space-y-4">${rowsHtml}</div></div>`;
             },
 
-            // ============ BUILD JUARA POS (TOP 3) ============
+            // BUILD JUARA POS
             buildJuaraPos: function(list, posKode) {
                 if (!list || list.length === 0) {
                     return '<div class="flex items-center justify-center h-full text-slate-500"><p class="text-2xl">Belum ada nilai</p></div>';
@@ -304,15 +332,15 @@
                     const scoreSize = idx === 0 ? 'text-5xl' : 'text-3xl';
 
                     const bidakInfo = isPos5 && bidak > 0 
-                        ? `<span class="text-purple-400 font-bold">🎲 ${bidak}</span>` 
+                        ? `<span class="text-purple-600 dark:text-purple-400 font-bold">🎲 ${bidak}</span>` 
                         : '';
 
                     rowsHtml += `
-                        <div class="anim-row bg-slate-900 border border-slate-700 ${rowSize} px-6 rounded-2xl shadow-xl flex items-center justify-between">
+                        <div class="anim-row bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 ${rowSize} px-6 rounded-2xl shadow-lg flex items-center justify-between">
                             <div class="flex items-center space-x-4">
                                 <span class="${medalSize}">${medals[idx]}</span>
                                 <div>
-                                    <h3 class="${nameSize} font-black text-white leading-tight">${tim}</h3>
+                                    <h3 class="${nameSize} font-black text-slate-900 dark:text-white leading-tight">${tim}</h3>
                                     <p class="text-xs text-slate-500 mt-1">
                                         ⏱ ${timer}s ${bidakInfo ? '· ' + bidakInfo : ''}
                                     </p>
@@ -323,45 +351,37 @@
                     `;
                 });
 
-                return `
-                    <div class="h-full flex flex-col justify-center px-12 py-6">
-                        <div class="space-y-4">
-                            ${rowsHtml}
-                        </div>
-                    </div>
-                `;
+                return `<div class="h-full flex flex-col justify-center px-12 py-6"><div class="space-y-4">${rowsHtml}</div></div>`;
             },
 
-            // ============ BUILD TRACKING ============
+            // BUILD TRACKING
             buildTracking: function(list) {
                 if (!list || list.length === 0) {
                     return '<div class="flex items-center justify-center h-full text-slate-500"><p class="text-2xl">Belum ada data tracking</p></div>';
                 }
 
-                // Urutkan: yang paling belum selesai di atas (butuh perhatian)
                 const sorted = [...list].sort((a, b) => {
                     const pA = a.selesai_count / a.total_pos;
                     const pB = b.selesai_count / b.total_pos;
                     return pA - pB;
                 });
 
-                // Bagi jadi 2 kolom
                 const mid = Math.ceil(sorted.length / 2);
                 const col1 = sorted.slice(0, mid);
                 const col2 = sorted.slice(mid);
 
                 const renderCard = (item) => {
-                    const totalPos = item.total_pos || 7;
+                    const totalPos = item.total_pos || 6;
                     const persen = Math.round((item.selesai_count / totalPos) * 100);
                     const barColor = persen === 100 ? 'bg-emerald-500' : persen >= 50 ? 'bg-amber-500' : 'bg-red-500';
 
                     return `
-                        <div class="bg-slate-900 border border-slate-700 p-3 rounded-xl">
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-3 rounded-xl shadow-sm">
                             <div class="flex justify-between items-center mb-1.5">
-                                <span class="text-sm font-bold text-white truncate">${item.id_kontingen} - ${item.nama_tim}</span>
-                                <span class="text-xs font-black ${persen === 100 ? 'text-emerald-400' : persen >= 50 ? 'text-amber-400' : 'text-red-400'}">${persen}%</span>
+                                <span class="text-sm font-bold text-slate-800 dark:text-white truncate">${item.id_kontingen} - ${item.nama_tim}</span>
+                                <span class="text-xs font-black ${persen === 100 ? 'text-emerald-600 dark:text-emerald-400' : persen >= 50 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}">${persen}%</span>
                             </div>
-                            <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                            <div class="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
                                 <div class="${barColor} h-2 rounded-full transition-all" style="width: ${persen}%"></div>
                             </div>
                             <div class="text-[10px] text-slate-500 mt-1">${item.selesai_count}/${totalPos} pos selesai</div>
@@ -371,19 +391,14 @@
 
                 return `
                     <div class="h-full overflow-y-auto px-8 py-6">
-                        <div class="grid grid-cols-2 gap-3">
-                            <div class="space-y-2">
-                                ${col1.map(renderCard).join('')}
-                            </div>
-                            <div class="space-y-2">
-                                ${col2.map(renderCard).join('')}
-                            </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-2">${col1.map(renderCard).join('')}</div>
+                            <div class="space-y-2">${col2.map(renderCard).join('')}</div>
                         </div>
                     </div>
                 `;
             },
 
-            // ============ RENDER SLIDES ============
             render: function() {
                 const container = document.getElementById('slideContainer');
                 container.innerHTML = '';
@@ -395,36 +410,30 @@
                     container.appendChild(div);
                 });
 
-                // Build dots
                 const dots = document.getElementById('dots');
                 dots.innerHTML = this.slides.map((_, i) => 
                     `<span class="dot ${i === 0 ? 'active' : ''}" onclick="slideshow.goTo(${i})"></span>`
                 ).join('');
             },
 
-            // ============ NAVIGASI ============
             goTo: function(idx) {
                 if (this.timer) clearTimeout(this.timer);
                 if (this.progressRAF) cancelAnimationFrame(this.progressRAF);
 
                 this.currentIndex = idx;
 
-                // Update active slide
                 document.querySelectorAll('.slide').forEach((s, i) => {
                     s.classList.toggle('active', i === idx);
                 });
 
-                // Update dots
                 document.querySelectorAll('.dot').forEach((d, i) => {
                     d.classList.toggle('active', i === idx);
                 });
 
-                // Update title & counter
                 const slide = this.slides[idx];
                 document.getElementById('slideTitle').innerText = slide.title;
                 document.getElementById('slideCounter').innerText = `${idx + 1} / ${this.slides.length}`;
 
-                // Start progress bar & timer
                 this.startProgress(slide.duration);
             },
 
@@ -479,25 +488,22 @@
                 } else {
                     btn.innerHTML = '<i class="fa-solid fa-pause"></i>';
                     btn.classList.remove('bg-amber-500', 'text-slate-900');
-                    this.goTo(this.currentIndex);  // restart
+                    this.goTo(this.currentIndex);
                 }
             }
         };
 
-        // ============ FETCH DATA ============
         async function loadData() {
             try {
                 const res = await fetch(GAS_API_URL + "?action=getData");
                 const data = await res.json();
                 masterData = data;
 
-                // Build ulang slideshow dengan data baru
                 const wasAtSlide = slideshow.currentIndex;
                 const wasPaused = slideshow.isPaused;
 
                 slideshow.build(data);
 
-                // Kembali ke slide yang sama (jika memungkinkan)
                 if (wasAtSlide < slideshow.slides.length) {
                     slideshow.goTo(wasAtSlide);
                 }
@@ -510,20 +516,17 @@
             }
         }
 
-        // ============ CLOCK ============
         function updateClock() {
             const now = new Date();
             document.getElementById('clockDisplay').innerText = now.toLocaleTimeString('id-ID');
         }
 
-        // ============ INIT ============
         function init() {
             updateClock();
             setInterval(updateClock, 1000);
 
             loadData();
-            // Refresh data setiap 30 detik (tidak mengganggu slideshow)
-            setInterval(loadData, 30000);
+            setInterval(loadData, 30000); // Refresh 30 detik
         }
 
         init();
