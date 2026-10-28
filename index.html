@@ -61,6 +61,9 @@
                     <button onclick="app.bukaRiwayat()" class="bg-red-900/60 text-amber-300 p-1.5 rounded-lg text-xs font-bold" title="Riwayat">
                         <i class="fa-solid fa-clock-rotate-left"></i>
                     </button>
+                    <button onclick="app.resetHistoryLokal()" class="bg-red-900/60 text-amber-300 p-1.5 rounded-lg text-xs font-bold" title="Reset History Lokal (cache HP)">
+                        <i class="fa-solid fa-broom"></i>
+                    </button>
                     <button onclick="app.logout()" class="bg-red-900/60 text-red-200 p-1.5 rounded-lg text-xs font-bold" title="Keluar">
                         <i class="fa-solid fa-right-from-bracket"></i>
                     </button>
@@ -244,6 +247,7 @@
                 try {
                     const res = await fetch(GAS_API_URL + "?action=getData");
                     this.masterData = await res.json();
+                    this.syncHistoryLokal();   // PATCH: sinkronkan localStorage dengan server
                     this.renderJuriOptions();
                     this.checkSession();
                 } catch (e) {
@@ -254,9 +258,6 @@
 
             // =====================================================================
             // PATCH: getNamaPos versi robust
-            // - Handle "POS-03 TEORI", "POS 03 TEORI", "POS3 TEORI", "POS-3 TEORI"
-            // - Fallback ke base code jika suffix tidak ketemu
-            // - Logika disamakan dengan backend gsnew.txt (normalizePosGroup)
             // =====================================================================
             getNamaPos: function(kode) {
                 if (!kode) return "-";
@@ -264,16 +265,13 @@
 
                 const raw = String(kode).toUpperCase().trim();
 
-                // Deteksi suffix Teori/Praktik
                 const isTeori = /\bTEORI\b/.test(raw);
                 const isPraktik = /\bPRAKTIK\b|\bPRAKTEK\b/.test(raw);
 
-                // Normalisasi ke base code: "POS-03", "POS 03", "POS3", "POS-3" → "POS-03"
                 const normalize = (s) => {
                     const u = String(s || "").toUpperCase().trim();
                     if (/POS[\s\-]?0?3/.test(u)) return "POS-03";
                     if (/POS[\s\-]?0?4/.test(u)) return "POS-04";
-                    // Untuk pos lain (01, 02, 05, 06, 07)
                     const m = u.match(/POS[\s\-]?0*(\d+)/);
                     if (m) return "POS-" + String(m[1]).padStart(2, "0");
                     return u;
@@ -294,6 +292,50 @@
                     return baseName;
                 }
                 return kode;
+            },
+
+            // =====================================================================
+            // PATCH: Sinkronisasi localStorage dengan server
+            // Menghapus entri lokal yang sudah tidak ada di sheet NILAI
+            // =====================================================================
+            syncHistoryLokal: function() {
+                let history = JSON.parse(localStorage.getItem('sijum_history_v2')) || [];
+                if (history.length === 0) return;
+                if (!this.masterData || !this.masterData.nilai) return;
+
+                const serverSet = new Set();
+                this.masterData.nilai.forEach(n => {
+                    const pos = String(n.POS_LOMBA || n.pos_lomba || '').toUpperCase().trim();
+                    const kont = String(n.KONTINGEN || n.kontingen || '').toLowerCase().trim();
+                    if (pos && kont) serverSet.add(pos + '|' + kont);
+                });
+
+                const filtered = history.filter(h => {
+                    const pos = String(h.pos_lomba || '').toUpperCase().trim();
+                    const kont = String(h.kontingen || '').toLowerCase().trim();
+                    return serverSet.has(pos + '|' + kont);
+                });
+
+                if (filtered.length !== history.length) {
+                    const dihapus = history.length - filtered.length;
+                    localStorage.setItem('sijum_history_v2', JSON.stringify(filtered));
+                    console.log(`🔄 Sync: ${dihapus} entri lokal dihapus (sudah tidak ada di server).`);
+                }
+            },
+
+            // =====================================================================
+            // PATCH: Reset history lokal manual (tombol broom)
+            // =====================================================================
+            resetHistoryLokal: function() {
+                if (!confirm("⚠️ Hapus SEMUA riwayat penilaian di HP ini?\n\nData di sheet NILAI TIDAK terhapus.\nHanya cache lokal yang dibersihkan.\n\nLanjutkan?")) return;
+
+                localStorage.removeItem('sijum_history_v2');
+                alert("✅ History lokal dibersihkan.\nTim yang sudah dinilai akan muncul kembali di dropdown.");
+
+                if (this.masterData) {
+                    this.renderKontingenOptions();
+                    this.renderRubrikDinamis();
+                }
             },
 
             toggleTheme: function() {
@@ -404,7 +446,6 @@
 
                     if (id || nama) {
                         let sudah = false;
-                        // Cek dari masterData.nilai (data server, paling akurat)
                         if (posJuriRaw && this.masterData.nilai) {
                             sudah = this.masterData.nilai.some(n => {
                                 const nPos = String(n.POS_LOMBA || n.pos_lomba || '').toUpperCase().trim();
@@ -414,7 +455,6 @@
                             });
                         }
 
-                        // Cek dari localStorage (cadangan jika server lambat update)
                         if (!sudah && posJuriRaw) {
                             sudah = listLokal.some(h => 
                                 String(h.pos_lomba || '').toUpperCase().trim() === posJuriRaw && 
@@ -719,7 +759,6 @@
             },
 
             logout: function() {
-                // Stop timer dulu sebelum logout
                 if (this.timerRunning) {
                     this.timerRunning = false;
                     clearInterval(this.timerInterval);
@@ -798,9 +837,7 @@
 
                 if (!valKont) return alert("Pilih Kontingen / Tim terlebih dahulu!");
 
-                // =====================================================
-                // PATCH A: Auto-stop timer sebelum proses simpan
-                // =====================================================
+                // Auto-stop timer sebelum simpan
                 if (this.timerRunning) {
                     this.timerRunning = false;
                     clearInterval(this.timerInterval);
@@ -843,16 +880,11 @@
                 btnSimpan.classList.add('opacity-50', 'cursor-not-allowed');
                 btnSimpan.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>PROSES PDF & SIMPAN...</span>`;
 
-                // =====================================================
-                // PATCH B: nama_pos DIHAPUS dari payload
-                // Backend (getNamaPosFromSheet) yang menentukan nama resmi.
-                // Ini double safety jika ada HP yang masih pakai index.html lama.
-                // =====================================================
+                // nama_pos TIDAK dikirim — backend (getNamaPosFromSheet) yang menentukan
                 const payload = {
                     action: "SIMPAN_NILAI",
                     nama_juri: namaJuri,
                     pos_lomba: posJuri,
-                    // nama_pos: namaPos,  ← DIHAPUS
                     kontingen: valKont,
                     total_skor: totalSkor,
                     durasi: durasi,
@@ -868,7 +900,6 @@
                     const result = await res.json();
 
                     if (result.status === "SUCCESS") {
-                        // Nama pos untuk struk lokal — tetap pakai getNamaPos frontend
                         const namaPosLocal = this.getNamaPos(posJuri);
 
                         const itemRiwayat = {
@@ -886,9 +917,6 @@
 
                         let history = JSON.parse(localStorage.getItem('sijum_history_v2')) || [];
                         history.unshift(itemRiwayat);
-                        // =====================================================
-                        // PATCH C: Batasi history max 50 entri
-                        // =====================================================
                         if (history.length > 50) history = history.slice(0, 50);
                         localStorage.setItem('sijum_history_v2', JSON.stringify(history));
 
