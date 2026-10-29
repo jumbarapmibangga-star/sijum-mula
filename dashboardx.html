@@ -1,1 +1,520 @@
 
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slideshow Dashboard - Jumbara PMR</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: { colors: { pmi: { red: '#FF0040' } } } }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ====== DASAR SLIDE ====== */
+        .slide { position: absolute; inset: 0; opacity: 0; transition: opacity 0.8s ease-in-out; pointer-events: none; overflow: hidden; }
+        .slide.active { opacity: 1; pointer-events: auto; }
+        #progressBar { height: 4px; background: #FF0040; width: 100%; transition: none; border-radius: 9999px; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(148, 163, 184, 0.4); transition: all 0.3s; cursor: pointer; }
+        .dot.active { background: #FF0040; width: 24px; border-radius: 4px; }
+
+        /* ====== ANIMASI ====== */
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .slide.active .anim-row { animation: fadeInUp 0.6s ease-out backwards; }
+        .slide.active .anim-row:nth-child(1) { animation-delay: 0.1s; }
+        .slide.active .anim-row:nth-child(2) { animation-delay: 0.2s; }
+        .slide.active .anim-row:nth-child(3) { animation-delay: 0.3s; }
+
+        /* ====== GLASSMORPHISM ====== */
+        .glass-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px 0 rgba(0, 0, 0, 0.5);
+        }
+        .light .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 30px 0 rgba(0, 0, 0, 0.1);
+        }
+        .glass-gold { border: 2px solid #fbbf24; box-shadow: 0 0 20px rgba(251, 191, 36, 0.3); }
+        .glass-silver { border: 2px solid #94a3b8; }
+        .glass-bronze { border: 2px solid #b45309; }
+
+        /* ====== TEMA 3: MEGA BOLD ====== */
+        .mega-text { font-size: 10rem; line-height: 1; font-weight: 900; letter-spacing: -0.05em; }
+    </style>
+</head>
+<body class="bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen font-sans overflow-hidden transition-colors duration-300">
+
+    <div id="slideshow" class="relative w-full h-screen flex flex-col">
+        <!-- HEADER -->
+        <header class="flex justify-between items-center px-6 py-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200 dark:border-slate-800 z-20 flex-shrink-0 transition-colors duration-300">
+            <div class="flex items-center space-x-4">
+                <img id="slideLogo" src="logo.png" alt="Logo" class="h-10 w-auto transition-all">
+                <div>
+                    <h1 class="text-lg font-black tracking-wide text-slate-900 dark:text-white">JUMBARA PMR MULA KE-4</h1>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400">PMI Kab. Purbalingga 2026</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="text-right hidden sm:block">
+                    <span class="text-[10px] text-slate-500 block">Waktu</span>
+                    <span id="clockDisplay" class="text-xs font-mono font-bold text-slate-900 dark:text-white">--:--:--</span>
+                </div>
+                
+                <!-- TOMBOL PILIH TEMA -->
+                <div class="flex bg-slate-200 dark:bg-slate-800 rounded-lg p-1 text-xs font-bold">
+                    <button onclick="changeTheme('classic')" id="btnThemeClassic" class="px-2 py-1 rounded bg-white dark:bg-slate-700 shadow text-slate-900 dark:text-white">Klasik</button>
+                    <button onclick="changeTheme('glass')" id="btnThemeGlass" class="px-2 py-1 rounded hover:bg-white/50 dark:hover:bg-slate-700 text-slate-500">Kaca</button>
+                    <button onclick="changeTheme('mega')" id="btnThemeMega" class="px-2 py-1 rounded hover:bg-white/50 dark:hover:bg-slate-700 text-slate-500">Bold</button>
+                </div>
+
+                <button onclick="toggleMode()" id="themeToggleBtn" class="p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-[#FF0040] hover:bg-slate-200 dark:hover:bg-slate-700 transition-all shadow-sm" title="Ubah Mode Gelap/Terang">
+                    <i id="themeIcon" class="fa-solid fa-moon"></i>
+                </button>
+                <a href="dashboard-full.html" class="text-xs bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-3 py-2 rounded-lg font-bold transition" title="Mode Tabel Panitia">
+                    <i class="fa-solid fa-table-list"></i>
+                </a>
+            </div>
+        </header>
+
+        <!-- SLIDE CONTAINER -->
+        <div id="slideContainer" class="relative flex-grow z-10">
+            <div class="text-center text-slate-500 py-20">
+                <i class="fa-solid fa-spinner fa-spin text-3xl mb-3"></i>
+                <p class="text-sm">Memuat data dashboard...</p>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <footer class="bg-white/90 dark:bg-slate-900/90 backdrop-blur border-t border-slate-200 dark:border-slate-800 px-6 py-2 z-20 flex-shrink-0 transition-colors duration-300">
+            <div class="flex items-center justify-between mb-1">
+                <div id="slideTitle" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider"></div>
+                <div id="slideCounter" class="text-[10px] text-slate-400 dark:text-slate-500 font-mono"></div>
+            </div>
+            <div class="w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden mb-2">
+                <div id="progressBar"></div>
+            </div>
+            <div class="flex items-center justify-between">
+                <div id="dots" class="flex items-center space-x-1.5"></div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="slideshow.togglePause()" id="btnPause" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-white px-2 py-1 rounded text-[10px] font-bold transition">
+                        <i class="fa-solid fa-pause"></i>
+                    </button>
+                    <button onclick="slideshow.prev()" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-white px-2 py-1 rounded text-[10px] font-bold transition">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <button onclick="slideshow.next()" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-white px-2 py-1 rounded text-[10px] font-bold transition">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // ============ VARIABEL GLOBAL ============
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxty9GSbJQtMy-Z21ffd1H3fuOgPh8FgliuiZVGvpLutDwsHp9rnz2Dk_y8eS8-tirb/exec";
+        let masterData = null;
+        let previousScores = {};
+        let currentVisualTheme = localStorage.getItem('visualTheme') || 'classic';
+
+        // ============ PENGATURAN TEMA VISUAL ============
+        function changeTheme(themeName) {
+            currentVisualTheme = themeName;
+            localStorage.setItem('visualTheme', themeName);
+
+            // Reset gaya tombol
+            ['Classic', 'Glass', 'Mega'].forEach(t => {
+                const btn = document.getElementById(`btnTheme${t}`);
+                btn.className = "px-2 py-1 rounded hover:bg-white/50 dark:hover:bg-slate-700 text-slate-500";
+            });
+
+            // Highlight tombol terpilih
+            const activeBtn = document.getElementById(`btnTheme${themeName.charAt(0).toUpperCase() + themeName.slice(1)}`);
+            if(activeBtn) activeBtn.className = "px-2 py-1 rounded bg-white dark:bg-slate-700 shadow text-slate-900 dark:text-white";
+
+            // Render ulang slideshow dengan tema baru
+            if (masterData) slideshow.build(masterData);
+        }
+
+        // Setup awal tombol tema
+        setTimeout(() => changeTheme(currentVisualTheme), 100);
+
+
+        // ============ MODE GELAP / TERANG ============
+        const htmlElement = document.documentElement;
+        const themeIcon = document.getElementById('themeIcon');
+        const slideLogo = document.getElementById('slideLogo');
+
+        function updateLogoAndThemeUI() {
+            if (htmlElement.classList.contains('dark')) {
+                themeIcon.className = "fa-solid fa-moon";
+                slideLogo.src = "logo.png";
+            } else {
+                themeIcon.className = "fa-solid fa-sun";
+                slideLogo.src = "logo1.png";
+            }
+        }
+
+        if (localStorage.getItem('theme') === 'light') htmlElement.classList.remove('dark');
+        else htmlElement.classList.add('dark');
+        updateLogoAndThemeUI();
+
+        function toggleMode() {
+            if (htmlElement.classList.contains('dark')) {
+                htmlElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                htmlElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+            updateLogoAndThemeUI();
+        }
+
+        // ============ ENGINE SLIDESHOW ============
+        const slideshow = {
+            slides: [], currentIndex: 0, isPaused: false, timer: null, progressRAF: null,
+
+            build: function(data) {
+                this.slides = [];
+                this.slides.push({ title: '🏆 Klasemen Juara Umum', html: this.buildJuaraUmum(data.juara_umum || []), duration: 15000 });
+
+                const posGroups = this.groupByPos(data.juara_pos || []);
+                const sortedPos = Object.keys(posGroups).sort();
+
+                sortedPos.forEach(posKode => {
+                    const posName = this.getPosName(data.pos || [], posKode);
+                    this.slides.push({ title: `🚩 ${posKode} — ${posName}`, html: this.buildJuaraPos(posGroups[posKode], posKode), duration: 10000 });
+                });
+
+                this.slides.push({ title: '📊 Progres Penilaian Kontingen', html: this.buildTracking(data.tracking || []), duration: 15000 });
+
+                this.render();
+                this.goTo(0);
+            },
+
+            getPosName: function(posList, kode) {
+                const found = posList.find(p => {
+                    const k = String(p.KODE_POS || p.kode_pos || p.POS || p.pos || '').toUpperCase().trim();
+                    return k === kode || k.replace(/^POS-?0*/, 'POS') === kode.replace(/^POS-?0*/, 'POS');
+                });
+                if (found) {
+                    let nama = found.NAMA_POS || found.nama_pos || found.NAMA_LOMBA || found.nama_lomba || found.NAMA || found.nama || kode;
+                    return nama.replace(/\s*\(T\)$/i, '').replace(/\s*\(P\)$/i, '').trim();
+                }
+                return kode;
+            },
+
+            groupByPos: function(list) {
+                const groups = {};
+                list.forEach(row => {
+                    const pos = row.pos_lomba || row.POS_LOMBA || 'LAINNYA';
+                    if (!groups[pos]) groups[pos] = [];
+                    groups[pos].push(row);
+                });
+                for (const pos in groups) groups[pos] = groups[pos].slice(0, 3);
+                return groups;
+            },
+
+            // ==========================================
+            // MEMBANGUN TAMPILAN JUARA UMUM (3 TEMA)
+            // ==========================================
+            buildJuaraUmum: function(list) {
+                const top3 = list.slice(0, 3);
+                if (top3.length === 0) return '<div class="flex items-center justify-center h-full text-slate-500"><p class="text-2xl">Belum ada nilai masuk</p></div>';
+
+                if (currentVisualTheme === 'glass') {
+                    return this.buildJuaraUmumGlass(top3);
+                } else if (currentVisualTheme === 'mega') {
+                    return this.buildJuaraUmumMega(top3);
+                } else {
+                    return this.buildJuaraUmumClassic(top3);
+                }
+            },
+
+            buildJuaraUmumClassic: function(top3) {
+                const medals = ['🥇', '🥈', '🥉'];
+                const cardStyles = [
+                    'border-amber-500 bg-amber-50 dark:bg-gradient-to-br dark:from-amber-950/60 dark:to-slate-900 text-slate-900 dark:text-white',
+                    'border-slate-400 bg-slate-100 dark:bg-gradient-to-br dark:from-slate-800/60 dark:to-slate-900 text-slate-900 dark:text-white',
+                    'border-amber-700 bg-orange-50 dark:bg-gradient-to-br dark:from-amber-950/40 dark:to-slate-900 text-slate-900 dark:text-white'
+                ];
+
+                let rowsHtml = '';
+                top3.forEach((item, idx) => {
+                    const tim = item.kontingen || '-';
+                    const skor = item.total_skor || 0;
+                    const isNew = previousScores[tim] !== undefined && skor > previousScores[tim];
+                    const highlightClass = isNew ? 'highlight-new' : '';
+
+                    const cardSize = idx === 0 ? 'py-8' : 'py-5';
+                    const medalSize = idx === 0 ? 'text-6xl' : 'text-5xl';
+                    const nameSize = idx === 0 ? 'text-4xl' : 'text-3xl';
+                    const scoreSize = idx === 0 ? 'text-6xl' : 'text-4xl';
+
+                    rowsHtml += `
+                        <div class="anim-row ${highlightClass} border-l-8 ${cardStyles[idx]} ${cardSize} px-8 rounded-2xl shadow-xl flex items-center justify-between transition-all">
+                            <div class="flex items-center space-x-6">
+                                <span class="${medalSize}">${medals[idx]}</span>
+                                <div>
+                                    <h3 class="${nameSize} font-black leading-tight">${tim}</h3>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                        P2: <b class="text-slate-700 dark:text-slate-300">${item.skor_pos02 || 0}</b> · 
+                                        P1: <b class="text-slate-700 dark:text-slate-300">${item.skor_pos01 || 0}</b> · 
+                                        P4: <b class="text-slate-700 dark:text-slate-300">${item.skor_pos04 || 0}</b> · 
+                                        ⏱ <b class="text-slate-700 dark:text-slate-300">${item.total_durasi || 0}s</b>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs text-slate-500 dark:text-slate-500 uppercase font-bold tracking-wider">Total Skor</div>
+                                <div class="${scoreSize} font-black text-[#FF0040] leading-none">${skor}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                top3.forEach(item => { previousScores[item.kontingen] = item.total_skor; });
+                return `<div class="h-full flex flex-col justify-center px-12 py-6"><div class="space-y-4">${rowsHtml}</div></div>`;
+            },
+
+            buildJuaraUmumGlass: function(top3) {
+                let podiumHtml = '';
+                const medals = ['🥇', '🥈', '🥉'];
+                
+                // Juara 1 (Tengah Atas)
+                if(top3[0]) {
+                    const t1 = top3[0];
+                    podiumHtml += `
+                        <div class="anim-row flex justify-center mb-6 w-full">
+                            <div class="glass-card glass-gold rounded-3xl p-6 flex flex-col items-center justify-center w-[600px] relative overflow-hidden">
+                                <div class="absolute -top-10 -right-10 text-9xl opacity-10">🏆</div>
+                                <span class="text-7xl mb-2 drop-shadow-lg">${medals[0]}</span>
+                                <h3 class="text-4xl font-black text-slate-900 dark:text-white mb-2 text-center">${t1.kontingen}</h3>
+                                <div class="text-6xl font-black text-[#FF0040] drop-shadow-md mb-3">${t1.total_skor}</div>
+                                <div class="flex gap-2 text-xs font-bold">
+                                    <span class="bg-slate-200 dark:bg-slate-800 px-3 py-1 rounded-full">P2: ${t1.skor_pos02 || 0}</span>
+                                    <span class="bg-slate-200 dark:bg-slate-800 px-3 py-1 rounded-full">P1: ${t1.skor_pos01 || 0}</span>
+                                    <span class="bg-slate-200 dark:bg-slate-800 px-3 py-1 rounded-full">P4: ${t1.skor_pos04 || 0}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // Juara 2 & 3 (Bawah)
+                podiumHtml += `<div class="flex justify-center gap-6 w-full">`;
+                if(top3[1]) {
+                    const t2 = top3[1];
+                    podiumHtml += `
+                        <div class="anim-row glass-card glass-silver rounded-2xl p-5 flex flex-col items-center justify-center w-[350px]">
+                            <span class="text-5xl mb-2">${medals[1]}</span>
+                            <h3 class="text-2xl font-black text-slate-800 dark:text-slate-200 mb-1 text-center">${t2.kontingen}</h3>
+                            <div class="text-4xl font-black text-slate-700 dark:text-white mb-2">${t2.total_skor}</div>
+                        </div>
+                    `;
+                }
+                if(top3[2]) {
+                    const t3 = top3[2];
+                    podiumHtml += `
+                        <div class="anim-row glass-card glass-bronze rounded-2xl p-5 flex flex-col items-center justify-center w-[350px]">
+                            <span class="text-5xl mb-2">${medals[2]}</span>
+                            <h3 class="text-2xl font-black text-slate-800 dark:text-slate-200 mb-1 text-center">${t3.kontingen}</h3>
+                            <div class="text-4xl font-black text-slate-700 dark:text-white mb-2">${t3.total_skor}</div>
+                        </div>
+                    `;
+                }
+                podiumHtml += `</div>`;
+
+                return `<div class="h-full flex flex-col justify-center items-center px-8 py-4 relative">
+                    <!-- Efek Cahaya Latar -->
+                    <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-red-500/20 rounded-full blur-3xl"></div>
+                    <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-amber-500/20 rounded-full blur-3xl"></div>
+                    <div class="relative z-10 w-full flex flex-col items-center">${podiumHtml}</div>
+                </div>`;
+            },
+
+            buildJuaraUmumMega: function(top3) {
+                const medals = ['🥇', '🥈', '🥉'];
+                let rowsHtml = '';
+                top3.forEach((item, idx) => {
+                    const tim = item.kontingen || '-';
+                    const skor = item.total_skor || 0;
+                    
+                    // Tema Mega: Warna sangat kontras (Hitam/Abu Gelap + Teks Putih/Merah)
+                    const bgClass = idx === 0 ? 'bg-[#FF0040] text-white' : 'bg-slate-900 text-white border-2 border-slate-700';
+                    const scoreColor = idx === 0 ? 'text-white' : 'text-[#FF0040]';
+                    
+                    rowsHtml += `
+                        <div class="anim-row ${bgClass} flex justify-between items-center px-10 py-4 w-full mx-auto rounded-none mb-2 shadow-2xl">
+                            <div class="flex items-center gap-6">
+                                <span class="text-6xl">${medals[idx]}</span>
+                                <h3 class="text-5xl font-black uppercase tracking-tighter">${tim}</h3>
+                            </div>
+                            <div class="mega-text ${scoreColor}">${skor}</div>
+                        </div>
+                    `;
+                });
+                
+                return `<div class="h-full flex flex-col justify-center w-full px-0 py-4">${rowsHtml}</div>`;
+            },
+
+            buildJuaraPos: function(list, posKode) {
+                if (!list || list.length === 0) return '<div class="flex items-center justify-center h-full text-slate-500"><p class="text-2xl">Belum ada nilai</p></div>';
+                const medals = ['🥇', '🥈', '🥉'];
+                const isPos5 = posKode === 'POS-05';
+                let rowsHtml = '';
+                
+                list.forEach((item, idx) => {
+                    const tim = item.kontingen || '-';
+                    const skor = item.total_skor || 0;
+                    const bidakInfo = isPos5 && item.no_bidak > 0 ? `<span class="text-purple-600 dark:text-purple-400 font-bold ml-2">🎲 ${item.no_bidak}</span>` : '';
+                    
+                    const rowSize = idx === 0 ? 'py-6' : 'py-4';
+                    const medalSize = idx === 0 ? 'text-5xl' : 'text-4xl';
+                    const nameSize = idx === 0 ? 'text-3xl' : 'text-2xl';
+                    const scoreSize = idx === 0 ? 'text-5xl' : 'text-3xl';
+
+                    rowsHtml += `
+                        <div class="anim-row bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 ${rowSize} px-6 rounded-2xl shadow-lg flex items-center justify-between">
+                            <div class="flex items-center space-x-4">
+                                <span class="${medalSize}">${medals[idx]}</span>
+                                <div>
+                                    <h3 class="${nameSize} font-black text-slate-900 dark:text-white leading-tight">${tim} ${bidakInfo}</h3>
+                                    <p class="text-xs text-slate-500 mt-1">⏱ ${item.total_durasi || 0}s</p>
+                                </div>
+                            </div>
+                            <div class="${scoreSize} font-black text-[#FF0040]">${skor}</div>
+                        </div>
+                    `;
+                });
+                return `<div class="h-full flex flex-col justify-center px-12 py-6"><div class="space-y-4">${rowsHtml}</div></div>`;
+            },
+
+            buildTracking: function(list) {
+                if (!list || list.length === 0) return '<div class="flex items-center justify-center h-full text-slate-500"><p class="text-2xl">Belum ada data tracking</p></div>';
+                const sorted = [...list].sort((a, b) => (a.selesai_count / a.total_pos) - (b.selesai_count / b.total_pos));
+                const mid = Math.ceil(sorted.length / 2);
+                const col1 = sorted.slice(0, mid);
+                const col2 = sorted.slice(mid);
+
+                const renderCard = (item) => {
+                    const totalPos = item.total_pos || 6;
+                    const persen = Math.round((item.selesai_count / totalPos) * 100);
+                    const barColor = persen === 100 ? 'bg-emerald-500' : persen >= 50 ? 'bg-amber-500' : 'bg-red-500';
+                    return `
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-3 rounded-xl shadow-sm">
+                            <div class="flex justify-between items-center mb-1.5">
+                                <span class="text-sm font-bold text-slate-800 dark:text-white truncate">${item.id_kontingen} - ${item.nama_tim}</span>
+                                <span class="text-xs font-black ${persen === 100 ? 'text-emerald-600 dark:text-emerald-400' : persen >= 50 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}">${persen}%</span>
+                            </div>
+                            <div class="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
+                                <div class="${barColor} h-2 rounded-full transition-all" style="width: ${persen}%"></div>
+                            </div>
+                        </div>
+                    `;
+                };
+
+                return `
+                    <div class="h-full overflow-y-auto px-8 py-6">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-2">${col1.map(renderCard).join('')}</div>
+                            <div class="space-y-2">${col2.map(renderCard).join('')}</div>
+                        </div>
+                    </div>
+                `;
+            },
+
+            render: function() {
+                const container = document.getElementById('slideContainer');
+                container.innerHTML = '';
+                this.slides.forEach((slide, idx) => {
+                    const div = document.createElement('div');
+                    div.className = 'slide' + (idx === 0 ? ' active' : '');
+                    div.innerHTML = slide.html;
+                    container.appendChild(div);
+                });
+                const dots = document.getElementById('dots');
+                dots.innerHTML = this.slides.map((_, i) => `<span class="dot ${i === 0 ? 'active' : ''}" onclick="slideshow.goTo(${i})"></span>`).join('');
+            },
+
+            goTo: function(idx) {
+                if (this.timer) clearTimeout(this.timer);
+                if (this.progressRAF) cancelAnimationFrame(this.progressRAF);
+                this.currentIndex = idx;
+                document.querySelectorAll('.slide').forEach((s, i) => s.classList.toggle('active', i === idx));
+                document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+                const slide = this.slides[idx];
+                document.getElementById('slideTitle').innerText = slide.title;
+                document.getElementById('slideCounter').innerText = `${idx + 1} / ${this.slides.length}`;
+                this.startProgress(slide.duration);
+            },
+
+            startProgress: function(duration) {
+                const bar = document.getElementById('progressBar');
+                bar.style.transition = 'none';
+                bar.style.width = '100%';
+                const startTime = performance.now();
+                const self = this;
+                const animate = (now) => {
+                    const remaining = Math.max(0, 1 - (now - startTime) / duration);
+                    bar.style.width = (remaining * 100) + '%';
+                    if (remaining > 0) self.progressRAF = requestAnimationFrame(animate);
+                };
+                setTimeout(() => { this.progressRAF = requestAnimationFrame(animate); }, 50);
+                if (!this.isPaused) this.timer = setTimeout(() => this.next(), duration);
+            },
+
+            next: function() { this.goTo((this.currentIndex + 1) % this.slides.length); },
+            prev: function() { this.goTo((this.currentIndex - 1 + this.slides.length) % this.slides.length); },
+            togglePause: function() {
+                this.isPaused = !this.isPaused;
+                const btn = document.getElementById('btnPause');
+                if (this.isPaused) {
+                    if (this.timer) clearTimeout(this.timer);
+                    if (this.progressRAF) cancelAnimationFrame(this.progressRAF);
+                    btn.innerHTML = '<i class="fa-solid fa-play"></i>';
+                    btn.classList.add('bg-amber-500', 'text-slate-900');
+                } else {
+                    btn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+                    btn.classList.remove('bg-amber-500', 'text-slate-900');
+                    this.goTo(this.currentIndex);
+                }
+            }
+        };
+
+        async function loadData() {
+            try {
+                const res = await fetch(GAS_API_URL + "?action=getData");
+                const data = await res.json();
+                masterData = data;
+                const wasAtSlide = slideshow.currentIndex;
+                const wasPaused = slideshow.isPaused;
+                slideshow.build(data);
+                if (wasAtSlide < slideshow.slides.length) slideshow.goTo(wasAtSlide);
+                if (wasPaused) slideshow.togglePause();
+            } catch (e) {
+                console.error("Gagal load data:", e);
+            }
+        }
+
+        function updateClock() {
+            document.getElementById('clockDisplay').innerText = new Date().toLocaleTimeString('id-ID');
+        }
+
+        function init() {
+            updateClock();
+            setInterval(updateClock, 1000);
+            loadData();
+            setInterval(loadData, 30000);
+        }
+
+        init();
+    </script>
+</body>
+</html>
