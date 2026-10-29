@@ -16,9 +16,9 @@
         /* ====== DASAR SLIDE ====== */
         .slide { position: absolute; inset: 0; opacity: 0; transition: opacity 0.8s ease-in-out; pointer-events: none; overflow: hidden; }
         .slide.active { opacity: 1; pointer-events: auto; }
-        #progressBar { height: 4px; background: #FF0040; width: 100%; transition: none; border-radius: 9999px; }
-        .dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(148, 163, 184, 0.4); transition: all 0.3s; cursor: pointer; }
-        .dot.active { background: #FF0040; width: 24px; border-radius: 4px; }
+        #progressBar { height: 4px; background: #FF0040; width: 100%; transition: none; border-radius: 4px; }
+        .dot { width: 8px; height: 8px; border-radius: 4px; background: rgba(148, 163, 184, 0.4); transition: all 0.3s; cursor: pointer; }
+        .dot.active { background: #FF0040; width: 24px; }
 
         /* ====== ANIMASI ====== */
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -26,16 +26,6 @@
         .slide.active .anim-row:nth-child(1) { animation-delay: 0.1s; }
         .slide.active .anim-row:nth-child(2) { animation-delay: 0.2s; }
         .slide.active .anim-row:nth-child(3) { animation-delay: 0.3s; }
-
-        @keyframes bounceIn { 
-            0% { opacity: 0; transform: scale(0.9) translateY(20px); } 
-            50% { opacity: 1; transform: scale(1.05) translateY(-5px); } 
-            100% { opacity: 1; transform: scale(1) translateY(0); } 
-        }
-        .festival-anim { animation: bounceIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) backwards; }
-        .festival-anim:nth-child(1) { animation-delay: 0.1s; }
-        .festival-anim:nth-child(2) { animation-delay: 0.2s; }
-        .festival-anim:nth-child(3) { animation-delay: 0.3s; }
 
         /* ====== TEMA KACA (GLASSMORPHISM) ====== */
         .glass-card { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 10px 30px 0 rgba(0, 0, 0, 0.5); }
@@ -61,36 +51,21 @@
         .swiss-card { background: #ffffff; color: #111827; border-left: 8px solid #FF0040; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
         .dark .swiss-card { background: #1e293b; color: #f1f5f9; }
 
-        /* ====== TEMA FESTIVAL (JUMPA BAKTI GEMBIRA) ====== */
+        /* ====== TEMA FESTIVAL ====== */
         .fest-bg { background: radial-gradient(circle at top left, #2e1065, #0f172a); }
         .light .fest-bg { background: radial-gradient(circle at top left, #fdf4ff, #f8fafc); }
-        
-        .fest-card-1 { 
-            background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(168, 85, 247, 0.15));
-            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-            border: 2px solid rgba(236, 72, 153, 0.5);
-            box-shadow: 0 0 30px rgba(236, 72, 153, 0.3), inset 0 0 20px rgba(236, 72, 153, 0.1);
-        }
-        .fest-card-2 { 
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(16, 185, 129, 0.15));
-            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-            border: 2px solid rgba(59, 130, 246, 0.5);
-            box-shadow: 0 0 30px rgba(59, 130, 246, 0.3), inset 0 0 20px rgba(59, 130, 246, 0.1);
-        }
-        .fest-card-3 { 
-            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(239, 68, 68, 0.15));
-            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-            border: 2px solid rgba(245, 158, 11, 0.5);
-            box-shadow: 0 0 30px rgba(245, 158, 11, 0.3), inset 0 0 20px rgba(245, 158, 11, 0.1);
-        }
-        .fest-text-gradient {
-            background: linear-gradient(to right, #f472b6, #a78bfa, #38bdf8, #fbbf24);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-size: 200% auto;
-            animation: shine 3s linear infinite;
-        }
+        .fest-card-1 { background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(168, 85, 247, 0.15)); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 2px solid rgba(236, 72, 153, 0.5); box-shadow: 0 0 30px rgba(236, 72, 153, 0.3), inset 0 0 20px rgba(236, 72, 153, 0.1); }
+        .fest-card-2 { background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(16, 185, 129, 0.15)); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 2px solid rgba(59, 130, 246, 0.5); box-shadow: 0 0 30px rgba(59, 130, 246, 0.3), inset 0 0 20px rgba(59, 130, 246, 0.1); }
+        .fest-card-3 { background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(239, 68, 68, 0.15)); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 2px solid rgba(245, 158, 11, 0.5); box-shadow: 0 0 30px rgba(245, 158, 11, 0.3), inset 0 0 20px rgba(245, 158, 11, 0.1); }
+        .fest-text-gradient { background: linear-gradient(to right, #f472b6, #a78bfa, #38bdf8, #fbbf24); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-size: 200% auto; animation: shine 3s linear infinite; }
         @keyframes shine { to { background-position: 200% center; } }
+
+        /* ====== TEMA BOOTSTRAP ====== */
+        .bs-card { background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 6px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); color: #212529; }
+        .dark .bs-card { background-color: #2b3035; border: 1px solid #495057; color: #e9ecef; }
+        .bs-primary { color: #0d6efd; }
+        .bs-warning { background-color: #ffc107; color: #000; border-radius: 4px; padding: 2px 8px; font-weight: bold; }
+        .bs-badge { background-color: #0d6efd; color: white; border-radius: 4px; padding: 4px 8px; font-weight: 600; font-size: 0.8em; }
 
         /* ====== AUTO HIDE CURSOR ====== */
         body.hide-cursor, body.hide-cursor * { cursor: none !important; }
@@ -133,8 +108,8 @@
                     <button onclick="changeTheme('neon')" id="btnThemeNeon" class="px-2 py-1 rounded text-slate-500 hover:bg-white/50 dark:hover:bg-slate-700">Neon</button>
                     <button onclick="changeTheme('retro')" id="btnThemeRetro" class="px-2 py-1 rounded text-slate-500 hover:bg-white/50 dark:hover:bg-slate-700">Retro</button>
                     <button onclick="changeTheme('swiss')" id="btnThemeSwiss" class="px-2 py-1 rounded text-slate-500 hover:bg-white/50 dark:hover:bg-slate-700">Swiss</button>
-                    <!-- TOMBOL TEMA BARU -->
                     <button onclick="changeTheme('festival')" id="btnThemeFestival" class="px-2 py-1 rounded text-slate-500 hover:bg-white/50 dark:hover:bg-slate-700">Festival</button>
+                    <button onclick="changeTheme('bootstrap')" id="btnThemeBootstrap" class="px-2 py-1 rounded text-slate-500 hover:bg-white/50 dark:hover:bg-slate-700">Bootstrap</button>
                 </div>
 
                 <div class="flex items-center gap-1">
@@ -210,7 +185,6 @@
         document.addEventListener('mousedown', showCursor);
         cursorTimeout = setTimeout(hideCursor, 3000);
 
-
         // ============ VARIABEL GLOBAL ============
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxty9GSbJQtMy-Z21ffd1H3fuOgPh8FgliuiZVGvpLutDwsHp9rnz2Dk_y8eS8-tirb/exec";
         let masterData = null;
@@ -221,7 +195,7 @@
         function changeTheme(themeName) {
             currentVisualTheme = themeName;
             localStorage.setItem('visualTheme', themeName);
-            ['Classic', 'Glass', 'Mega', 'Neon', 'Retro', 'Swiss', 'Festival'].forEach(t => {
+            ['Classic', 'Glass', 'Mega', 'Neon', 'Retro', 'Swiss', 'Festival', 'Bootstrap'].forEach(t => {
                 const btn = document.getElementById(`btnTheme${t}`);
                 if(btn) btn.className = "px-2 py-1 rounded text-slate-500 hover:bg-white/50 dark:hover:bg-slate-700";
             });
@@ -301,6 +275,7 @@
                 else if (currentVisualTheme === 'retro') return this.buildJuaraUmumRetro(top3);
                 else if (currentVisualTheme === 'swiss') return this.buildJuaraUmumSwiss(top3);
                 else if (currentVisualTheme === 'festival') return this.buildJuaraUmumFestival(top3);
+                else if (currentVisualTheme === 'bootstrap') return this.buildJuaraUmumBootstrap(top3);
                 else return this.buildJuaraUmumClassic(top3);
             },
 
@@ -313,21 +288,7 @@
                     const isNew = previousScores[tim] !== undefined && skor > previousScores[tim];
                     const highlightClass = isNew ? 'highlight-new' : '';
                     const cardSize = idx === 0 ? 'py-8' : 'py-5'; const medalSize = idx === 0 ? 'text-6xl' : 'text-5xl'; const nameSize = idx === 0 ? 'text-4xl' : 'text-3xl'; const scoreSize = idx === 0 ? 'text-6xl' : 'text-4xl';
-                    rowsHtml += `
-                        <div class="anim-row ${highlightClass} border-l-8 ${cardStyles[idx]} ${cardSize} px-8 rounded-2xl shadow-xl flex items-center justify-between transition-all">
-                            <div class="flex items-center space-x-6">
-                                <span class="${medalSize}">${medals[idx]}</span>
-                                <div>
-                                    <h3 class="${nameSize} font-black leading-tight">${tim}</h3>
-                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">P2: <b class="text-slate-700 dark:text-slate-300">${item.skor_pos02 || 0}</b> · P1: <b class="text-slate-700 dark:text-slate-300">${item.skor_pos01 || 0}</b> · P4: <b class="text-slate-700 dark:text-slate-300">${item.skor_pos04 || 0}</b> · ⏱ <b class="text-slate-700 dark:text-slate-300">${item.total_durasi || 0}s</b></p>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-xs text-slate-500 dark:text-slate-500 uppercase font-bold tracking-wider">Total Skor</div>
-                                <div class="${scoreSize} font-black text-[#FF0040] leading-none">${skor}</div>
-                            </div>
-                        </div>
-                    `;
+                    rowsHtml += `<div class="anim-row ${highlightClass} border-l-8 ${cardStyles[idx]} ${cardSize} px-8 rounded-2xl shadow-xl flex items-center justify-between transition-all"><div class="flex items-center space-x-6"><span class="${medalSize}">${medals[idx]}</span><div><h3 class="${nameSize} font-black leading-tight">${tim}</h3><p class="text-xs text-slate-500 dark:text-slate-400 mt-1">P2: <b class="text-slate-700 dark:text-slate-300">${item.skor_pos02 || 0}</b> · P1: <b class="text-slate-700 dark:text-slate-300">${item.skor_pos01 || 0}</b> · P4: <b class="text-slate-700 dark:text-slate-300">${item.skor_pos04 || 0}</b> · ⏱ <b class="text-slate-700 dark:text-slate-300">${item.total_durasi || 0}s</b></p></div></div><div class="text-right"><div class="text-xs text-slate-500 dark:text-slate-500 uppercase font-bold tracking-wider">Total Skor</div><div class="${scoreSize} font-black text-[#FF0040] leading-none">${skor}</div></div></div>`;
                 });
                 top3.forEach(item => { previousScores[item.kontingen] = item.total_skor; });
                 return `<div class="h-full flex flex-col justify-center px-12 py-6"><div class="space-y-4">${rowsHtml}</div></div>`;
@@ -340,54 +301,24 @@
                     const t1 = top3[0];
                     const isNew = previousScores[t1.kontingen] !== undefined && t1.total_skor > previousScores[t1.kontingen];
                     const hl = isNew ? 'highlight-new' : '';
-                    podiumHtml += `
-                        <div class="anim-row ${hl} flex justify-center mb-6 w-full">
-                            <div class="glass-card glass-gold rounded-3xl p-6 flex flex-col items-center justify-center w-[600px] relative overflow-hidden">
-                                <div class="absolute -top-10 -right-10 text-9xl opacity-10">🏆</div>
-                                <span class="text-7xl mb-2 drop-shadow-lg">${medals[0]}</span>
-                                <h3 class="text-4xl font-black text-slate-900 dark:text-white mb-2 text-center">${t1.kontingen}</h3>
-                                <div class="text-6xl font-black text-[#FF0040] drop-shadow-md mb-3">${t1.total_skor}</div>
-                                <div class="flex gap-2 text-xs font-bold">
-                                    <span class="bg-slate-200 dark:bg-slate-800 px-3 py-1 rounded-full">P2: ${t1.skor_pos02 || 0}</span>
-                                    <span class="bg-slate-200 dark:bg-slate-800 px-3 py-1 rounded-full">P1: ${t1.skor_pos01 || 0}</span>
-                                    <span class="bg-slate-200 dark:bg-slate-800 px-3 py-1 rounded-full">P4: ${t1.skor_pos04 || 0}</span>
-                                </div>
-                            </div>
-                        </div>
-                    `;
+                    podiumHtml += `<div class="anim-row ${hl} flex justify-center mb-6 w-full"><div class="glass-card glass-gold rounded-3xl p-6 flex flex-col items-center justify-center w-[600px] relative overflow-hidden"><div class="absolute -top-10 -right-10 text-9xl opacity-10">🏆</div><span class="text-7xl mb-2 drop-shadow-lg">${medals[0]}</span><h3 class="text-4xl font-black text-slate-900 dark:text-white mb-2 text-center">${t1.kontingen}</h3><div class="text-6xl font-black text-[#FF0040] drop-shadow-md mb-3">${t1.total_skor}</div><div class="flex gap-2 text-xs font-bold"><span class="bg-slate-200 dark:bg-slate-800 px-3 py-1 rounded-full">P2: ${t1.skor_pos02 || 0}</span><span class="bg-slate-200 dark:bg-slate-800 px-3 py-1 rounded-full">P1: ${t1.skor_pos01 || 0}</span><span class="bg-slate-200 dark:bg-slate-800 px-3 py-1 rounded-full">P4: ${t1.skor_pos04 || 0}</span></div></div></div>`;
                 }
                 podiumHtml += `<div class="flex justify-center gap-6 w-full">`;
                 if(top3[1]) {
                     const t2 = top3[1];
                     const isNew = previousScores[t2.kontingen] !== undefined && t2.total_skor > previousScores[t2.kontingen];
                     const hl = isNew ? 'highlight-new' : '';
-                    podiumHtml += `
-                        <div class="anim-row ${hl} glass-card glass-silver rounded-2xl p-5 flex flex-col items-center justify-center w-[350px]">
-                            <span class="text-5xl mb-2">${medals[1]}</span>
-                            <h3 class="text-2xl font-black text-slate-800 dark:text-slate-200 mb-1 text-center">${t2.kontingen}</h3>
-                            <div class="text-4xl font-black text-slate-700 dark:text-white mb-2">${t2.total_skor}</div>
-                        </div>
-                    `;
+                    podiumHtml += `<div class="anim-row ${hl} glass-card glass-silver rounded-2xl p-5 flex flex-col items-center justify-center w-[350px]"><span class="text-5xl mb-2">${medals[1]}</span><h3 class="text-2xl font-black text-slate-800 dark:text-slate-200 mb-1 text-center">${t2.kontingen}</h3><div class="text-4xl font-black text-slate-700 dark:text-white mb-2">${t2.total_skor}</div></div>`;
                 }
                 if(top3[2]) {
                     const t3 = top3[2];
                     const isNew = previousScores[t3.kontingen] !== undefined && t3.total_skor > previousScores[t3.kontingen];
                     const hl = isNew ? 'highlight-new' : '';
-                    podiumHtml += `
-                        <div class="anim-row ${hl} glass-card glass-bronze rounded-2xl p-5 flex flex-col items-center justify-center w-[350px]">
-                            <span class="text-5xl mb-2">${medals[2]}</span>
-                            <h3 class="text-2xl font-black text-slate-800 dark:text-slate-200 mb-1 text-center">${t3.kontingen}</h3>
-                            <div class="text-4xl font-black text-slate-700 dark:text-white mb-2">${t3.total_skor}</div>
-                        </div>
-                    `;
+                    podiumHtml += `<div class="anim-row ${hl} glass-card glass-bronze rounded-2xl p-5 flex flex-col items-center justify-center w-[350px]"><span class="text-5xl mb-2">${medals[2]}</span><h3 class="text-2xl font-black text-slate-800 dark:text-slate-200 mb-1 text-center">${t3.kontingen}</h3><div class="text-4xl font-black text-slate-700 dark:text-white mb-2">${t3.total_skor}</div></div>`;
                 }
                 podiumHtml += `</div>`;
                 top3.forEach(item => { previousScores[item.kontingen] = item.total_skor; });
-                return `<div class="h-full flex flex-col justify-center items-center px-8 py-4 relative">
-                    <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-red-500/20 rounded-full blur-3xl"></div>
-                    <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-amber-500/20 rounded-full blur-3xl"></div>
-                    <div class="relative z-10 w-full flex flex-col items-center">${podiumHtml}</div>
-                </div>`;
+                return `<div class="h-full flex flex-col justify-center items-center px-8 py-4 relative"><div class="absolute top-1/4 left-1/4 w-96 h-96 bg-red-500/20 rounded-full blur-3xl"></div><div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-amber-500/20 rounded-full blur-3xl"></div><div class="relative z-10 w-full flex flex-col items-center">${podiumHtml}</div></div>`;
             },
 
             buildJuaraUmumMega: function(top3) {
@@ -399,15 +330,7 @@
                     const hl = isNew ? 'highlight-new' : '';
                     const bgClass = idx === 0 ? 'bg-[#FF0040] text-white' : 'bg-slate-900 text-white border-2 border-slate-700';
                     const scoreColor = idx === 0 ? 'text-white' : 'text-[#FF0040]';
-                    rowsHtml += `
-                        <div class="anim-row ${hl} ${bgClass} flex justify-between items-center px-10 py-4 w-full mx-auto rounded-none mb-2 shadow-2xl">
-                            <div class="flex items-center gap-6">
-                                <span class="text-6xl">${medals[idx]}</span>
-                                <h3 class="text-5xl font-black uppercase tracking-tighter">${tim}</h3>
-                            </div>
-                            <div class="mega-text ${scoreColor}">${skor}</div>
-                        </div>
-                    `;
+                    rowsHtml += `<div class="anim-row ${hl} ${bgClass} flex justify-between items-center px-10 py-4 w-full mx-auto rounded-none mb-2 shadow-2xl"><div class="flex items-center gap-6"><span class="text-6xl">${medals[idx]}</span><h3 class="text-5xl font-black uppercase tracking-tighter">${tim}</h3></div><div class="mega-text ${scoreColor}">${skor}</div></div>`;
                 });
                 top3.forEach(item => { previousScores[item.kontingen] = item.total_skor; });
                 return `<div class="h-full flex flex-col justify-center w-full px-0 py-4">${rowsHtml}</div>`;
@@ -421,15 +344,7 @@
                     const isNew = previousScores[tim] !== undefined && skor > previousScores[tim];
                     const hl = isNew ? 'highlight-new' : '';
                     const isFirst = idx === 0; const boxClass = isFirst ? 'neon-border scale-105' : 'border border-slate-700'; const textClass = isFirst ? 'neon-text' : 'neon-text-pink';
-                    rowsHtml += `
-                        <div class="anim-row ${hl} ${boxClass} bg-black rounded-xl p-6 flex justify-between items-center w-full max-w-5xl mx-auto mb-4">
-                            <div class="flex items-center gap-6">
-                                <span class="text-5xl">${medals[idx]}</span>
-                                <h3 class="text-4xl font-black ${textClass} uppercase tracking-widest">${tim}</h3>
-                            </div>
-                            <div class="text-6xl font-black ${textClass}">${skor}</div>
-                        </div>
-                    `;
+                    rowsHtml += `<div class="anim-row ${hl} ${boxClass} bg-black rounded-xl p-6 flex justify-between items-center w-full max-w-5xl mx-auto mb-4"><div class="flex items-center gap-6"><span class="text-5xl">${medals[idx]}</span><h3 class="text-4xl font-black ${textClass} uppercase tracking-widest">${tim}</h3></div><div class="text-6xl font-black ${textClass}">${skor}</div></div>`;
                 });
                 top3.forEach(item => { previousScores[item.kontingen] = item.total_skor; });
                 return `<div class="h-full flex flex-col justify-center w-full bg-[#050505] px-4"><div class="space-y-2">${rowsHtml}</div></div>`;
@@ -442,18 +357,7 @@
                     const tim = item.kontingen || '-'; const skor = item.total_skor || 0;
                     const isNew = previousScores[tim] !== undefined && skor > previousScores[tim];
                     const hl = isNew ? 'highlight-new' : '';
-                    rowsHtml += `
-                        <div class="anim-row ${hl} retro-border retro-bg rounded-xl p-6 flex justify-between items-center w-full max-w-4xl mx-auto mb-6">
-                            <div class="flex items-center gap-6">
-                                <span class="text-6xl drop-shadow-lg">${medals[idx]}</span>
-                                <div>
-                                    <h3 class="text-4xl font-black text-white uppercase italic tracking-wider drop-shadow-md">${tim}</h3>
-                                    <p class="text-pink-200 text-sm font-bold">Posisi #${idx+1}</p>
-                                </div>
-                            </div>
-                            <div class="text-6xl font-black retro-text italic">${skor}</div>
-                        </div>
-                    `;
+                    rowsHtml += `<div class="anim-row ${hl} retro-border retro-bg rounded-xl p-6 flex justify-between items-center w-full max-w-4xl mx-auto mb-6"><div class="flex items-center gap-6"><span class="text-6xl drop-shadow-lg">${medals[idx]}</span><div><h3 class="text-4xl font-black text-white uppercase italic tracking-wider drop-shadow-md">${tim}</h3><p class="text-pink-200 text-sm font-bold">Posisi #${idx+1}</p></div></div><div class="text-6xl font-black retro-text italic">${skor}</div></div>`;
                 });
                 top3.forEach(item => { previousScores[item.kontingen] = item.total_skor; });
                 return `<div class="h-full flex flex-col justify-center w-full bg-slate-900 px-4"><div class="space-y-2">${rowsHtml}</div></div>`;
@@ -466,58 +370,65 @@
                     const tim = item.kontingen || '-'; const skor = item.total_skor || 0;
                     const isNew = previousScores[tim] !== undefined && skor > previousScores[tim];
                     const hl = isNew ? 'highlight-new' : '';
-                    rowsHtml += `
-                        <div class="anim-row ${hl} swiss-card p-6 flex justify-between items-center w-full max-w-5xl mx-auto mb-3">
-                            <div class="flex items-center gap-8">
-                                <span class="text-4xl font-black text-slate-300 dark:text-slate-600">${medals[idx]}</span>
-                                <h3 class="text-3xl font-bold text-slate-900 dark:text-white uppercase">${tim}</h3>
-                            </div>
-                            <div class="text-5xl font-black text-[#FF0040]">${skor}</div>
-                        </div>
-                    `;
+                    rowsHtml += `<div class="anim-row ${hl} swiss-card p-6 flex justify-between items-center w-full max-w-5xl mx-auto mb-3"><div class="flex items-center gap-8"><span class="text-4xl font-black text-slate-300 dark:text-slate-600">${medals[idx]}</span><h3 class="text-3xl font-bold text-slate-900 dark:text-white uppercase">${tim}</h3></div><div class="text-5xl font-black text-[#FF0040]">${skor}</div></div>`;
                 });
                 top3.forEach(item => { previousScores[item.kontingen] = item.total_skor; });
                 return `<div class="h-full flex flex-col justify-center w-full bg-slate-50 dark:bg-slate-950 px-8"><div class="space-y-4">${rowsHtml}</div></div>`;
             },
 
-            // ================= TEMA FESTIVAL (JUMPA BAKTI GEMBIRA) =================
             buildJuaraUmumFestival: function(top3) {
                 const medals = ['🥇', '🥈', '🥉'];
                 const cardClasses = ['fest-card-1', 'fest-card-2', 'fest-card-3'];
                 let rowsHtml = '';
-                
+                top3.forEach((item, idx) => {
+                    const tim = item.kontingen || '-'; const skor = item.total_skor || 0;
+                    const isNew = previousScores[tim] !== undefined && skor > previousScores[tim];
+                    const hl = isNew ? 'highlight-new' : '';
+                    const cardSize = idx === 0 ? 'py-8 scale-105' : 'py-5';
+                    const medalSize = idx === 0 ? 'text-7xl' : 'text-5xl';
+                    const nameSize = idx === 0 ? 'text-5xl' : 'text-3xl';
+                    const scoreSize = idx === 0 ? 'text-7xl' : 'text-5xl';
+                    rowsHtml += `<div class="festival-anim ${hl} ${cardClasses[idx]} rounded-3xl ${cardSize} px-8 flex items-center justify-between w-full max-w-5xl mx-auto mb-4 relative overflow-hidden"><div class="absolute -right-10 -bottom-10 text-9xl opacity-5">✨</div><div class="flex items-center space-x-6 relative z-10"><span class="${medalSize} drop-shadow-lg">${medals[idx]}</span><div><h3 class="${nameSize} font-black text-white tracking-wide leading-tight drop-shadow-md">${tim}</h3><p class="text-xs text-white/80 font-bold mt-2 uppercase tracking-widest">P2: ${item.skor_pos02 || 0} · P1: ${item.skor_pos01 || 0} · P4: ${item.skor_pos04 || 0}</p></div></div><div class="text-right relative z-10"><div class="text-xs text-white/70 uppercase font-bold tracking-widest">Total Skor</div><div class="${scoreSize} font-black fest-text-gradient leading-none drop-shadow-lg">${skor}</div></div></div>`;
+                });
+                top3.forEach(item => { previousScores[item.kontingen] = item.total_skor; });
+                return `<div class="h-full flex flex-col justify-center px-8 py-6 fest-bg w-full"><div class="space-y-4">${rowsHtml}</div></div>`;
+            },
+
+            // ================= TEMA BOOTSTRAP =================
+            buildJuaraUmumBootstrap: function(top3) {
+                const medals = ['🥇', '🥈', '🥉'];
+                let rowsHtml = '';
                 top3.forEach((item, idx) => {
                     const tim = item.kontingen || '-'; const skor = item.total_skor || 0;
                     const isNew = previousScores[tim] !== undefined && skor > previousScores[tim];
                     const hl = isNew ? 'highlight-new' : '';
                     
-                    const cardSize = idx === 0 ? 'py-8 scale-105' : 'py-5';
-                    const medalSize = idx === 0 ? 'text-7xl' : 'text-5xl';
-                    const nameSize = idx === 0 ? 'text-5xl' : 'text-3xl';
-                    const scoreSize = idx === 0 ? 'text-7xl' : 'text-5xl';
-
+                    const cardSize = idx === 0 ? 'py-8' : 'py-5';
+                    const nameSize = idx === 0 ? 'text-3xl' : 'text-2xl';
+                    const scoreSize = idx === 0 ? 'text-5xl' : 'text-4xl';
+                    
                     rowsHtml += `
-                        <div class="festival-anim ${hl} ${cardClasses[idx]} rounded-3xl ${cardSize} px-8 flex items-center justify-between w-full max-w-5xl mx-auto mb-4 relative overflow-hidden">
-                            <div class="absolute -right-10 -bottom-10 text-9xl opacity-5">✨</div>
-                            
-                            <div class="flex items-center space-x-6 relative z-10">
-                                <span class="${medalSize} drop-shadow-lg">${medals[idx]}</span>
+                        <div class="anim-row ${hl} bs-card ${cardSize} px-6 flex items-center justify-between w-full max-w-5xl mx-auto mb-4">
+                            <div class="flex items-center space-x-4">
+                                <span class="text-4xl">${medals[idx]}</span>
                                 <div>
-                                    <h3 class="${nameSize} font-black text-white tracking-wide leading-tight drop-shadow-md">${tim}</h3>
-                                    <p class="text-xs text-white/80 font-bold mt-2 uppercase tracking-widest">
-                                        P2: ${item.skor_pos02 || 0} · P1: ${item.skor_pos01 || 0} · P4: ${item.skor_pos04 || 0}
-                                    </p>
+                                    <h3 class="${nameSize} font-bold text-slate-900 dark:text-white">${tim}</h3>
+                                    <div class="mt-2 flex gap-2">
+                                        <span class="bs-badge">P2: ${item.skor_pos02 || 0}</span>
+                                        <span class="bs-badge">P1: ${item.skor_pos01 || 0}</span>
+                                        <span class="bs-badge">P4: ${item.skor_pos04 || 0}</span>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="text-right relative z-10">
-                                <div class="text-xs text-white/70 uppercase font-bold tracking-widest">Total Skor</div>
-                                <div class="${scoreSize} font-black fest-text-gradient leading-none drop-shadow-lg">${skor}</div>
+                            <div class="text-right">
+                                <div class="text-xs text-slate-500 font-bold uppercase mb-1">Total Skor</div>
+                                <div class="${scoreSize} font-bold bs-primary">${skor}</div>
                             </div>
                         </div>
                     `;
                 });
                 top3.forEach(item => { previousScores[item.kontingen] = item.total_skor; });
-                return `<div class="h-full flex flex-col justify-center px-8 py-6 fest-bg w-full"><div class="space-y-4">${rowsHtml}</div></div>`;
+                return `<div class="h-full flex flex-col justify-center px-8 py-6 bg-slate-100 dark:bg-slate-900 w-full"><div class="space-y-4">${rowsHtml}</div></div>`;
             },
 
             // ================= SLIDE PER POS =================
@@ -542,9 +453,11 @@
                     } else if (currentVisualTheme === 'swiss') {
                         rowsHtml += `<div class="anim-row swiss-card p-4 flex justify-between items-center mb-2"><h3 class="text-xl font-bold uppercase text-slate-800 dark:text-white">${idx+1}. ${tim} ${bidakInfo}</h3><div class="text-3xl font-black text-[#FF0040]">${skor}</div></div>`;
                     } else if (currentVisualTheme === 'festival') {
-                        // Tema Festival Per Pos
                         const cardClass = ['fest-card-1','fest-card-2','fest-card-3'][idx];
                         rowsHtml += `<div class="festival-anim ${cardClass} rounded-2xl p-4 flex justify-between items-center mb-3"><h3 class="text-2xl font-black text-white drop-shadow-md">${['🥇', '🥈', '🥉'][idx]} ${tim} ${bidakInfo}</h3><div class="text-4xl font-black fest-text-gradient">${skor}</div></div>`;
+                    } else if (currentVisualTheme === 'bootstrap') {
+                        // Tema Bootstrap Per Pos
+                        rowsHtml += `<div class="anim-row bs-card p-4 flex justify-between items-center mb-3"><h3 class="text-xl font-bold text-slate-900 dark:text-white">${idx+1}. ${tim} ${bidakInfo}</h3><div class="text-3xl font-bold bs-primary">${skor}</div></div>`;
                     } else {
                         const rowSize = idx === 0 ? 'py-6' : 'py-4'; const medalSize = idx === 0 ? 'text-5xl' : 'text-4xl'; const nameSize = idx === 0 ? 'text-3xl' : 'text-2xl'; const scoreSize = idx === 0 ? 'text-5xl' : 'text-3xl';
                         rowsHtml += `<div class="anim-row bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 ${rowSize} px-6 rounded-2xl shadow-lg flex items-center justify-between"><div class="flex items-center space-x-4"><span class="${medalSize}">${['🥇', '🥈', '🥉'][idx]}</span><div><h3 class="${nameSize} font-black text-slate-900 dark:text-white leading-tight">${tim} ${bidakInfo}</h3><p class="text-xs text-slate-500 mt-1">⏱ ${item.total_durasi || 0}s</p></div></div><div class="${scoreSize} font-black text-[#FF0040]">${skor}</div></div>`;
@@ -554,6 +467,7 @@
                 if (currentVisualTheme === 'neon') bgClass += " bg-[#050505]";
                 if (currentVisualTheme === 'retro') bgClass += " bg-slate-900";
                 if (currentVisualTheme === 'festival') bgClass += " fest-bg";
+                if (currentVisualTheme === 'bootstrap') bgClass += " bg-slate-100 dark:bg-slate-900";
                 return `<div class="${bgClass}"><div class="space-y-3">${rowsHtml}</div></div>`;
             },
 
@@ -574,6 +488,7 @@
                     if (currentVisualTheme === 'retro') cardClass = "retro-bg border-2 border-yellow-400 p-3 rounded-xl";
                     if (currentVisualTheme === 'swiss') cardClass = "swiss-card p-3 rounded-xl";
                     if (currentVisualTheme === 'festival') { cardClass = "fest-card-2 p-3 rounded-2xl"; textClass = "text-sm font-bold text-white truncate"; }
+                    if (currentVisualTheme === 'bootstrap') { cardClass = "bs-card p-3"; textClass = "text-sm font-bold text-slate-900 dark:text-white truncate"; }
                     
                     return `<div class="${cardClass}"><div class="flex justify-between items-center mb-1.5"><span class="${textClass}">${item.id_kontingen} - ${item.nama_tim}</span><span class="text-xs font-black ${persen === 100 ? 'text-emerald-600 dark:text-emerald-400' : persen >= 50 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}">${persen}%</span></div><div class="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2 overflow-hidden"><div class="${barColor} h-2 rounded-full transition-all" style="width: ${persen}%"></div></div></div>`;
                 };
@@ -581,6 +496,7 @@
                 if (currentVisualTheme === 'neon') bgClass += " bg-[#050505]";
                 if (currentVisualTheme === 'retro') bgClass += " bg-slate-900";
                 if (currentVisualTheme === 'festival') bgClass += " fest-bg";
+                if (currentVisualTheme === 'bootstrap') bgClass += " bg-slate-100 dark:bg-slate-900";
                 return `<div class="${bgClass}"><div class="grid grid-cols-2 gap-4"><div class="space-y-2">${col1.map(renderCard).join('')}</div><div class="space-y-2">${col2.map(renderCard).join('')}</div></div></div>`;
             },
 
