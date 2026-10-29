@@ -13,72 +13,23 @@
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* ====== SLIDE TRANSITION ====== */
-        .slide {
-            position: absolute;
-            inset: 0;
-            opacity: 0;
-            transition: opacity 0.8s ease-in-out;
-            pointer-events: none;
-            overflow: hidden;
-        }
-        .slide.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        /* ====== PROGRESS BAR ====== */
-        #progressBar {
-            height: 4px;
-            background: #FF0040;
-            width: 100%;
-            transition: none;
-            border-radius: 9999px;
-        }
-
-        /* ====== DOTS ====== */
-        .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: rgba(148, 163, 184, 0.4);
-            transition: all 0.3s;
-            cursor: pointer;
-        }
-        .dot.active {
-            background: #FF0040;
-            width: 24px;
-            border-radius: 4px;
-        }
-
-        /* ====== FADE-IN ANIMATION untuk baris ====== */
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .slide.active .anim-row {
-            animation: fadeInUp 0.5s ease-out backwards;
-        }
+        .slide { position: absolute; inset: 0; opacity: 0; transition: opacity 0.8s ease-in-out; pointer-events: none; overflow: hidden; }
+        .slide.active { opacity: 1; pointer-events: auto; }
+        #progressBar { height: 4px; background: #FF0040; width: 100%; transition: none; border-radius: 9999px; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(148, 163, 184, 0.4); transition: all 0.3s; cursor: pointer; }
+        .dot.active { background: #FF0040; width: 24px; border-radius: 4px; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .slide.active .anim-row { animation: fadeInUp 0.5s ease-out backwards; }
         .slide.active .anim-row:nth-child(1) { animation-delay: 0.1s; }
         .slide.active .anim-row:nth-child(2) { animation-delay: 0.2s; }
         .slide.active .anim-row:nth-child(3) { animation-delay: 0.3s; }
-
-        /* ====== HIGHLIGHT BARU ====== */
-        @keyframes highlight {
-            0%, 100% { background-color: transparent; }
-            50% { background-color: rgba(16, 185, 129, 0.3); }
-        }
-        .highlight-new {
-            animation: highlight 1s ease-in-out 3;
-        }
+        @keyframes highlight { 0%, 100% { background-color: transparent; } 50% { background-color: rgba(16, 185, 129, 0.3); } }
+        .highlight-new { animation: highlight 1s ease-in-out 3; }
     </style>
 </head>
 <body class="bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen font-sans overflow-hidden transition-colors duration-300">
 
-    <!-- CONTAINER SLIDESHOW -->
     <div id="slideshow" class="relative w-full h-screen flex flex-col">
-
-        <!-- HEADER -->
         <header class="flex justify-between items-center px-8 py-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200 dark:border-slate-800 z-20 flex-shrink-0 transition-colors duration-300">
             <div class="flex items-center space-x-4">
                 <img id="slideLogo" src="logo.png" alt="Logo" class="h-12 w-auto transition-all">
@@ -98,19 +49,15 @@
                     <span class="text-xs text-slate-500 block">Waktu</span>
                     <span id="clockDisplay" class="text-sm font-mono font-bold text-slate-900 dark:text-white">--:--:--</span>
                 </div>
-                
-                <!-- TOMBOL TEMA -->
                 <button onclick="toggleTheme()" id="themeToggleBtn" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-[#FF0040] hover:bg-slate-200 dark:hover:bg-slate-700 transition-all shadow-sm" title="Ubah Tema">
                     <i id="themeIcon" class="fa-solid fa-moon"></i>
                 </button>
-
                 <a href="dashboard-full.html" class="text-xs bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-3 py-2 rounded-lg font-bold transition" title="Mode Tabel Panitia">
                     <i class="fa-solid fa-table-list mr-1"></i> Tabel
                 </a>
             </div>
         </header>
 
-        <!-- SLIDE CONTAINER -->
         <div id="slideContainer" class="relative flex-grow z-10">
             <div class="text-center text-slate-500 py-20">
                 <i class="fa-solid fa-spinner fa-spin text-3xl mb-3"></i>
@@ -118,7 +65,6 @@
             </div>
         </div>
 
-        <!-- FOOTER -->
         <footer class="bg-white/90 dark:bg-slate-900/90 backdrop-blur border-t border-slate-200 dark:border-slate-800 px-8 py-3 z-20 flex-shrink-0 transition-colors duration-300">
             <div class="flex items-center justify-between mb-2">
                 <div id="slideTitle" class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider"></div>
@@ -145,7 +91,6 @@
     </div>
 
     <script>
-        // ============ SETUP THEME ============
         const htmlElement = document.documentElement;
         const themeIcon = document.getElementById('themeIcon');
         const slideLogo = document.getElementById('slideLogo');
@@ -160,12 +105,8 @@
             }
         }
 
-        // Load tema dari memori browser
-        if (localStorage.getItem('theme') === 'light') {
-            htmlElement.classList.remove('dark');
-        } else {
-            htmlElement.classList.add('dark');
-        }
+        if (localStorage.getItem('theme') === 'light') htmlElement.classList.remove('dark');
+        else htmlElement.classList.add('dark');
         updateLogoAndThemeUI();
 
         function toggleTheme() {
@@ -179,51 +120,27 @@
             updateLogoAndThemeUI();
         }
 
-        // ============ API ============
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxty9GSbJQtMy-Z21ffd1H3fuOgPh8FgliuiZVGvpLutDwsHp9rnz2Dk_y8eS8-tirb/exec";
 
-        // ============ STATE ============
         let masterData = null;
-        let previousScores = {};  // untuk highlight "baru saja dinilai"
+        let previousScores = {};
 
-        // ============ SLIDESHOW ENGINE ============
         const slideshow = {
-            slides: [],
-            currentIndex: 0,
-            isPaused: false,
-            timer: null,
-            progressRAF: null,
-            progressStart: 0,
+            slides: [], currentIndex: 0, isPaused: false, timer: null, progressRAF: null, progressStart: 0,
 
             build: function(data) {
                 this.slides = [];
+                this.slides.push({ title: '🏆 Klasemen Juara Umum', html: this.buildJuaraUmum(data.juara_umum || []), duration: 15000 });
 
-                // SLIDE 1: JUARA UMUM TOP 3
-                this.slides.push({
-                    title: '🏆 Klasemen Juara Umum',
-                    html: this.buildJuaraUmum(data.juara_umum || []),
-                    duration: 15000
-                });
-
-                // SLIDE 2..N: PER POS (TOP 3)
                 const posGroups = this.groupByPos(data.juara_pos || []);
                 const sortedPos = Object.keys(posGroups).sort();
 
                 sortedPos.forEach(posKode => {
                     const posName = this.getPosName(data.pos || [], posKode);
-                    this.slides.push({
-                        title: `🚩 ${posKode} — ${posName}`,
-                        html: this.buildJuaraPos(posGroups[posKode], posKode),
-                        duration: 10000
-                    });
+                    this.slides.push({ title: `🚩 ${posKode} — ${posName}`, html: this.buildJuaraPos(posGroups[posKode], posKode), duration: 10000 });
                 });
 
-                // SLIDE TERAKHIR: TRACKING PROGRES
-                this.slides.push({
-                    title: '📊 Progres Penilaian Kontingen',
-                    html: this.buildTracking(data.tracking || []),
-                    duration: 15000
-                });
+                this.slides.push({ title: '📊 Progres Penilaian Kontingen', html: this.buildTracking(data.tracking || []), duration: 15000 });
 
                 this.render();
                 this.goTo(0);
@@ -235,7 +152,8 @@
                     return k === kode || k.replace(/^POS-?0*/, 'POS') === kode.replace(/^POS-?0*/, 'POS');
                 });
                 if (found) {
-                    return found.NAMA_POS || found.nama_pos || found.NAMA_LOMBA || found.nama_lomba || found.NAMA || found.nama || kode;
+                    let nama = found.NAMA_POS || found.nama_pos || found.NAMA_LOMBA || found.nama_lomba || found.NAMA || found.nama || kode;
+                    return nama.replace(/\s*\(T\)$/i, '').replace(/\s*\(P\)$/i, '').trim();
                 }
                 return kode;
             },
@@ -247,21 +165,15 @@
                     if (!groups[pos]) groups[pos] = [];
                     groups[pos].push(row);
                 });
-                for (const pos in groups) {
-                    groups[pos] = groups[pos].slice(0, 3); // Ambil Top 3
-                }
+                for (const pos in groups) groups[pos] = groups[pos].slice(0, 3);
                 return groups;
             },
 
-            // BUILD JUARA UMUM
             buildJuaraUmum: function(list) {
                 const top3 = list.slice(0, 3);
-                if (top3.length === 0) {
-                    return '<div class="flex items-center justify-center h-full text-slate-500"><p class="text-2xl">Belum ada nilai masuk</p></div>';
-                }
+                if (top3.length === 0) return '<div class="flex items-center justify-center h-full text-slate-500"><p class="text-2xl">Belum ada nilai masuk</p></div>';
 
                 const medals = ['🥇', '🥈', '🥉'];
-                // Kartu menyesuaikan tema gelap/terang
                 const cardStyles = [
                     'border-amber-500 bg-amber-50 dark:bg-gradient-to-br dark:from-amber-950/60 dark:to-slate-900 text-slate-900 dark:text-white',
                     'border-slate-400 bg-slate-100 dark:bg-gradient-to-br dark:from-slate-800/60 dark:to-slate-900 text-slate-900 dark:text-white',
@@ -272,7 +184,8 @@
                 top3.forEach((item, idx) => {
                     const tim = item.kontingen || '-';
                     const skor = item.total_skor || 0;
-                    const pos3 = item.skor_pos03 || 0;
+                    const pos2 = item.skor_pos02 || 0;
+                    const pos1 = item.skor_pos01 || 0;
                     const pos4 = item.skor_pos04 || 0;
                     const timer = item.total_durasi || 0;
 
@@ -290,10 +203,11 @@
                                 <span class="${medalSize}">${medals[idx]}</span>
                                 <div>
                                     <h3 class="${nameSize} font-black leading-tight">${tim}</h3>
-                                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                                        POS-03: <b class="text-slate-700 dark:text-slate-300">${pos3}</b>
-                                        · POS-04: <b class="text-slate-700 dark:text-slate-300">${pos4}</b>
-                                        · ⏱ <b class="text-slate-700 dark:text-slate-300">${timer}s</b>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                        Kepalangmerahan: <b class="text-slate-700 dark:text-slate-300">${pos2}</b> · 
+                                        Kepemimpinan: <b class="text-slate-700 dark:text-slate-300">${pos1}</b> · 
+                                        Sanitasi: <b class="text-slate-700 dark:text-slate-300">${pos4}</b> · 
+                                        ⏱ <b class="text-slate-700 dark:text-slate-300">${timer}s</b>
                                     </p>
                                 </div>
                             </div>
@@ -310,11 +224,8 @@
                 return `<div class="h-full flex flex-col justify-center px-12 py-6"><div class="space-y-4">${rowsHtml}</div></div>`;
             },
 
-            // BUILD JUARA POS
             buildJuaraPos: function(list, posKode) {
-                if (!list || list.length === 0) {
-                    return '<div class="flex items-center justify-center h-full text-slate-500"><p class="text-2xl">Belum ada nilai</p></div>';
-                }
+                if (!list || list.length === 0) return '<div class="flex items-center justify-center h-full text-slate-500"><p class="text-2xl">Belum ada nilai</p></div>';
 
                 const medals = ['🥇', '🥈', '🥉'];
                 const isPos5 = posKode === 'POS-05';
@@ -331,9 +242,7 @@
                     const nameSize = idx === 0 ? 'text-3xl' : 'text-2xl';
                     const scoreSize = idx === 0 ? 'text-5xl' : 'text-3xl';
 
-                    const bidakInfo = isPos5 && bidak > 0 
-                        ? `<span class="text-purple-600 dark:text-purple-400 font-bold">🎲 ${bidak}</span>` 
-                        : '';
+                    const bidakInfo = isPos5 && bidak > 0 ? `<span class="text-purple-600 dark:text-purple-400 font-bold">🎲 ${bidak}</span>` : '';
 
                     rowsHtml += `
                         <div class="anim-row bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 ${rowSize} px-6 rounded-2xl shadow-lg flex items-center justify-between">
@@ -341,9 +250,7 @@
                                 <span class="${medalSize}">${medals[idx]}</span>
                                 <div>
                                     <h3 class="${nameSize} font-black text-slate-900 dark:text-white leading-tight">${tim}</h3>
-                                    <p class="text-xs text-slate-500 mt-1">
-                                        ⏱ ${timer}s ${bidakInfo ? '· ' + bidakInfo : ''}
-                                    </p>
+                                    <p class="text-xs text-slate-500 mt-1">⏱ ${timer}s ${bidakInfo ? '· ' + bidakInfo : ''}</p>
                                 </div>
                             </div>
                             <div class="${scoreSize} font-black text-[#FF0040]">${skor}</div>
@@ -354,18 +261,10 @@
                 return `<div class="h-full flex flex-col justify-center px-12 py-6"><div class="space-y-4">${rowsHtml}</div></div>`;
             },
 
-            // BUILD TRACKING
             buildTracking: function(list) {
-                if (!list || list.length === 0) {
-                    return '<div class="flex items-center justify-center h-full text-slate-500"><p class="text-2xl">Belum ada data tracking</p></div>';
-                }
+                if (!list || list.length === 0) return '<div class="flex items-center justify-center h-full text-slate-500"><p class="text-2xl">Belum ada data tracking</p></div>';
 
-                const sorted = [...list].sort((a, b) => {
-                    const pA = a.selesai_count / a.total_pos;
-                    const pB = b.selesai_count / b.total_pos;
-                    return pA - pB;
-                });
-
+                const sorted = [...list].sort((a, b) => (a.selesai_count / a.total_pos) - (b.selesai_count / b.total_pos));
                 const mid = Math.ceil(sorted.length / 2);
                 const col1 = sorted.slice(0, mid);
                 const col2 = sorted.slice(mid);
@@ -411,9 +310,7 @@
                 });
 
                 const dots = document.getElementById('dots');
-                dots.innerHTML = this.slides.map((_, i) => 
-                    `<span class="dot ${i === 0 ? 'active' : ''}" onclick="slideshow.goTo(${i})"></span>`
-                ).join('');
+                dots.innerHTML = this.slides.map((_, i) => `<span class="dot ${i === 0 ? 'active' : ''}" onclick="slideshow.goTo(${i})"></span>`).join('');
             },
 
             goTo: function(idx) {
@@ -422,13 +319,8 @@
 
                 this.currentIndex = idx;
 
-                document.querySelectorAll('.slide').forEach((s, i) => {
-                    s.classList.toggle('active', i === idx);
-                });
-
-                document.querySelectorAll('.dot').forEach((d, i) => {
-                    d.classList.toggle('active', i === idx);
-                });
+                document.querySelectorAll('.slide').forEach((s, i) => s.classList.toggle('active', i === idx));
+                document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === idx));
 
                 const slide = this.slides[idx];
                 document.getElementById('slideTitle').innerText = slide.title;
@@ -446,35 +338,18 @@
                 const self = this;
 
                 const animate = (now) => {
-                    const elapsed = now - startTime;
-                    const remaining = Math.max(0, 1 - elapsed / duration);
+                    const remaining = Math.max(0, 1 - (now - startTime) / duration);
                     bar.style.width = (remaining * 100) + '%';
-
-                    if (remaining > 0) {
-                        self.progressRAF = requestAnimationFrame(animate);
-                    }
+                    if (remaining > 0) self.progressRAF = requestAnimationFrame(animate);
                 };
 
-                setTimeout(() => {
-                    this.progressRAF = requestAnimationFrame(animate);
-                }, 50);
+                setTimeout(() => { this.progressRAF = requestAnimationFrame(animate); }, 50);
 
-                if (!this.isPaused) {
-                    this.timer = setTimeout(() => {
-                        this.next();
-                    }, duration);
-                }
+                if (!this.isPaused) this.timer = setTimeout(() => this.next(), duration);
             },
 
-            next: function() {
-                const nextIdx = (this.currentIndex + 1) % this.slides.length;
-                this.goTo(nextIdx);
-            },
-
-            prev: function() {
-                const prevIdx = (this.currentIndex - 1 + this.slides.length) % this.slides.length;
-                this.goTo(prevIdx);
-            },
+            next: function() { this.goTo((this.currentIndex + 1) % this.slides.length); },
+            prev: function() { this.goTo((this.currentIndex - 1 + this.slides.length) % this.slides.length); },
 
             togglePause: function() {
                 this.isPaused = !this.isPaused;
@@ -504,29 +379,22 @@
 
                 slideshow.build(data);
 
-                if (wasAtSlide < slideshow.slides.length) {
-                    slideshow.goTo(wasAtSlide);
-                }
-
-                if (wasPaused) {
-                    slideshow.togglePause();
-                }
+                if (wasAtSlide < slideshow.slides.length) slideshow.goTo(wasAtSlide);
+                if (wasPaused) slideshow.togglePause();
             } catch (e) {
                 console.error("Gagal load data:", e);
             }
         }
 
         function updateClock() {
-            const now = new Date();
-            document.getElementById('clockDisplay').innerText = now.toLocaleTimeString('id-ID');
+            document.getElementById('clockDisplay').innerText = new Date().toLocaleTimeString('id-ID');
         }
 
         function init() {
             updateClock();
             setInterval(updateClock, 1000);
-
             loadData();
-            setInterval(loadData, 30000); // Refresh 30 detik
+            setInterval(loadData, 30000);
         }
 
         init();
