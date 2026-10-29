@@ -8,6 +8,7 @@
     <meta name="theme-color" content="#dc2626">
     
     <script>
+        // Menyembunyikan warning Tailwind CDN di Console
         (function() {
             const origWarn = console.warn;
             console.warn = function(...args) {
@@ -23,20 +24,28 @@
         .pulse-dot { animation: pulse 1.5s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
         
+        /* TEMA TERANG UNTUK OUTDOOR */
         body.theme-light { background-color: #f8fafc !important; color: #0f172a !important; }
         body.theme-light .card-bg { background-color: #ffffff !important; border-color: #cbd5e1 !important; color: #0f172a !important; }
         body.theme-light .input-bg { background-color: #f1f5f9 !important; border-color: #94a3b8 !important; color: #0f172a !important; }
         body.theme-light .text-sub { color: #475569 !important; }
         body.theme-light .btn-preset-off { background-color: #e2e8f0 !important; color: #1e293b !important; border-color: #cbd5e1 !important; }
 
+        /* PENGATURAN CETAK PRINTER THERMAL */
         @media print {
             @page { size: 58mm auto; margin: 0; }
             body * { visibility: hidden; }
             #areaCetakThermal, #areaCetakThermal * { visibility: visible; }
             #areaCetakThermal {
-                position: absolute; left: 0; top: 0; width: 54mm;
-                font-family: monospace; font-size: 8.5pt; color: #000 !important;
-                background: #fff !important; padding: 4px;
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 54mm;
+                font-family: monospace;
+                font-size: 8.5pt;
+                color: #000 !important;
+                background: #fff !important;
+                padding: 4px;
             }
         }
     </style>
@@ -239,6 +248,7 @@
             timerSeconds: 0,
             timerRunning: false,
             isLightMode: false,
+            autoSyncInterval: null,
 
             init: async function() {
                 window.addEventListener('beforeunload', (e) => {
@@ -407,6 +417,32 @@
                 this.renderKontingenOptions();
                 this.renderRubrikDinamis();
                 this.resetTimer();
+                
+                this.startAutoSync(); // Memulai Auto-Sync
+            },
+
+            // AUTO-SYNC: Menghilangkan nama tim jika sudah dinilai juri lain
+            startAutoSync: function() {
+                if (this.autoSyncInterval) clearInterval(this.autoSyncInterval);
+                
+                this.autoSyncInterval = setInterval(async () => {
+                    try {
+                        // Jangan lakukan apa-apa jika timer sedang berjalan (juri sedang menilai)
+                        if (this.timerRunning) return;
+
+                        // Ambil data terbaru dari server
+                        const res = await fetch(GAS_API_URL + "?action=getData");
+                        const data = await res.json();
+                        
+                        // Perbarui masterData dengan data terbaru
+                        this.masterData = data;
+                        
+                        // Render ulang dropdown (tim yang sudah dinilai juri lain akan otomatis hilang)
+                        this.renderKontingenOptions();
+                    } catch (e) {
+                        console.log("Auto-sync gagal (mungkin koneksi terputus):", e.message);
+                    }
+                }, 30000); // Cek setiap 30 detik
             },
 
             renderKontingenOptions: function() {
@@ -744,6 +780,7 @@
                     this.timerRunning = false;
                     clearInterval(this.timerInterval);
                 }
+                if (this.autoSyncInterval) clearInterval(this.autoSyncInterval);
                 sessionStorage.clear();
                 location.reload();
             },
