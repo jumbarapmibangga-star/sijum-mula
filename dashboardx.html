@@ -27,12 +27,15 @@
         .slide.active .anim-row:nth-child(2) { animation-delay: 0.2s; }
         .slide.active .anim-row:nth-child(3) { animation-delay: 0.3s; }
 
-        /* ====== HIGHLIGHT NEW SCORE ====== */
-        @keyframes flashHighlight {
-            0%, 100% { box-shadow: 0 0 0 rgba(16, 185, 129, 0); transform: scale(1); }
-            50% { box-shadow: 0 0 30px rgba(16, 185, 129, 0.8); transform: scale(1.02); }
+        @keyframes bounceIn { 
+            0% { opacity: 0; transform: scale(0.9) translateY(20px); } 
+            50% { opacity: 1; transform: scale(1.05) translateY(-5px); } 
+            100% { opacity: 1; transform: scale(1) translateY(0); } 
         }
-        .highlight-new { animation: flashHighlight 1s ease-in-out 5; border-color: #10b981 !important; }
+        .festival-anim { animation: bounceIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) backwards; }
+        .festival-anim:nth-child(1) { animation-delay: 0.1s; }
+        .festival-anim:nth-child(2) { animation-delay: 0.2s; }
+        .festival-anim:nth-child(3) { animation-delay: 0.3s; }
 
         /* ====== TEMA KACA (GLASSMORPHISM) ====== */
         .glass-card { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 10px 30px 0 rgba(0, 0, 0, 0.5); }
@@ -58,6 +61,37 @@
         .swiss-card { background: #ffffff; color: #111827; border-left: 8px solid #FF0040; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
         .dark .swiss-card { background: #1e293b; color: #f1f5f9; }
 
+        /* ====== TEMA FESTIVAL (JUMPA BAKTI GEMBIRA) ====== */
+        .fest-bg { background: radial-gradient(circle at top left, #2e1065, #0f172a); }
+        .light .fest-bg { background: radial-gradient(circle at top left, #fdf4ff, #f8fafc); }
+        
+        .fest-card-1 { 
+            background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(168, 85, 247, 0.15));
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border: 2px solid rgba(236, 72, 153, 0.5);
+            box-shadow: 0 0 30px rgba(236, 72, 153, 0.3), inset 0 0 20px rgba(236, 72, 153, 0.1);
+        }
+        .fest-card-2 { 
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(16, 185, 129, 0.15));
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border: 2px solid rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.3), inset 0 0 20px rgba(59, 130, 246, 0.1);
+        }
+        .fest-card-3 { 
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(239, 68, 68, 0.15));
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border: 2px solid rgba(245, 158, 11, 0.5);
+            box-shadow: 0 0 30px rgba(245, 158, 11, 0.3), inset 0 0 20px rgba(245, 158, 11, 0.1);
+        }
+        .fest-text-gradient {
+            background: linear-gradient(to right, #f472b6, #a78bfa, #38bdf8, #fbbf24);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% auto;
+            animation: shine 3s linear infinite;
+        }
+        @keyframes shine { to { background-position: 200% center; } }
+
         /* ====== AUTO HIDE CURSOR ====== */
         body.hide-cursor, body.hide-cursor * { cursor: none !important; }
 
@@ -65,6 +99,13 @@
         .marquee-container { overflow: hidden; white-space: nowrap; width: 100%; background: #991b1b; color: white; padding: 4px 0; font-size: 12px; font-weight: bold; }
         .marquee-content { display: inline-block; padding-left: 100%; animation: marquee 20s linear infinite; }
         @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
+
+        /* ====== HIGHLIGHT NEW SCORE ====== */
+        @keyframes flashHighlight {
+            0%, 100% { box-shadow: 0 0 0 rgba(16, 185, 129, 0); transform: scale(1); }
+            50% { box-shadow: 0 0 30px rgba(16, 185, 129, 0.8); transform: scale(1.02); }
+        }
+        .highlight-new { animation: flashHighlight 1s ease-in-out 5; border-color: #10b981 !important; }
     </style>
 </head>
 <body class="bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen font-sans overflow-hidden transition-colors duration-300">
@@ -92,6 +133,8 @@
                     <button onclick="changeTheme('neon')" id="btnThemeNeon" class="px-2 py-1 rounded text-slate-500 hover:bg-white/50 dark:hover:bg-slate-700">Neon</button>
                     <button onclick="changeTheme('retro')" id="btnThemeRetro" class="px-2 py-1 rounded text-slate-500 hover:bg-white/50 dark:hover:bg-slate-700">Retro</button>
                     <button onclick="changeTheme('swiss')" id="btnThemeSwiss" class="px-2 py-1 rounded text-slate-500 hover:bg-white/50 dark:hover:bg-slate-700">Swiss</button>
+                    <!-- TOMBOL TEMA BARU -->
+                    <button onclick="changeTheme('festival')" id="btnThemeFestival" class="px-2 py-1 rounded text-slate-500 hover:bg-white/50 dark:hover:bg-slate-700">Festival</button>
                 </div>
 
                 <div class="flex items-center gap-1">
@@ -148,7 +191,6 @@
 
     <script>
         // ============ AUTO FULLSCREEN & HIDE CURSOR ============
-        // 1. Auto Fullscreen (Butuh interaksi pertama user)
         document.body.addEventListener('click', () => {
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen().catch(err => {
@@ -157,11 +199,8 @@
             }
         }, { once: true });
 
-        // 2. Auto Hide Cursor (Hilang saat diam 3 detik)
         let cursorTimeout;
-        function hideCursor() {
-            document.body.classList.add('hide-cursor');
-        }
+        function hideCursor() { document.body.classList.add('hide-cursor'); }
         function showCursor() {
             document.body.classList.remove('hide-cursor');
             clearTimeout(cursorTimeout);
@@ -169,7 +208,6 @@
         }
         document.addEventListener('mousemove', showCursor);
         document.addEventListener('mousedown', showCursor);
-        // Mulai timer saat halaman dimuat
         cursorTimeout = setTimeout(hideCursor, 3000);
 
 
@@ -183,7 +221,7 @@
         function changeTheme(themeName) {
             currentVisualTheme = themeName;
             localStorage.setItem('visualTheme', themeName);
-            ['Classic', 'Glass', 'Mega', 'Neon', 'Retro', 'Swiss'].forEach(t => {
+            ['Classic', 'Glass', 'Mega', 'Neon', 'Retro', 'Swiss', 'Festival'].forEach(t => {
                 const btn = document.getElementById(`btnTheme${t}`);
                 if(btn) btn.className = "px-2 py-1 rounded text-slate-500 hover:bg-white/50 dark:hover:bg-slate-700";
             });
@@ -262,6 +300,7 @@
                 else if (currentVisualTheme === 'neon') return this.buildJuaraUmumNeon(top3);
                 else if (currentVisualTheme === 'retro') return this.buildJuaraUmumRetro(top3);
                 else if (currentVisualTheme === 'swiss') return this.buildJuaraUmumSwiss(top3);
+                else if (currentVisualTheme === 'festival') return this.buildJuaraUmumFestival(top3);
                 else return this.buildJuaraUmumClassic(top3);
             },
 
@@ -271,11 +310,8 @@
                 let rowsHtml = '';
                 top3.forEach((item, idx) => {
                     const tim = item.kontingen || '-'; const skor = item.total_skor || 0;
-                    
-                    // Highlight Logika
                     const isNew = previousScores[tim] !== undefined && skor > previousScores[tim];
                     const highlightClass = isNew ? 'highlight-new' : '';
-                    
                     const cardSize = idx === 0 ? 'py-8' : 'py-5'; const medalSize = idx === 0 ? 'text-6xl' : 'text-5xl'; const nameSize = idx === 0 ? 'text-4xl' : 'text-3xl'; const scoreSize = idx === 0 ? 'text-6xl' : 'text-4xl';
                     rowsHtml += `
                         <div class="anim-row ${highlightClass} border-l-8 ${cardStyles[idx]} ${cardSize} px-8 rounded-2xl shadow-xl flex items-center justify-between transition-all">
@@ -444,6 +480,47 @@
                 return `<div class="h-full flex flex-col justify-center w-full bg-slate-50 dark:bg-slate-950 px-8"><div class="space-y-4">${rowsHtml}</div></div>`;
             },
 
+            // ================= TEMA FESTIVAL (JUMPA BAKTI GEMBIRA) =================
+            buildJuaraUmumFestival: function(top3) {
+                const medals = ['🥇', '🥈', '🥉'];
+                const cardClasses = ['fest-card-1', 'fest-card-2', 'fest-card-3'];
+                let rowsHtml = '';
+                
+                top3.forEach((item, idx) => {
+                    const tim = item.kontingen || '-'; const skor = item.total_skor || 0;
+                    const isNew = previousScores[tim] !== undefined && skor > previousScores[tim];
+                    const hl = isNew ? 'highlight-new' : '';
+                    
+                    const cardSize = idx === 0 ? 'py-8 scale-105' : 'py-5';
+                    const medalSize = idx === 0 ? 'text-7xl' : 'text-5xl';
+                    const nameSize = idx === 0 ? 'text-5xl' : 'text-3xl';
+                    const scoreSize = idx === 0 ? 'text-7xl' : 'text-5xl';
+
+                    rowsHtml += `
+                        <div class="festival-anim ${hl} ${cardClasses[idx]} rounded-3xl ${cardSize} px-8 flex items-center justify-between w-full max-w-5xl mx-auto mb-4 relative overflow-hidden">
+                            <div class="absolute -right-10 -bottom-10 text-9xl opacity-5">✨</div>
+                            
+                            <div class="flex items-center space-x-6 relative z-10">
+                                <span class="${medalSize} drop-shadow-lg">${medals[idx]}</span>
+                                <div>
+                                    <h3 class="${nameSize} font-black text-white tracking-wide leading-tight drop-shadow-md">${tim}</h3>
+                                    <p class="text-xs text-white/80 font-bold mt-2 uppercase tracking-widest">
+                                        P2: ${item.skor_pos02 || 0} · P1: ${item.skor_pos01 || 0} · P4: ${item.skor_pos04 || 0}
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="text-right relative z-10">
+                                <div class="text-xs text-white/70 uppercase font-bold tracking-widest">Total Skor</div>
+                                <div class="${scoreSize} font-black fest-text-gradient leading-none drop-shadow-lg">${skor}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                top3.forEach(item => { previousScores[item.kontingen] = item.total_skor; });
+                return `<div class="h-full flex flex-col justify-center px-8 py-6 fest-bg w-full"><div class="space-y-4">${rowsHtml}</div></div>`;
+            },
+
+            // ================= SLIDE PER POS =================
             buildJuaraPos: function(list, posKode) {
                 if (!list || list.length === 0) return '<div class="flex items-center justify-center h-full text-slate-500"><p class="text-2xl">Belum ada nilai</p></div>';
                 const isPos5 = posKode === 'POS-05';
@@ -464,6 +541,10 @@
                         rowsHtml += `<div class="anim-row retro-border retro-bg rounded-xl p-4 flex justify-between items-center mb-3"><h3 class="text-2xl font-black text-white italic">${idx+1}. ${tim} ${bidakInfo}</h3><div class="text-4xl font-black retro-text italic">${skor}</div></div>`;
                     } else if (currentVisualTheme === 'swiss') {
                         rowsHtml += `<div class="anim-row swiss-card p-4 flex justify-between items-center mb-2"><h3 class="text-xl font-bold uppercase text-slate-800 dark:text-white">${idx+1}. ${tim} ${bidakInfo}</h3><div class="text-3xl font-black text-[#FF0040]">${skor}</div></div>`;
+                    } else if (currentVisualTheme === 'festival') {
+                        // Tema Festival Per Pos
+                        const cardClass = ['fest-card-1','fest-card-2','fest-card-3'][idx];
+                        rowsHtml += `<div class="festival-anim ${cardClass} rounded-2xl p-4 flex justify-between items-center mb-3"><h3 class="text-2xl font-black text-white drop-shadow-md">${['🥇', '🥈', '🥉'][idx]} ${tim} ${bidakInfo}</h3><div class="text-4xl font-black fest-text-gradient">${skor}</div></div>`;
                     } else {
                         const rowSize = idx === 0 ? 'py-6' : 'py-4'; const medalSize = idx === 0 ? 'text-5xl' : 'text-4xl'; const nameSize = idx === 0 ? 'text-3xl' : 'text-2xl'; const scoreSize = idx === 0 ? 'text-5xl' : 'text-3xl';
                         rowsHtml += `<div class="anim-row bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 ${rowSize} px-6 rounded-2xl shadow-lg flex items-center justify-between"><div class="flex items-center space-x-4"><span class="${medalSize}">${['🥇', '🥈', '🥉'][idx]}</span><div><h3 class="${nameSize} font-black text-slate-900 dark:text-white leading-tight">${tim} ${bidakInfo}</h3><p class="text-xs text-slate-500 mt-1">⏱ ${item.total_durasi || 0}s</p></div></div><div class="${scoreSize} font-black text-[#FF0040]">${skor}</div></div>`;
@@ -472,9 +553,11 @@
                 let bgClass = "h-full flex flex-col justify-center px-12 py-6";
                 if (currentVisualTheme === 'neon') bgClass += " bg-[#050505]";
                 if (currentVisualTheme === 'retro') bgClass += " bg-slate-900";
+                if (currentVisualTheme === 'festival') bgClass += " fest-bg";
                 return `<div class="${bgClass}"><div class="space-y-3">${rowsHtml}</div></div>`;
             },
 
+            // ================= SLIDE TRACKING =================
             buildTracking: function(list) {
                 if (!list || list.length === 0) return '<div class="flex items-center justify-center h-full text-slate-500"><p class="text-2xl">Belum ada data tracking</p></div>';
                 const sorted = [...list].sort((a, b) => (a.selesai_count / a.total_pos) - (b.selesai_count / b.total_pos));
@@ -485,15 +568,19 @@
                     const barColor = persen === 100 ? 'bg-emerald-500' : persen >= 50 ? 'bg-amber-500' : 'bg-red-500';
                     let cardClass = "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-3 rounded-xl shadow-sm";
                     let textClass = "text-sm font-bold text-slate-800 dark:text-white truncate";
+                    
                     if (currentVisualTheme === 'glass') cardClass = "glass-card p-3 rounded-xl";
                     if (currentVisualTheme === 'neon') { cardClass = "bg-black border border-cyan-400 p-3 rounded-xl"; textClass = "text-sm font-bold neon-text truncate"; }
                     if (currentVisualTheme === 'retro') cardClass = "retro-bg border-2 border-yellow-400 p-3 rounded-xl";
                     if (currentVisualTheme === 'swiss') cardClass = "swiss-card p-3 rounded-xl";
+                    if (currentVisualTheme === 'festival') { cardClass = "fest-card-2 p-3 rounded-2xl"; textClass = "text-sm font-bold text-white truncate"; }
+                    
                     return `<div class="${cardClass}"><div class="flex justify-between items-center mb-1.5"><span class="${textClass}">${item.id_kontingen} - ${item.nama_tim}</span><span class="text-xs font-black ${persen === 100 ? 'text-emerald-600 dark:text-emerald-400' : persen >= 50 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}">${persen}%</span></div><div class="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2 overflow-hidden"><div class="${barColor} h-2 rounded-full transition-all" style="width: ${persen}%"></div></div></div>`;
                 };
                 let bgClass = "h-full overflow-y-auto px-8 py-6";
                 if (currentVisualTheme === 'neon') bgClass += " bg-[#050505]";
                 if (currentVisualTheme === 'retro') bgClass += " bg-slate-900";
+                if (currentVisualTheme === 'festival') bgClass += " fest-bg";
                 return `<div class="${bgClass}"><div class="grid grid-cols-2 gap-4"><div class="space-y-2">${col1.map(renderCard).join('')}</div><div class="space-y-2">${col2.map(renderCard).join('')}</div></div></div>`;
             },
 
