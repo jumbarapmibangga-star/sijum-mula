@@ -199,13 +199,16 @@
             build: function(data) {
                 this.slides = [];
                 this.slides.push({ title: '🏆 Klasemen Juara Umum', html: this.buildJuaraUmum(data.juara_umum || []), duration: 15000 });
+                
                 const posGroups = this.groupByPos(data.juara_pos || []);
                 const sortedPos = Object.keys(posGroups).sort();
                 sortedPos.forEach(posKode => {
                     const posName = this.getPosName(data.pos || [], posKode);
                     this.slides.push({ title: `🚩 ${posKode} — ${posName}`, html: this.buildJuaraPos(posGroups[posKode], posKode), duration: 10000 });
                 });
+                
                 this.slides.push({ title: '📊 Progres Penilaian Kontingen', html: this.buildTracking(data.tracking || []), duration: 15000 });
+                
                 this.render();
                 this.goTo(0);
             },
@@ -233,6 +236,9 @@
                 return groups;
             },
 
+            // ==========================================
+            // MEMBANGUN TAMPILAN JUARA UMUM
+            // ==========================================
             buildJuaraUmum: function(list) {
                 const top3 = list.slice(0, 3);
                 if (top3.length === 0) return '<div class="flex items-center justify-center h-full text-slate-500"><p class="text-2xl">Belum ada nilai masuk</p></div>';
@@ -245,7 +251,6 @@
                 else return this.buildJuaraUmumClassic(top3);
             },
 
-            // ================= TEMA KLASIK =================
             buildJuaraUmumClassic: function(top3) {
                 const medals = ['🥇', '🥈', '🥉'];
                 const cardStyles = [
@@ -288,7 +293,6 @@
                 return `<div class="h-full flex flex-col justify-center px-12 py-6"><div class="space-y-4">${rowsHtml}</div></div>`;
             },
 
-            // ================= TEMA KACA =================
             buildJuaraUmumGlass: function(top3) {
                 let podiumHtml = '';
                 const medals = ['🥇', '🥈', '🥉'];
@@ -339,7 +343,6 @@
                 </div>`;
             },
 
-            // ================= TEMA BOLD =================
             buildJuaraUmumMega: function(top3) {
                 const medals = ['🥇', '🥈', '🥉'];
                 let rowsHtml = '';
@@ -361,7 +364,6 @@
                 return `<div class="h-full flex flex-col justify-center w-full px-0 py-4">${rowsHtml}</div>`;
             },
 
-            // ================= TEMA NEON =================
             buildJuaraUmumNeon: function(top3) {
                 const medals = ['🥇', '🥈', '🥉'];
                 let rowsHtml = '';
@@ -384,7 +386,6 @@
                 return `<div class="h-full flex flex-col justify-center w-full bg-[#050505] px-4"><div class="space-y-2">${rowsHtml}</div></div>`;
             },
 
-            // ================= TEMA RETRO =================
             buildJuaraUmumRetro: function(top3) {
                 const medals = ['🥇', '🥈', '🥉'];
                 let rowsHtml = '';
@@ -407,7 +408,6 @@
                 return `<div class="h-full flex flex-col justify-center w-full bg-slate-900 px-4"><div class="space-y-2">${rowsHtml}</div></div>`;
             },
 
-            // ================= TEMA SWISS =================
             buildJuaraUmumSwiss: function(top3) {
                 const medals = ['1st', '2nd', '3rd'];
                 let rowsHtml = '';
@@ -427,10 +427,12 @@
                 return `<div class="h-full flex flex-col justify-center w-full bg-slate-50 dark:bg-slate-950 px-8"><div class="space-y-4">${rowsHtml}</div></div>`;
             },
 
-            // ================= SLIDE PER POS =================
+            // ==========================================
+            // MEMBANGUN TAMPILAN PER POS (MENGIKUTI TEMA)
+            // ==========================================
             buildJuaraPos: function(list, posKode) {
                 if (!list || list.length === 0) return '<div class="flex items-center justify-center h-full text-slate-500"><p class="text-2xl">Belum ada nilai</p></div>';
-                const medals = ['🥇', '🥈', '🥉'];
+                
                 const isPos5 = posKode === 'POS-05';
                 let rowsHtml = '';
                 
@@ -439,28 +441,78 @@
                     const skor = item.total_skor || 0;
                     const bidakInfo = isPos5 && item.no_bidak > 0 ? `<span class="text-purple-600 dark:text-purple-400 font-bold ml-2">🎲 ${item.no_bidak}</span>` : '';
                     
-                    const rowSize = idx === 0 ? 'py-6' : 'py-4';
-                    const medalSize = idx === 0 ? 'text-5xl' : 'text-4xl';
-                    const nameSize = idx === 0 ? 'text-3xl' : 'text-2xl';
-                    const scoreSize = idx === 0 ? 'text-5xl' : 'text-3xl';
-
-                    rowsHtml += `
-                        <div class="anim-row bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 ${rowSize} px-6 rounded-2xl shadow-lg flex items-center justify-between">
-                            <div class="flex items-center space-x-4">
-                                <span class="${medalSize}">${medals[idx]}</span>
-                                <div>
-                                    <h3 class="${nameSize} font-black text-slate-900 dark:text-white leading-tight">${tim} ${bidakInfo}</h3>
-                                    <p class="text-xs text-slate-500 mt-1">⏱ ${item.total_durasi || 0}s</p>
+                    // Desain menyesuaikan tema
+                    if (currentVisualTheme === 'glass') {
+                        rowsHtml += `
+                            <div class="anim-row glass-card rounded-2xl p-4 flex justify-between items-center mb-3 border-l-4 border-[#FF0040]">
+                                <div class="flex items-center gap-4">
+                                    <span class="text-4xl">${['🥇', '🥈', '🥉'][idx]}</span>
+                                    <h3 class="text-2xl font-black text-slate-800 dark:text-white">${tim} ${bidakInfo}</h3>
                                 </div>
+                                <div class="text-4xl font-black text-[#FF0040]">${skor}</div>
                             </div>
-                            <div class="${scoreSize} font-black text-[#FF0040]">${skor}</div>
-                        </div>
-                    `;
+                        `;
+                    } else if (currentVisualTheme === 'mega') {
+                        const bgClass = idx === 0 ? 'bg-[#FF0040] text-white' : 'bg-slate-900 text-white';
+                        rowsHtml += `
+                            <div class="anim-row ${bgClass} p-4 flex justify-between items-center mb-2">
+                                <h3 class="text-3xl font-black uppercase">${idx+1}. ${tim} ${bidakInfo}</h3>
+                                <div class="text-5xl font-black ${idx === 0 ? 'text-white' : 'text-[#FF0040]'}">${skor}</div>
+                            </div>
+                        `;
+                    } else if (currentVisualTheme === 'neon') {
+                        rowsHtml += `
+                            <div class="anim-row border-2 border-cyan-400 bg-black rounded-xl p-4 flex justify-between items-center mb-3 neon-border">
+                                <h3 class="text-2xl font-black neon-text">${idx+1}. ${tim} ${bidakInfo}</h3>
+                                <div class="text-4xl font-black neon-text-pink">${skor}</div>
+                            </div>
+                        `;
+                    } else if (currentVisualTheme === 'retro') {
+                        rowsHtml += `
+                            <div class="anim-row retro-border retro-bg rounded-xl p-4 flex justify-between items-center mb-3">
+                                <h3 class="text-2xl font-black text-white italic">${idx+1}. ${tim} ${bidakInfo}</h3>
+                                <div class="text-4xl font-black retro-text italic">${skor}</div>
+                            </div>
+                        `;
+                    } else if (currentVisualTheme === 'swiss') {
+                        rowsHtml += `
+                            <div class="anim-row swiss-card p-4 flex justify-between items-center mb-2">
+                                <h3 class="text-xl font-bold uppercase text-slate-800 dark:text-white">${idx+1}. ${tim} ${bidakInfo}</h3>
+                                <div class="text-3xl font-black text-[#FF0040]">${skor}</div>
+                            </div>
+                        `;
+                    } else {
+                        // Klasik
+                        const rowSize = idx === 0 ? 'py-6' : 'py-4';
+                        const medalSize = idx === 0 ? 'text-5xl' : 'text-4xl';
+                        const nameSize = idx === 0 ? 'text-3xl' : 'text-2xl';
+                        const scoreSize = idx === 0 ? 'text-5xl' : 'text-3xl';
+                        rowsHtml += `
+                            <div class="anim-row bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 ${rowSize} px-6 rounded-2xl shadow-lg flex items-center justify-between">
+                                <div class="flex items-center space-x-4">
+                                    <span class="${medalSize}">${['🥇', '🥈', '🥉'][idx]}</span>
+                                    <div>
+                                        <h3 class="${nameSize} font-black text-slate-900 dark:text-white leading-tight">${tim} ${bidakInfo}</h3>
+                                        <p class="text-xs text-slate-500 mt-1">⏱ ${item.total_durasi || 0}s</p>
+                                    </div>
+                                </div>
+                                <div class="${scoreSize} font-black text-[#FF0040]">${skor}</div>
+                            </div>
+                        `;
+                    }
                 });
-                return `<div class="h-full flex flex-col justify-center px-12 py-6"><div class="space-y-4">${rowsHtml}</div></div>`;
+                
+                // Background pembungkus menyesuaikan tema
+                let bgClass = "h-full flex flex-col justify-center px-12 py-6";
+                if (currentVisualTheme === 'neon') bgClass += " bg-[#050505]";
+                if (currentVisualTheme === 'retro') bgClass += " bg-slate-900";
+
+                return `<div class="${bgClass}"><div class="space-y-3">${rowsHtml}</div></div>`;
             },
 
-            // ================= SLIDE TRACKING =================
+            // ==========================================
+            // MEMBANGUN TAMPILAN TRACKING (MENGIKUTI TEMA)
+            // ==========================================
             buildTracking: function(list) {
                 if (!list || list.length === 0) return '<div class="flex items-center justify-center h-full text-slate-500"><p class="text-2xl">Belum ada data tracking</p></div>';
                 const sorted = [...list].sort((a, b) => (a.selesai_count / a.total_pos) - (b.selesai_count / b.total_pos));
@@ -472,10 +524,22 @@
                     const totalPos = item.total_pos || 6;
                     const persen = Math.round((item.selesai_count / totalPos) * 100);
                     const barColor = persen === 100 ? 'bg-emerald-500' : persen >= 50 ? 'bg-amber-500' : 'bg-red-500';
+                    
+                    let cardClass = "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-3 rounded-xl shadow-sm";
+                    let textClass = "text-sm font-bold text-slate-800 dark:text-white truncate";
+                    
+                    if (currentVisualTheme === 'glass') cardClass = "glass-card p-3 rounded-xl";
+                    if (currentVisualTheme === 'neon') {
+                        cardClass = "bg-black border border-cyan-400 p-3 rounded-xl";
+                        textClass = "text-sm font-bold neon-text truncate";
+                    }
+                    if (currentVisualTheme === 'retro') cardClass = "retro-bg border-2 border-yellow-400 p-3 rounded-xl";
+                    if (currentVisualTheme === 'swiss') cardClass = "swiss-card p-3 rounded-xl";
+
                     return `
-                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-3 rounded-xl shadow-sm">
+                        <div class="${cardClass}">
                             <div class="flex justify-between items-center mb-1.5">
-                                <span class="text-sm font-bold text-slate-800 dark:text-white truncate">${item.id_kontingen} - ${item.nama_tim}</span>
+                                <span class="${textClass}">${item.id_kontingen} - ${item.nama_tim}</span>
                                 <span class="text-xs font-black ${persen === 100 ? 'text-emerald-600 dark:text-emerald-400' : persen >= 50 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}">${persen}%</span>
                             </div>
                             <div class="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
@@ -485,8 +549,12 @@
                     `;
                 };
 
+                let bgClass = "h-full overflow-y-auto px-8 py-6";
+                if (currentVisualTheme === 'neon') bgClass += " bg-[#050505]";
+                if (currentVisualTheme === 'retro') bgClass += " bg-slate-900";
+
                 return `
-                    <div class="h-full overflow-y-auto px-8 py-6">
+                    <div class="${bgClass}">
                         <div class="grid grid-cols-2 gap-4">
                             <div class="space-y-2">${col1.map(renderCard).join('')}</div>
                             <div class="space-y-2">${col2.map(renderCard).join('')}</div>
