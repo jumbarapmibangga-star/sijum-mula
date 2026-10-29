@@ -67,10 +67,9 @@
                         <th class="py-2 px-2 w-12">#</th>
                         <th class="py-2 px-2">Kontingen</th>
                         <th class="py-2 px-2 text-right">Total</th>
-                        <!-- Kolom Tie-Breaker Utama -->
-                        <th class="py-2 px-2 text-right hidden md:table-cell" title="Kepalangmerahan (Tie-Breaker 1)">POS-02</th>
-                        <th class="py-2 px-2 text-right hidden md:table-cell" title="Kepemimpinan (Tie-Breaker 2)">POS-01</th>
-                        <th class="py-2 px-2 text-right hidden md:table-cell" title="Perawatan Keluarga/Sanitasi (Tie-Breaker 3)">POS-04</th>
+                        <th class="py-2 px-2 text-right hidden md:table-cell">POS-02</th>
+                        <th class="py-2 px-2 text-right hidden md:table-cell">POS-01</th>
+                        <th class="py-2 px-2 text-right hidden md:table-cell">POS-04</th>
                         <th class="py-2 px-2 text-right hidden md:table-cell">Timer</th>
                         <th class="py-2 px-2 text-right hidden lg:table-cell">Pos Selesai</th>
                     </tr>
@@ -81,7 +80,7 @@
             </table>
         </div>
         <div class="text-[10px] text-slate-400 dark:text-slate-500 border-t border-slate-200 dark:border-slate-800 pt-2 mt-2 leading-relaxed">
-            <strong>Tie-breaker:</strong> Nilai → Kepalangmerahan (POS-02) → Kepemimpinan (POS-01) → Perawatan Keluarga (POS-04) → Pertolongan Pertama (POS-03) → Ayo Siaga Bencana (POS-05) → Paduan Suara (POS-06) → Timer
+            <strong>Tie-breaker:</strong> Nilai → Kepalangmerahan → Kepemimpinan → Perawatan Keluarga → Pertolongan Pertama → Ayo Siaga Bencana → Paduan Suara → Timer
         </div>
     </section>
 
@@ -194,7 +193,6 @@
                 tr.className = 'border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition';
                 const rankClass = medalColors[index] || 'text-slate-600 dark:text-slate-400 font-bold';
 
-                // Menampilkan POS-02, POS-01, POS-04 secara berurutan sesuai aturan tie-breaker
                 tr.innerHTML = `
                     <td class="py-2 px-2 ${rankClass}">${index + 1}</td>
                     <td class="py-2 px-2 font-bold">${item.kontingen || '-'}</td>
