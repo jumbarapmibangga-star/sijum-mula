@@ -8,7 +8,6 @@
     <meta name="theme-color" content="#dc2626">
     
     <script>
-        // Menyembunyikan warning Tailwind CDN di Console
         (function() {
             const origWarn = console.warn;
             console.warn = function(...args) {
@@ -24,28 +23,20 @@
         .pulse-dot { animation: pulse 1.5s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
         
-        /* TEMA TERANG UNTUK OUTDOOR */
         body.theme-light { background-color: #f8fafc !important; color: #0f172a !important; }
         body.theme-light .card-bg { background-color: #ffffff !important; border-color: #cbd5e1 !important; color: #0f172a !important; }
         body.theme-light .input-bg { background-color: #f1f5f9 !important; border-color: #94a3b8 !important; color: #0f172a !important; }
         body.theme-light .text-sub { color: #475569 !important; }
         body.theme-light .btn-preset-off { background-color: #e2e8f0 !important; color: #1e293b !important; border-color: #cbd5e1 !important; }
 
-        /* PENGATURAN CETAK PRINTER THERMAL */
         @media print {
             @page { size: 58mm auto; margin: 0; }
             body * { visibility: hidden; }
             #areaCetakThermal, #areaCetakThermal * { visibility: visible; }
             #areaCetakThermal {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 54mm;
-                font-family: monospace;
-                font-size: 8.5pt;
-                color: #000 !important;
-                background: #fff !important;
-                padding: 4px;
+                position: absolute; left: 0; top: 0; width: 54mm;
+                font-family: monospace; font-size: 8.5pt; color: #000 !important;
+                background: #fff !important; padding: 4px;
             }
         }
     </style>
@@ -54,7 +45,7 @@
 
     <!-- HEADER / NAVBAR -->
     <header class="bg-red-700 text-white shadow-md sticky top-0 z-30">
-        <div class="max-w-md mx-auto px-4 py-2.5 flex items-center justify-between">
+        <div class="max-w-md mx-auto px-3 py-2.5 flex items-center justify-between">
             <div class="flex items-center space-x-2">
                 <img id="imgLogoHeader" src="logo.png" alt="Logo Jumbara" class="h-8 w-auto object-contain transition-all duration-300">
                 <div>
@@ -64,20 +55,25 @@
             </div>
             
             <div class="flex items-center gap-1.5">
+                <!-- 1. TOMBOL TEMA (Sekarang di sebelah kiri Konek Printer) -->
                 <button onclick="app.toggleTheme()" class="bg-red-800 hover:bg-red-900 text-white p-1.5 rounded-lg text-xs" title="Mode Siang/Malam">
                     <i id="icoTheme" class="fa-solid fa-sun text-amber-300"></i>
                 </button>
 
                 <div id="navActions" class="hidden flex items-center gap-1.5">
+                    <!-- 2. TOMBOL PRINTER -->
                     <button id="btnBT" onclick="app.connectBT()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 px-2 py-1 rounded-lg text-xs font-black flex items-center shadow">
                         <i class="fa-solid fa-print mr-1"></i> <span id="lblBT">Konek Printer</span>
                     </button>
+                    <!-- 3. TOMBOL RIWAYAT -->
                     <button onclick="app.bukaRiwayat()" class="bg-red-900/60 text-amber-300 p-1.5 rounded-lg text-xs font-bold" title="Riwayat">
                         <i class="fa-solid fa-clock-rotate-left"></i>
                     </button>
+                    <!-- 4. TOMBOL SAPU -->
                     <button onclick="app.resetHistoryLokal()" class="bg-red-900/60 text-amber-300 p-1.5 rounded-lg text-xs font-bold" title="Bersihkan Cache Lokal (Sapu)">
                         <i class="fa-solid fa-broom"></i>
                     </button>
+                    <!-- 5. TOMBOL LOGOUT -->
                     <button onclick="app.logout()" class="bg-red-900/60 text-red-200 p-1.5 rounded-lg text-xs font-bold" title="Keluar">
                         <i class="fa-solid fa-right-from-bracket"></i>
                     </button>
@@ -261,7 +257,7 @@
                 try {
                     const res = await fetch(GAS_API_URL + "?action=getData");
                     this.masterData = await res.json();
-                    this.syncHistoryLokal(); // Sinkronisasi cache lokal dengan server
+                    this.syncHistoryLokal();
                     this.renderJuriOptions();
                     this.checkSession();
                 } catch (e) {
@@ -270,14 +266,11 @@
                 }
             },
 
-            // MENGAMBIL NAMA POS DENGAN TEPAT (Mendukung POS-03-T / POS-03-P)
             getNamaPos: function(kode) {
                 if (!kode) return "-";
                 if (!this.masterData || !this.masterData.pos) return kode;
 
                 const raw = String(kode).toUpperCase().trim();
-                
-                // Cari persis sama di sheet POS
                 const exact = this.masterData.pos.find(p => {
                     const pKode = String(p.KODE_POS || p.kode_pos || p.POS || p.pos || '').toUpperCase().trim();
                     return pKode === raw;
@@ -286,11 +279,9 @@
                 if (exact) {
                     return exact.NAMA_POS || exact.nama_pos || exact.NAMA_LOMBA || exact.nama_lomba || raw;
                 }
-
                 return raw;
             },
 
-            // SINKRONISASI CACHE (Menghapus data hantu di HP jika dihapus di server)
             syncHistoryLokal: function() {
                 let history = JSON.parse(localStorage.getItem('sijum_history_v2')) || [];
                 if (history.length === 0) return;
@@ -315,7 +306,6 @@
                 }
             },
 
-            // RESET HISTORY MANUAL (Tombol Sapu)
             resetHistoryLokal: function() {
                 if (!confirm("⚠️ Hapus SEMUA riwayat penilaian di HP ini?\n\nData di sheet NILAI TIDAK terhapus.\nHanya cache lokal yang dibersihkan.\n\nLanjutkan?")) return;
 
@@ -437,7 +427,6 @@
                     if (id || nama) {
                         let sudah = false;
                         
-                        // Cek dari server (masterData.nilai)
                         if (posJuriRaw && this.masterData.nilai) {
                             sudah = this.masterData.nilai.some(n => {
                                 const nPos = String(n.POS_LOMBA || n.pos_lomba || '').toUpperCase().trim();
@@ -447,7 +436,6 @@
                             });
                         }
 
-                        // Cek dari cache HP
                         if (!sudah && posJuriRaw) {
                             sudah = listLokal.some(h => 
                                 String(h.pos_lomba || '').toUpperCase().trim() === posJuriRaw && 
@@ -482,7 +470,6 @@
                     return;
                 }
 
-                // Filter persis sama (POS-03-T akan memunculkan rubrik POS-03-T)
                 const items = this.masterData.rubrik.filter(r => {
                     const rPos = String(r.KODE_POS || r.kode_pos || r.POS || r.pos || '').toUpperCase().trim();
                     return rPos === posJuri;
@@ -831,7 +818,6 @@
 
                 if (!valKont) return alert("Pilih Kontingen / Tim terlebih dahulu!");
 
-                // Auto-stop timer sebelum simpan
                 if (this.timerRunning) {
                     this.timerRunning = false;
                     clearInterval(this.timerInterval);
