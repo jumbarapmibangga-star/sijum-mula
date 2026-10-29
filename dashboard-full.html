@@ -15,7 +15,6 @@
 </head>
 <body class="bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen p-4 md:p-6 font-sans transition-colors duration-300">
 
-    <!-- HEADER -->
     <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl mb-4 shadow-xl">
         <div class="flex items-center space-x-3">
             <img id="dashLogo" src="logo.png" alt="Logo" class="h-10 w-auto">
@@ -38,7 +37,6 @@
         </div>
     </header>
 
-    <!-- STATISTIK RINGKAS -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 rounded-xl shadow">
             <span class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Total Kontingen</span>
@@ -58,7 +56,6 @@
         </div>
     </div>
 
-    <!-- KLASEMEN JUARA UMUM (SEMUA) -->
     <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-xl mb-4">
         <h2 class="text-sm font-black text-[#FF0040] flex items-center border-b border-slate-200 dark:border-slate-800 pb-2 mb-3">
             <i class="fa-solid fa-crown mr-2"></i> KLASEMEN JUARA UMUM (SEMUA KONTINGEN)
@@ -70,23 +67,24 @@
                         <th class="py-2 px-2 w-12">#</th>
                         <th class="py-2 px-2">Kontingen</th>
                         <th class="py-2 px-2 text-right">Total</th>
-                        <th class="py-2 px-2 text-right hidden md:table-cell">POS-03</th>
-                        <th class="py-2 px-2 text-right hidden md:table-cell">POS-04</th>
+                        <!-- Kolom Tie-Breaker Utama -->
+                        <th class="py-2 px-2 text-right hidden md:table-cell" title="Kepalangmerahan (Tie-Breaker 1)">POS-02</th>
+                        <th class="py-2 px-2 text-right hidden md:table-cell" title="Kepemimpinan (Tie-Breaker 2)">POS-01</th>
+                        <th class="py-2 px-2 text-right hidden md:table-cell" title="Perawatan Keluarga/Sanitasi (Tie-Breaker 3)">POS-04</th>
                         <th class="py-2 px-2 text-right hidden md:table-cell">Timer</th>
                         <th class="py-2 px-2 text-right hidden lg:table-cell">Pos Selesai</th>
                     </tr>
                 </thead>
                 <tbody id="tbodyJuaraUmum">
-                    <tr><td colspan="7" class="py-4 text-center text-slate-400">Memuat data...</td></tr>
+                    <tr><td colspan="8" class="py-4 text-center text-slate-400">Memuat data...</td></tr>
                 </tbody>
             </table>
         </div>
-        <div class="text-[10px] text-slate-400 dark:text-slate-500 border-t border-slate-200 dark:border-slate-800 pt-2 mt-2">
-            <strong>Tie-breaker:</strong> Nilai → POS-03 → POS-04 → Timer (lebih cepat lebih baik) → Abjad
+        <div class="text-[10px] text-slate-400 dark:text-slate-500 border-t border-slate-200 dark:border-slate-800 pt-2 mt-2 leading-relaxed">
+            <strong>Tie-breaker:</strong> Nilai → Kepalangmerahan (POS-02) → Kepemimpinan (POS-01) → Perawatan Keluarga (POS-04) → Pertolongan Pertama (POS-03) → Ayo Siaga Bencana (POS-05) → Paduan Suara (POS-06) → Timer
         </div>
     </section>
 
-    <!-- PERINGKAT PER POS (SEMUA) -->
     <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-xl">
         <h2 class="text-sm font-black text-[#FF0040] flex items-center border-b border-slate-200 dark:border-slate-800 pb-2 mb-3">
             <i class="fa-solid fa-list-ol mr-2"></i> PERINGKAT PER POS (SEMUA KONTINGEN)
@@ -104,7 +102,6 @@
     </footer>
 
     <script>
-        // ============ THEME ============
         const htmlElement = document.documentElement;
         const themeIcon = document.getElementById('themeIcon');
         const dashLogo = document.getElementById('dashLogo');
@@ -119,11 +116,8 @@
             }
         }
 
-        if (localStorage.getItem('theme') === 'light') {
-            htmlElement.classList.remove('dark');
-        } else {
-            htmlElement.classList.add('dark');
-        }
+        if (localStorage.getItem('theme') === 'light') htmlElement.classList.remove('dark');
+        else htmlElement.classList.add('dark');
         updateLogoAndThemeUI();
 
         function toggleTheme() {
@@ -137,7 +131,6 @@
             updateLogoAndThemeUI();
         }
 
-        // ============ API ============
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxty9GSbJQtMy-Z21ffd1H3fuOgPh8FgliuiZVGvpLutDwsHp9rnz2Dk_y8eS8-tirb/exec";
 
         let pollingInterval = null;
@@ -169,7 +162,6 @@
             const totalKontingen = (data.kontingen || []).length;
             const totalNilai = (data.nilai || []).length;
 
-            // Hitung berapa kontingen yang sudah mulai dinilai (selesai > 0)
             let kontingenBerjalan = 0;
             const tracking = data.tracking || [];
             tracking.forEach(t => {
@@ -177,7 +169,7 @@
             });
 
             document.getElementById('statKontingen').innerText = totalKontingen;
-            document.getElementById('statPos').innerText = "6"; // Fix 6 Pos Utama
+            document.getElementById('statPos').innerText = "6";
             document.getElementById('statNilai').innerText = totalNilai;
             document.getElementById('statProgres').innerText = kontingenBerjalan + " Tim";
         }
@@ -187,7 +179,7 @@
             tbody.innerHTML = '';
 
             if (list.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="py-4 text-center text-slate-400">Belum ada data.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="py-4 text-center text-slate-400">Belum ada data.</td></tr>';
                 return;
             }
 
@@ -202,11 +194,13 @@
                 tr.className = 'border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition';
                 const rankClass = medalColors[index] || 'text-slate-600 dark:text-slate-400 font-bold';
 
+                // Menampilkan POS-02, POS-01, POS-04 secara berurutan sesuai aturan tie-breaker
                 tr.innerHTML = `
                     <td class="py-2 px-2 ${rankClass}">${index + 1}</td>
                     <td class="py-2 px-2 font-bold">${item.kontingen || '-'}</td>
                     <td class="py-2 px-2 text-right font-black text-[#FF0040] text-base">${item.total_skor || 0}</td>
-                    <td class="py-2 px-2 text-right hidden md:table-cell text-slate-600 dark:text-slate-400">${item.skor_pos03 || 0}</td>
+                    <td class="py-2 px-2 text-right hidden md:table-cell text-slate-600 dark:text-slate-400">${item.skor_pos02 || 0}</td>
+                    <td class="py-2 px-2 text-right hidden md:table-cell text-slate-600 dark:text-slate-400">${item.skor_pos01 || 0}</td>
                     <td class="py-2 px-2 text-right hidden md:table-cell text-slate-600 dark:text-slate-400">${item.skor_pos04 || 0}</td>
                     <td class="py-2 px-2 text-right hidden md:table-cell text-slate-500">${item.total_durasi || 0}s</td>
                     <td class="py-2 px-2 text-right hidden lg:table-cell text-slate-500">${item.pos_selesai || 0}</td>
@@ -250,7 +244,6 @@
                     posName = fallbackKey ? posNameMap[fallbackKey] : posKode;
                 }
                 
-                // Bersihkan akhiran (T) atau (P)
                 posName = posName.replace(/\s*\(T\)$/i, '').replace(/\s*\(P\)$/i, '').trim();
 
                 const box = document.createElement('div');
