@@ -22,7 +22,7 @@
 
         /* ====== ANIMASI ====== */
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .slide.active .anim-row { animation: fadeInUp 0.6s ease-out backwards; }
+        .slide.active .anim-row, .slide.active .festival-anim { animation: fadeInUp 0.6s ease-out backwards; }
         .slide.active .anim-row:nth-child(1) { animation-delay: 0.1s; }
         .slide.active .anim-row:nth-child(2) { animation-delay: 0.2s; }
         .slide.active .anim-row:nth-child(3) { animation-delay: 0.3s; }
@@ -97,13 +97,14 @@
         <!-- HEADER -->
         <header class="flex flex-col md:flex-row justify-between items-center px-4 py-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200 dark:border-slate-800 z-20 flex-shrink-0 transition-colors duration-300 gap-2">
             <div class="flex items-center space-x-3">
-                <img id="slideLogo" src="logo.png" alt="Logo" class="h-10 w-auto transition-all">
+                <img id="slideLogo" src="logo.png" alt="Logo" class="h-10 w-auto transition-all" onerror="this.onerror=null;this.style.display='none'">
                 <div>
                     <h1 class="text-base font-black tracking-wide text-slate-900 dark:text-white">JUMBARA PMR MULA KE-4</h1>
                     <p class="text-[10px] text-slate-500 dark:text-slate-400">PMI Kab. Purbalingga 2026</p>
                 </div>
             </div>
             <div class="flex flex-wrap items-center justify-center gap-2">
+                <span id="connWarn" class="hidden text-[10px] font-bold text-red-500 mr-2">⚠️ Koneksi terputus</span>
                 <div class="text-right hidden lg:block mr-2">
                     <span class="text-[10px] text-slate-500 block">Waktu</span>
                     <span id="clockDisplay" class="text-xs font-mono font-bold text-slate-900 dark:text-white">--:--:--</span>
@@ -200,6 +201,52 @@
         let masterData = null;
         let previousScores = {};
         let currentVisualTheme = localStorage.getItem('visualTheme') || 'classic';
+        let lastSig = '';
+
+        // ============ HELPER BERSAMA ============
+        function fmt(n) {
+            const x = Number(n);
+            return isNaN(x) ? n : Math.round(x * 100) / 100;
+        }
+
+        function normPos(code) {
+            const p = String(code || '').toUpperCase().trim();
+            if (p.indexOf('POS-03') !== -1 || p.indexOf('POS3') !== -1 || p.indexOf('POS 3') !== -1) return 'POS-03';
+            if (p.indexOf('POS-04') !== -1 || p.indexOf('POS4') !== -1 || p.indexOf('POS 4') !== -1) return 'POS-04';
+            return p;
+        }
+
+        // Peta kode pos -> nama pos (dari sheet POS), varian Teori/Praktik digabung
+        function buildPosMap(list) {
+            const map = {};
+            (list || []).forEach(p => {
+                const kode = String(p.KODE_POS || p.kode_pos || p.POS || p.pos || '').toUpperCase().trim();
+                const nama = String(p.NAMA_POS || p.nama_pos || p.NAMA_LOMBA || p.nama_lomba || p.NAMA || p.nama || '').trim();
+                if (!kode || !nama) return;
+                const norm = normPos(kode);
+                const bersih = nama.replace(/\s*[-–(]\s*(teori|praktik|praktek|t|p)\b.*$/i, '').trim();
+                if (kode === norm) map[norm] = bersih;
+                else if (!map[norm]) map[norm] = bersih;
+            });
+            return map;
+        }
+
+        // Bulatkan semua skor (rata-rata POS-06 / penjumlahan desimal) maks. 2 desimal
+        function roundScores(data) {
+            (data.juara_umum || []).forEach(r => {
+                ['total_skor', 'skor_pos01', 'skor_pos02', 'skor_pos03', 'skor_pos04', 'skor_pos05', 'skor_pos06']
+                    .forEach(k => { if (r[k] !== undefined) r[k] = fmt(r[k]); });
+            });
+            (data.juara_pos || []).forEach(r => {
+                if (r.total_skor !== undefined) r.total_skor = fmt(r.total_skor);
+            });
+        }
+
+        const POLL_MS = 30000;
+        const FETCH_TIMEOUT_MS = 20000;
+        let loading = false;
+        let failCount = 0;
+        let pollTimer = null;
 
         // ============ PENGATURAN TEMA VISUAL ============
         function changeTheme(themeName) {
@@ -221,6 +268,8 @@
         const slideLogo = document.getElementById('slideLogo');
 
         function updateLogoAndThemeUI() {
+            slideLogo.style.display = '';
+            slideLogo.onerror = function () { this.onerror = null; this.style.display = 'none'; };
             if (htmlElement.classList.contains('dark')) { themeIcon.className = "fa-solid fa-moon"; slideLogo.src = "logo.png"; }
             else { themeIcon.className = "fa-solid fa-sun"; slideLogo.src = "logo1.png"; }
         }
@@ -246,7 +295,8 @@
                 const sortedPos = Object.keys(posGroups).sort();
                 sortedPos.forEach(posKode => {
                     const posName = this.getPosName(data.pos || [], posKode);
-                    this.slides.push({ title: `🚩 ${posKode} — ${posName}`, html: this.buildJuaraPos(posGroups[posKode], posKode), duration: 10000 });
+                    const infoJuri = posKode === 'POS-06' ? ' (rata-rata 2 juri)' : '';
+                    this.slides.push({ title: `🚩 ${posKode} — ${posName}${infoJuri}`, html: this.buildJuaraPos(posGroups[posKode], posKode), duration: 10000 });
                 });
                 this.slides.push({ title: '📊 Progres Penilaian Kontingen', html: this.buildTracking(data.tracking || []), duration: 15000 });
                 this.render();
@@ -254,15 +304,7 @@
             },
 
             getPosName: function(posList, kode) {
-                const found = posList.find(p => {
-                    const k = String(p.KODE_POS || p.kode_pos || p.POS || p.pos || '').toUpperCase().trim();
-                    return k === kode || k.replace(/^POS-?0*/, 'POS') === kode.replace(/^POS-?0*/, 'POS');
-                });
-                if (found) {
-                    let nama = found.NAMA_POS || found.nama_pos || found.NAMA_LOMBA || found.nama_lomba || found.NAMA || found.nama || kode;
-                    return nama.replace(/\s*\(T\)$/i, '').replace(/\s*\(P\)$/i, '').trim();
-                }
-                return kode;
+                return buildPosMap(posList)[normPos(kode)] || kode;
             },
 
             groupByPos: function(list) {
@@ -552,6 +594,7 @@
 
             startProgress: function(duration) {
                 const bar = document.getElementById('progressBar'); bar.style.transition = 'none'; bar.style.width = '100%';
+                if (this.isPaused) return;
                 const startTime = performance.now(); const self = this;
                 const animate = (now) => { const remaining = Math.max(0, 1 - (now - startTime) / duration); bar.style.width = (remaining * 100) + '%'; if (remaining > 0) self.progressRAF = requestAnimationFrame(animate); };
                 setTimeout(() => { this.progressRAF = requestAnimationFrame(animate); }, 50);
@@ -567,19 +610,51 @@
             }
         };
 
+        function setConnWarn(show) {
+            const el = document.getElementById('connWarn');
+            if (el) el.classList.toggle('hidden', !show);
+        }
+
         async function loadData() {
+            if (loading) return; // jangan menumpuk request
+            loading = true;
+            const ctrl = new AbortController();
+            const timeoutId = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
             try {
-                const res = await fetch(GAS_API_URL + "?action=getData");
-                const data = await res.json(); masterData = data;
-                const wasAtSlide = slideshow.currentIndex; const wasPaused = slideshow.isPaused;
-                slideshow.build(data);
+                const res = await fetch(GAS_API_URL + "?action=getData&_=" + Date.now(), { signal: ctrl.signal, cache: 'no-store' });
+                const data = await res.json();
+                if (!data || data.status !== "SUCCESS") throw new Error((data && data.message) || "Respons server tidak valid");
+
+                failCount = 0;
+                setConnWarn(false);
+                roundScores(data);
+
+                // Bangun ulang slide hanya kalau data berubah (hindari animasi mengulang tiap refresh)
+                const sig = JSON.stringify([data.juara_umum, data.juara_pos, data.tracking, data.pos]);
+                masterData = data;
+                if (sig === lastSig) return;
+                lastSig = sig;
+
+                const wasAtSlide = slideshow.currentIndex;
+                slideshow.build(data); // status pause tetap dipertahankan
                 if (wasAtSlide < slideshow.slides.length) slideshow.goTo(wasAtSlide);
-                if (wasPaused) slideshow.togglePause();
-            } catch (e) { console.error("Gagal load data:", e); }
+            } catch (e) {
+                failCount++;
+                console.error("Gagal load data:", e);
+                if (failCount >= 3) setConnWarn(true);
+            } finally {
+                clearTimeout(timeoutId);
+                loading = false;
+            }
+        }
+
+        function scheduleNext() {
+            clearTimeout(pollTimer);
+            pollTimer = setTimeout(async () => { await loadData(); scheduleNext(); }, POLL_MS);
         }
 
         function updateClock() { document.getElementById('clockDisplay').innerText = new Date().toLocaleTimeString('id-ID'); }
-        function init() { updateClock(); setInterval(updateClock, 1000); loadData(); setInterval(loadData, 30000); }
+        function init() { updateClock(); setInterval(updateClock, 1000); loadData().then(scheduleNext); }
         init();
     </script>
 </body>
