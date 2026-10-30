@@ -231,6 +231,9 @@
                 const pos2 = fmt(item.skor_pos02 || 0);
                 const pos1 = fmt(item.skor_pos01 || 0);
                 const pos4 = fmt(item.skor_pos04 || 0);
+                const pos3 = fmt(item.skor_pos03 || 0);
+                const pos5 = fmt(item.skor_pos05 || 0);
+                const pos6 = fmt(item.skor_pos06 || 0);
 
                 const div = document.createElement('div');
                 div.className = `p-3.5 rounded-xl border flex items-center justify-between ${badges[index] || 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`;
@@ -240,7 +243,7 @@
                         <div>
                             <strong class="text-sm block font-bold text-slate-900 dark:text-white">${tim}</strong>
                             <span class="text-[10px] text-slate-500 dark:text-slate-400 block">
-                                POS-02: ${pos2} · POS-01: ${pos1} · POS-04: ${pos4}
+                                POS-02: ${pos2} · POS-01: ${pos1} · POS-04: ${pos4} · POS-03: ${pos3} · POS-05: ${pos5} · POS-06: ${pos6}
                             </span>
                         </div>
                     </div>
