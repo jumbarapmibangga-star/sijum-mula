@@ -70,12 +70,15 @@
                         <th class="py-2 px-2 text-right hidden md:table-cell">POS-02</th>
                         <th class="py-2 px-2 text-right hidden md:table-cell">POS-01</th>
                         <th class="py-2 px-2 text-right hidden md:table-cell">POS-04</th>
+                        <th class="py-2 px-2 text-right hidden md:table-cell">POS-03</th>
+                        <th class="py-2 px-2 text-right hidden md:table-cell">POS-05</th>
+                        <th class="py-2 px-2 text-right hidden md:table-cell">POS-06</th>
                         <th class="py-2 px-2 text-right hidden md:table-cell">Timer</th>
                         <th class="py-2 px-2 text-right hidden lg:table-cell">Pos Selesai</th>
                     </tr>
                 </thead>
                 <tbody id="tbodyJuaraUmum">
-                    <tr><td colspan="8" class="py-4 text-center text-slate-400">Memuat data...</td></tr>
+                    <tr><td colspan="11" class="py-4 text-center text-slate-400">Memuat data...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -237,7 +240,7 @@
             tbody.innerHTML = '';
 
             if (list.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="py-4 text-center text-slate-400">Belum ada data.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="11" class="py-4 text-center text-slate-400">Belum ada data.</td></tr>';
                 return;
             }
 
@@ -259,6 +262,9 @@
                     <td class="py-2 px-2 text-right hidden md:table-cell text-slate-600 dark:text-slate-400">${item.skor_pos02 || 0}</td>
                     <td class="py-2 px-2 text-right hidden md:table-cell text-slate-600 dark:text-slate-400">${item.skor_pos01 || 0}</td>
                     <td class="py-2 px-2 text-right hidden md:table-cell text-slate-600 dark:text-slate-400">${item.skor_pos04 || 0}</td>
+                    <td class="py-2 px-2 text-right hidden md:table-cell text-slate-600 dark:text-slate-400">${item.skor_pos03 || 0}</td>
+                    <td class="py-2 px-2 text-right hidden md:table-cell text-slate-600 dark:text-slate-400">${item.skor_pos05 || 0}</td>
+                    <td class="py-2 px-2 text-right hidden md:table-cell text-slate-600 dark:text-slate-400">${item.skor_pos06 || 0}</td>
                     <td class="py-2 px-2 text-right hidden md:table-cell text-slate-500">${item.total_durasi || 0}s</td>
                     <td class="py-2 px-2 text-right hidden lg:table-cell text-slate-500">${item.pos_selesai || 0}</td>
                 `;
