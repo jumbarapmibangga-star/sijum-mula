@@ -17,7 +17,7 @@
 
     <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl mb-4 shadow-xl">
         <div class="flex items-center space-x-3">
-            <img id="dashLogo" src="logo.png" alt="Logo" class="h-10 w-auto">
+            <img id="dashLogo" src="logo.png" alt="Logo" class="h-10 w-auto" onerror="this.onerror=null;this.style.display='none'">
             <div>
                 <h1 class="text-base md:text-lg font-black">DASHBOARD TABEL LENGKAP — JUMBARA PMR KE-4</h1>
                 <p class="text-[10px] md:text-xs text-slate-500 dark:text-slate-400">
@@ -106,6 +106,8 @@
         const dashLogo = document.getElementById('dashLogo');
 
         function updateLogoAndThemeUI() {
+            dashLogo.style.display = '';
+            dashLogo.onerror = function () { this.onerror = null; this.style.display = 'none'; };
             if (htmlElement.classList.contains('dark')) {
                 themeIcon.className = "fa-solid fa-moon";
                 dashLogo.src = "logo.png";
@@ -132,18 +134,72 @@
 
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxty9GSbJQtMy-Z21ffd1H3fuOgPh8FgliuiZVGvpLutDwsHp9rnz2Dk_y8eS8-tirb/exec";
 
-        let pollingInterval = null;
+
+        // ============ HELPER BERSAMA ============
+        function fmt(n) {
+            const x = Number(n);
+            return isNaN(x) ? n : Math.round(x * 100) / 100;
+        }
+
+        function normPos(code) {
+            const p = String(code || '').toUpperCase().trim();
+            if (p.indexOf('POS-03') !== -1 || p.indexOf('POS3') !== -1 || p.indexOf('POS 3') !== -1) return 'POS-03';
+            if (p.indexOf('POS-04') !== -1 || p.indexOf('POS4') !== -1 || p.indexOf('POS 4') !== -1) return 'POS-04';
+            return p;
+        }
+
+        // Peta kode pos -> nama pos (dari sheet POS), varian Teori/Praktik digabung
+        function buildPosMap(list) {
+            const map = {};
+            (list || []).forEach(p => {
+                const kode = String(p.KODE_POS || p.kode_pos || p.POS || p.pos || '').toUpperCase().trim();
+                const nama = String(p.NAMA_POS || p.nama_pos || p.NAMA_LOMBA || p.nama_lomba || p.NAMA || p.nama || '').trim();
+                if (!kode || !nama) return;
+                const norm = normPos(kode);
+                const bersih = nama.replace(/\s*[-–(]\s*(teori|praktik|praktek|t|p)\b.*$/i, '').trim();
+                if (kode === norm) map[norm] = bersih;
+                else if (!map[norm]) map[norm] = bersih;
+            });
+            return map;
+        }
+
+        // Bulatkan semua skor (rata-rata POS-06 / penjumlahan desimal) maks. 2 desimal
+        function roundScores(data) {
+            (data.juara_umum || []).forEach(r => {
+                ['total_skor', 'skor_pos01', 'skor_pos02', 'skor_pos03', 'skor_pos04', 'skor_pos05', 'skor_pos06']
+                    .forEach(k => { if (r[k] !== undefined) r[k] = fmt(r[k]); });
+            });
+            (data.juara_pos || []).forEach(r => {
+                if (r.total_skor !== undefined) r.total_skor = fmt(r.total_skor);
+            });
+        }
+
+        const POLL_MS = 30000;
+        const FETCH_TIMEOUT_MS = 20000;
+        let loading = false;
         let failCount = 0;
+        let pollTimer = null;
+
+        const LAST_UPDATE_CLASS = 'ml-2';
+        const LAST_UPDATE_ERR_CLASS = 'text-red-500 font-bold ml-2';
 
         async function loadDashboard() {
+            if (loading) return; // jangan menumpuk request
+            loading = true;
+            const ctrl = new AbortController();
+            const timeoutId = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+            const lastEl = document.getElementById('lastUpdate');
+
             try {
-                const res = await fetch(GAS_API_URL + "?action=getData");
+                const res = await fetch(GAS_API_URL + "?action=getData&_=" + Date.now(), { signal: ctrl.signal, cache: 'no-store' });
                 const data = await res.json();
+                if (!data || data.status !== "SUCCESS") throw new Error((data && data.message) || "Respons server tidak valid");
 
-                const now = new Date();
-                document.getElementById('lastUpdate').innerText = now.toLocaleTimeString('id-ID');
                 failCount = 0;
+                lastEl.className = LAST_UPDATE_CLASS;
+                lastEl.innerText = new Date().toLocaleTimeString('id-ID');
 
+                roundScores(data);
                 renderStatistik(data);
                 renderJuaraUmumFull(data.juara_umum || []);
                 renderPerPosFull(data.juara_pos || [], data.pos || []);
@@ -151,9 +207,12 @@
                 failCount++;
                 console.error("Gagal:", e);
                 if (failCount >= 3) {
-                    document.getElementById('lastUpdate').innerText = '⚠️ Koneksi terputus';
-                    document.getElementById('lastUpdate').className = 'text-red-500 font-bold ml-2';
+                    lastEl.innerText = '⚠️ Koneksi terputus';
+                    lastEl.className = LAST_UPDATE_ERR_CLASS;
                 }
+            } finally {
+                clearTimeout(timeoutId);
+                loading = false;
             }
         }
 
@@ -216,12 +275,7 @@
                 return;
             }
 
-            const posNameMap = {};
-            (posList || []).forEach(p => {
-                const kode = String(p.KODE_POS || p.kode_pos || p.POS || p.pos || '').toUpperCase().trim();
-                const nama = p.NAMA_POS || p.nama_pos || p.NAMA_LOMBA || p.nama_lomba || p.NAMA || p.nama || kode;
-                if (kode) posNameMap[kode] = nama;
-            });
+            const posNameMap = buildPosMap(posList);
 
             const grouped = {};
             juaraPosList.forEach(row => {
@@ -236,20 +290,15 @@
                 const teamList = grouped[posKode];
                 const isPos5 = posKode === 'POS-05';
                 
-                let posName = posNameMap[posKode];
-                if (!posName) {
-                    const fallbackKey = Object.keys(posNameMap).find(k => k.startsWith(posKode));
-                    posName = fallbackKey ? posNameMap[fallbackKey] : posKode;
-                }
-                
-                posName = posName.replace(/\s*\(T\)$/i, '').replace(/\s*\(P\)$/i, '').trim();
+                const posName = posNameMap[posKode] || posKode;
+                const infoJuri = posKode === 'POS-06' ? '<span class="ml-2 text-slate-400 dark:text-slate-500 font-normal normal-case tracking-normal">· nilai = rata-rata 2 juri</span>' : '';
 
                 const box = document.createElement('div');
                 box.className = "bg-slate-50 dark:bg-slate-950/60 p-3 rounded-xl border border-slate-200 dark:border-slate-800";
 
                 const header = document.createElement('h3');
                 header.className = "text-xs font-black text-[#FF0040] uppercase tracking-wider mb-2 flex items-center";
-                header.innerHTML = `<i class="fa-solid fa-flag mr-2"></i>${posKode} — ${posName} <span class="ml-2 text-slate-400 dark:text-slate-500 font-normal">(${teamList.length} tim)</span>`;
+                header.innerHTML = `<i class="fa-solid fa-flag mr-2"></i>${posKode} — ${posName} <span class="ml-2 text-slate-400 dark:text-slate-500 font-normal">(${teamList.length} tim)</span>${infoJuri}`;
 
                 const table = document.createElement('table');
                 table.className = "w-full text-xs";
@@ -289,22 +338,21 @@
             });
         }
 
-        function startPolling() {
-            if (pollingInterval) clearInterval(pollingInterval);
-            pollingInterval = setInterval(loadDashboard, 30000);
+        function scheduleNext() {
+            clearTimeout(pollTimer);
+            pollTimer = setTimeout(async () => { await loadDashboard(); scheduleNext(); }, POLL_MS);
         }
 
-        document.addEventListener('visibilitychange', () => {
+        document.addEventListener('visibilitychange', async () => {
             if (document.hidden) {
-                if (pollingInterval) clearInterval(pollingInterval);
+                clearTimeout(pollTimer);
             } else {
-                loadDashboard();
-                startPolling();
+                await loadDashboard();
+                scheduleNext();
             }
         });
 
-        loadDashboard();
-        startPolling();
+        loadDashboard().then(scheduleNext);
     </script>
 </body>
 </html>
