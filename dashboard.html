@@ -26,7 +26,7 @@
     <!-- HEADER DASHBOARD -->
     <header class="flex justify-between items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl mb-6 shadow-2xl transition-colors duration-300">
         <div class="flex items-center space-x-3">
-            <img id="dashboardLogo" src="logo.png" alt="Logo Jumbara" class="h-12 w-auto object-contain">
+            <img id="dashboardLogo" src="logo.png" alt="Logo Jumbara" class="h-12 w-auto object-contain" onerror="this.onerror=null;this.style.display='none'">
             <div>
                 <h1 class="text-xl font-black tracking-wide text-slate-900 dark:text-white">LIVE LEADERBOARD JUMBARA PMR MULA KE-4</h1>
                 <p class="text-xs text-slate-500 dark:text-slate-400">PMI Kabupaten Purbalingga Tahun 2026</p>
@@ -103,6 +103,8 @@
         const dashboardLogo = document.getElementById('dashboardLogo');
 
         function updateLogoAndThemeUI() {
+            dashboardLogo.style.display = '';
+            dashboardLogo.onerror = function () { this.onerror = null; this.style.display = 'none'; };
             if (htmlElement.classList.contains('dark')) {
                 themeIcon.className = "fa-solid fa-moon";
                 dashboardLogo.src = "logo.png";
@@ -133,33 +135,76 @@
         // URL ENDPOINT APPS SCRIPT
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxty9GSbJQtMy-Z21ffd1H3fuOgPh8FgliuiZVGvpLutDwsHp9rnz2Dk_y8eS8-tirb/exec";
 
-        let pollingInterval = null;
+        const LAST_UPDATE_CLASS = 'text-[10px] text-slate-400 dark:text-slate-500 block mt-0.5';
+        const LAST_UPDATE_ERR_CLASS = 'text-[10px] text-red-500 font-bold block mt-0.5';
+        const POLL_MS = 15000;
+        const FETCH_TIMEOUT_MS = 20000;
+
+        let pollTimer = null;
+        let loading = false;
         let failCount = 0;
 
+        // Pembulatan tampilan skor (hindari 87.49999999 dari penjumlahan desimal)
+        function fmt(n) {
+            const x = Number(n);
+            return isNaN(x) ? n : Math.round(x * 100) / 100;
+        }
+
+        function normPos(code) {
+            const p = String(code || '').toUpperCase().trim();
+            if (p.indexOf('POS-03') !== -1 || p.indexOf('POS3') !== -1 || p.indexOf('POS 3') !== -1) return 'POS-03';
+            if (p.indexOf('POS-04') !== -1 || p.indexOf('POS4') !== -1 || p.indexOf('POS 4') !== -1) return 'POS-04';
+            return p;
+        }
+
+        // Peta kode pos -> nama pos (dari sheet POS)
+        function buildPosMap(list) {
+            const map = {};
+            (list || []).forEach(p => {
+                const kode = String(p.KODE_POS || p.kode_pos || p.POS || p.pos || '').toUpperCase().trim();
+                const nama = String(p.NAMA_POS || p.nama_pos || '').trim();
+                if (!kode || !nama) return;
+                const norm = normPos(kode);
+                const bersih = nama.replace(/\s*[-–(]\s*(teori|praktik|praktek)\b.*$/i, '').trim();
+                if (kode === norm) map[norm] = nama;
+                else if (!map[norm]) map[norm] = bersih;
+            });
+            return map;
+        }
+
         async function loadDashboard() {
+            if (loading) return; // jangan menumpuk request
+            loading = true;
+            const ctrl = new AbortController();
+            const timeoutId = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+            const lastEl = document.getElementById('lastUpdate');
+
             try {
-                const res = await fetch(GAS_API_URL + "?action=getData");
+                const res = await fetch(GAS_API_URL + "?action=getData&_=" + Date.now(), { signal: ctrl.signal, cache: 'no-store' });
                 const data = await res.json();
 
-                // Update timestamp
-                const now = new Date();
-                document.getElementById('lastUpdate').innerText = 
-                    'Terakhir: ' + now.toLocaleTimeString('id-ID');
+                if (!data || data.status !== "SUCCESS") {
+                    throw new Error((data && data.message) || "Respons server tidak valid");
+                }
 
-                // Reset fail counter
                 failCount = 0;
+                lastEl.className = LAST_UPDATE_CLASS;
+                lastEl.innerText = 'Terakhir: ' + new Date().toLocaleTimeString('id-ID');
 
                 renderJuaraUmum(data.juara_umum || []);
-                renderJuaraPos(data.juara_pos || []);
+                renderJuaraPos(data.juara_pos || [], buildPosMap(data.pos));
                 renderTracking(data.tracking || []);
             } catch (e) {
                 failCount++;
                 console.error("Gagal update dashboard:", e);
 
                 if (failCount >= 3) {
-                    document.getElementById('lastUpdate').innerText = '⚠️ Koneksi terputus';
-                    document.getElementById('lastUpdate').className = 'text-[10px] text-red-500 font-bold block mt-0.5';
+                    lastEl.innerText = '⚠️ Koneksi terputus';
+                    lastEl.className = LAST_UPDATE_ERR_CLASS;
                 }
+            } finally {
+                clearTimeout(timeoutId);
+                loading = false;
             }
         }
 
@@ -182,10 +227,10 @@
             // Tampilkan hanya top 10
             list.slice(0, 10).forEach((item, index) => {
                 const tim = item.kontingen || item.KONTINGEN || '-';
-                const skor = item.total_skor !== undefined ? item.total_skor : (item.TOTAL_SKOR || 0);
-                const pos2 = item.skor_pos02 || 0;
-                const pos1 = item.skor_pos01 || 0;
-                const pos4 = item.skor_pos04 || 0;
+                const skor = fmt(item.total_skor !== undefined ? item.total_skor : (item.TOTAL_SKOR || 0));
+                const pos2 = fmt(item.skor_pos02 || 0);
+                const pos1 = fmt(item.skor_pos01 || 0);
+                const pos4 = fmt(item.skor_pos04 || 0);
 
                 const div = document.createElement('div');
                 div.className = `p-3.5 rounded-xl border flex items-center justify-between ${badges[index] || 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`;
@@ -205,7 +250,8 @@
             });
         }
 
-        function renderJuaraPos(list) {
+        function renderJuaraPos(list, posMap) {
+            posMap = posMap || {};
             const container = document.getElementById('containerJuaraPos');
             container.innerHTML = '';
 
@@ -231,7 +277,7 @@
                 let rowsHtml = '';
                 teamList.forEach((t, idx) => {
                     const timName = t.kontingen || t.KONTINGEN || '-';
-                    const totalSkor = t.total_skor !== undefined ? t.total_skor : (t.TOTAL_SKOR || 0);
+                    const totalSkor = fmt(t.total_skor !== undefined ? t.total_skor : (t.TOTAL_SKOR || 0));
                     const bidakInfo = t.no_bidak ? `<span class="text-[10px] text-amber-500 font-bold ml-1">🎲${t.no_bidak}</span>` : '';
                     const timerInfo = t.total_durasi ? `<span class="text-[10px] text-slate-400 ml-1">⏱${t.total_durasi}s</span>` : '';
 
@@ -243,8 +289,11 @@
                     `;
                 });
 
+                const namaPos = posMap[posName] ? ` · ${posMap[posName]}` : '';
+                const infoJuri = posName.indexOf('POS-06') !== -1
+                    ? '<span class="block normal-case tracking-normal text-[10px] font-normal text-slate-400 dark:text-slate-500">Nilai = rata-rata 2 juri</span>' : '';
                 box.innerHTML = `
-                    <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800 pb-1">${posName}</h3>
+                    <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800 pb-1">${posName}${namaPos}${infoJuri}</h3>
                     <div class="space-y-1 mt-1">${rowsHtml}</div>
                 `;
                 container.appendChild(box);
@@ -291,24 +340,31 @@
             });
         }
 
-        // Polling dengan pause saat tab hidden
-        function startPolling() {
-            if (pollingInterval) clearInterval(pollingInterval);
-            pollingInterval = setInterval(loadDashboard, 15000); // 15 detik
+        // Polling berantai (request berikutnya baru dijadwalkan setelah yang sekarang selesai)
+        function scheduleNext() {
+            clearTimeout(pollTimer);
+            pollTimer = setTimeout(async () => {
+                await loadDashboard();
+                scheduleNext();
+            }, POLL_MS);
         }
 
-        document.addEventListener('visibilitychange', () => {
+        function startPolling() {
+            scheduleNext();
+        }
+
+        // Pause saat tab tersembunyi
+        document.addEventListener('visibilitychange', async () => {
             if (document.hidden) {
-                if (pollingInterval) clearInterval(pollingInterval);
+                clearTimeout(pollTimer);
             } else {
-                loadDashboard();
-                startPolling();
+                await loadDashboard();
+                scheduleNext();
             }
         });
 
         // Initial load
-        loadDashboard();
-        startPolling();
+        loadDashboard().then(startPolling);
     </script>
 </body>
 </html>
