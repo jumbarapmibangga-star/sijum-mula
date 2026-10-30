@@ -178,11 +178,26 @@
                     <i class="fa-solid fa-list-check mr-1"></i> RUBRIK PENILAIAN (<span id="lblKodePosRubrik"></span>)
                 </label>
                 
+                <div id="boxNamaJuriDua" class="hidden input-bg bg-slate-900 p-3 rounded-xl border border-slate-700 space-y-2">
+                    <div class="text-[11px] font-black text-amber-400">NAMA JURI PENILAI</div>
+                    <input id="txtNamaJuri1" type="text" placeholder="Nama Juri 1" class="input-bg w-full bg-slate-800 border border-sky-700 rounded-lg p-2 text-xs font-bold outline-none focus:border-red-500" oninput="app.simpanNamaJuriDua()">
+                    <input id="txtNamaJuri2" type="text" placeholder="Nama Juri 2" class="input-bg w-full bg-slate-800 border border-pink-700 rounded-lg p-2 text-xs font-bold outline-none focus:border-red-500" oninput="app.simpanNamaJuriDua()">
+                </div>
                 <div id="containerRubrik" class="space-y-3"></div>
 
                 <div class="input-bg bg-slate-900 p-3 rounded-xl border border-slate-700 flex justify-between items-center mt-3">
-                    <span class="text-xs font-bold text-sub text-slate-300">TOTAL SKOR:</span>
+                    <span id="lblTotalLabel" class="text-xs font-bold text-sub text-slate-300">TOTAL SKOR:</span>
                     <span id="lblTotalSkorAuto" class="text-2xl font-black text-amber-400">0</span>
+                </div>
+                <div id="boxTotalDuaJuri" class="hidden grid grid-cols-2 gap-2 text-center">
+                    <div class="input-bg bg-slate-900 border border-slate-700 rounded-xl p-2">
+                        <div class="text-[10px] text-slate-400 font-bold">TOTAL JURI 1</div>
+                        <div id="lblTotalJuri1" class="text-lg font-black text-sky-400">0</div>
+                    </div>
+                    <div class="input-bg bg-slate-900 border border-slate-700 rounded-xl p-2">
+                        <div class="text-[10px] text-slate-400 font-bold">TOTAL JURI 2</div>
+                        <div id="lblTotalJuri2" class="text-lg font-black text-pink-400">0</div>
+                    </div>
                 </div>
             </div>
 
@@ -494,12 +509,55 @@
                 sel.onchange = () => this.resetTimer();
             },
 
+            simpanNamaJuriDua: function() {
+                try {
+                    localStorage.setItem('sijum_nama_juri_dua', JSON.stringify({
+                        j1: document.getElementById('txtNamaJuri1').value,
+                        j2: document.getElementById('txtNamaJuri2').value
+                    }));
+                } catch (e) {}
+            },
+
+            isPosDuaJuri: function(kode) {
+                const p = String(kode || '').toUpperCase().trim();
+                return p.indexOf('POS-06') !== -1 || p.indexOf('POS6') !== -1 || p.indexOf('POS 6') !== -1;
+            },
+
+            isNilaiDuaJuri: function(v) {
+                return v !== null && typeof v === 'object' && v.juri1 !== undefined;
+            },
+
+            formatNilaiRincian: function(v) {
+                if (this.isNilaiDuaJuri(v)) return `${v.juri1} | ${v.juri2}`;
+                if (v !== null && typeof v === 'object') return `[Bidak:${v.no_bidak}]`;
+                return String(v);
+            },
+
             renderRubrikDinamis: function() {
                 const container = document.getElementById('containerRubrik');
                 const posJuri = String(this.currentJuri ? (this.currentJuri.KODE_POS || this.currentJuri.kode_pos) : '').toUpperCase().trim();
                 const namaPos = this.getNamaPos(posJuri);
                 document.getElementById('lblKodePosRubrik').innerText = namaPos;
                 container.innerHTML = '';
+
+                const modeDua = this.isPosDuaJuri(posJuri);
+                const boxDua = document.getElementById('boxTotalDuaJuri');
+                if (boxDua) boxDua.classList.toggle('hidden', !modeDua);
+                const boxNama = document.getElementById('boxNamaJuriDua');
+                if (boxNama) {
+                    boxNama.classList.toggle('hidden', !modeDua);
+                    if (modeDua) {
+                        let nm = {};
+                        try { nm = JSON.parse(localStorage.getItem('sijum_nama_juri_dua')) || {}; } catch (e) {}
+                        document.getElementById('txtNamaJuri1').value = nm.j1 || '';
+                        document.getElementById('txtNamaJuri2').value = nm.j2 || '';
+                    }
+                }
+                const lblTot = document.getElementById('lblTotalLabel');
+                if (lblTot) lblTot.innerText = modeDua ? 'RATA-RATA 2 JURI:' : 'TOTAL SKOR:';
+                document.getElementById('lblTotalSkorAuto').innerText = '0';
+                const l1 = document.getElementById('lblTotalJuri1'); if (l1) l1.innerText = '0';
+                const l2 = document.getElementById('lblTotalJuri2'); if (l2) l2.innerText = '0';
 
                 if (!this.masterData || !this.masterData.rubrik) {
                     container.innerHTML = '<p class="text-xs text-red-400">Data rubrik tidak ditemukan.</p>';
@@ -521,6 +579,7 @@
                     const bobotMaks = parseFloat(item.SKOR_MAKSIMAL || item.BOBOT_MAKS || item.bobot_maks || item.maks || 100);
                     
                     const isBidak = namaItem.toUpperCase().includes('BIDAK');
+                    const dual = this.isPosDuaJuri(posJuri) && !isBidak;
 
                     let presets = [];
                     if (item.OPSI_A || item.A) {
@@ -581,6 +640,40 @@
                                        class="input-rubrik input-bg bg-slate-800 border border-purple-600 rounded-lg p-1.5 w-24 text-center font-bold text-purple-300 text-sm focus:border-red-500 outline-none" 
                                        placeholder="No. Bidak">
                             </div>
+                        `;
+                    } else if (dual) {
+                        const buildJuri = (juriKe, label, warna) => {
+                            const gid = `${index}_j${juriKe}`;
+                            const btns = presets.map(val => `
+                                <button type="button"
+                                        onclick="app.pilihPresetRubrik(this, 'inp_rubrik_${gid}', ${val})"
+                                        class="btn-preset-${gid} btn-opt-rubrik btn-preset-off flex-1 py-2 px-1 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg text-xs font-bold transition text-center shadow-sm">
+                                    ${val}
+                                </button>`).join('');
+                            return `
+                                <div class="space-y-1.5">
+                                    <div class="text-[11px] font-black ${warna}">${label}</div>
+                                    ${presets.length > 0 ? `<div class="flex gap-1.5">${btns}</div>` : ''}
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-[11px] text-sub text-slate-400">Ketik Manual:</span>
+                                        <input id="inp_rubrik_${gid}"
+                                               type="number" min="0" max="${bobotMaks}"
+                                               data-item="${namaItem}" data-maks="${bobotMaks}"
+                                               data-group="${gid}" data-juri="${juriKe}"
+                                               oninput="app.inputManualRubrik(this)"
+                                               class="input-rubrik input-bg bg-slate-800 border border-slate-600 rounded-lg p-1.5 w-20 text-center font-bold text-amber-400 text-sm focus:border-red-500 outline-none"
+                                               placeholder="0">
+                                    </div>
+                                </div>`;
+                        };
+                        div.innerHTML = `
+                            <div class="flex justify-between items-center border-b border-slate-800 pb-1.5">
+                                <span class="text-xs font-bold text-sub">${namaItem}</span>
+                                <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono">Maks: ${bobotMaks} / juri</span>
+                            </div>
+                            ${buildJuri(1, 'JURI 1', 'text-sky-400')}
+                            <div class="border-t border-slate-800/60"></div>
+                            ${buildJuri(2, 'JURI 2', 'text-pink-400')}
                         `;
                     } else {
                         div.innerHTML = `
@@ -759,7 +852,7 @@
             },
 
             hitungTotalAuto: function() {
-                let total = 0;
+                let total = 0, t1 = 0, t2 = 0, dual = false;
                 const inputs = document.querySelectorAll('.input-rubrik');
                 inputs.forEach(input => {
                     if (input.getAttribute('data-is-bidak') === 'true') return;
@@ -770,8 +863,18 @@
                         val = max;
                         input.value = max;
                     }
-                    total += val;
+                    const juriKe = input.getAttribute('data-juri');
+                    if (juriKe === '1') { t1 += val; dual = true; }
+                    else if (juriKe === '2') { t2 += val; dual = true; }
+                    else total += val;
                 });
+                if (dual) {
+                    total = Math.round(((t1 + t2) / 2) * 100) / 100;
+                    const l1 = document.getElementById('lblTotalJuri1');
+                    const l2 = document.getElementById('lblTotalJuri2');
+                    if (l1) l1.innerText = t1;
+                    if (l2) l2.innerText = t2;
+                }
                 document.getElementById('lblTotalSkorAuto').innerText = total;
             },
 
@@ -877,20 +980,42 @@
                     const itemNama = inp.getAttribute('data-item');
                     const isBidak = inp.getAttribute('data-is-bidak') === 'true';
                     const val = parseFloat(inp.value) || 0;
+                    const juriKe = inp.getAttribute('data-juri');
 
                     if (isBidak) {
                         rincian[itemNama] = { no_bidak: val || "-", skor: 0 };
+                    } else if (juriKe) {
+                        if (typeof rincian[itemNama] !== 'object') rincian[itemNama] = {};
+                        rincian[itemNama]['juri' + juriKe] = val;
                     } else {
                         rincian[itemNama] = val;
                     }
                 });
 
-                const totalSkor = parseFloat(document.getElementById('lblTotalSkorAuto').innerText) || 0;
+                let totalJuri1 = 0, totalJuri2 = 0, duaJuri = false;
+                for (const k in rincian) {
+                    if (this.isNilaiDuaJuri(rincian[k])) {
+                        duaJuri = true;
+                        totalJuri1 += rincian[k].juri1 || 0;
+                        totalJuri2 += rincian[k].juri2 || 0;
+                    }
+                }
+
+                let totalSkor = parseFloat(document.getElementById('lblTotalSkorAuto').innerText) || 0;
+                if (duaJuri) totalSkor = Math.round(((totalJuri1 + totalJuri2) / 2) * 100) / 100;
                 const durasi = parseInt(document.getElementById('txtDurasi').value) || 0;
                 const catatan = document.getElementById('txtCatatan').value.trim();
 
                 const posJuri = this.currentJuri.KODE_POS || this.currentJuri.kode_pos;
-                const namaJuri = this.currentJuri.NAMA_JURI || this.currentJuri.nama_juri;
+                let namaJuri = this.currentJuri.NAMA_JURI || this.currentJuri.nama_juri;
+
+                let namaJuri1 = '', namaJuri2 = '';
+                if (duaJuri) {
+                    namaJuri1 = document.getElementById('txtNamaJuri1').value.trim();
+                    namaJuri2 = document.getElementById('txtNamaJuri2').value.trim();
+                    if (!namaJuri1 || !namaJuri2) return alert("Isi nama Juri 1 dan Juri 2 terlebih dahulu!");
+                    namaJuri = namaJuri1 + " & " + namaJuri2;
+                }
 
                 const btnSimpan = document.getElementById('btnSimpan');
                 btnSimpan.disabled = true;
@@ -903,6 +1028,11 @@
                     pos_lomba: posJuri,
                     kontingen: valKont,
                     total_skor: totalSkor,
+                    dua_juri: duaJuri,
+                    nama_juri1: namaJuri1,
+                    nama_juri2: namaJuri2,
+                    total_juri1: totalJuri1,
+                    total_juri2: totalJuri2,
                     durasi: durasi,
                     catatan: catatan,
                     rincian_nilai: rincian
@@ -925,6 +1055,11 @@
                             nama_juri: namaJuri,
                             kontingen: valKont,
                             total_skor: totalSkor,
+                            dua_juri: duaJuri,
+                            nama_juri1: namaJuri1,
+                            nama_juri2: namaJuri2,
+                            total_juri1: totalJuri1,
+                            total_juri2: totalJuri2,
                             durasi: durasi,
                             catatan: catatan,
                             rincian: rincian,
@@ -999,16 +1134,21 @@
                     esc += "Waktu : " + dataStruk.timestamp + "\n";
                     esc += "Pos   : " + posDisplay + "\n";
                     esc += "Tim   : " + dataStruk.kontingen + "\n";
-                    esc += "Juri  : " + dataStruk.nama_juri + "\n";
+                    if (dataStruk.dua_juri && dataStruk.nama_juri1) {
+                        esc += "Juri 1: " + dataStruk.nama_juri1 + "\n";
+                        esc += "Juri 2: " + dataStruk.nama_juri2 + "\n";
+                    } else {
+                        esc += "Juri  : " + dataStruk.nama_juri + "\n";
+                    }
                     esc += "Durasi: " + dataStruk.durasi + " Detik\n";
                     esc += "--------------------------------\n";
-                    esc += "RINCIAN RUBRIK PENILAIAN:\n";
+                    esc += dataStruk.dua_juri ? "RINCIAN (Juri 1 | Juri 2):\n" : "RINCIAN RUBRIK PENILAIAN:\n";
 
                     const maxChar = 32;
                     let noItem = 1;
                     for (let k in dataStruk.rincian) {
                         let valObj = dataStruk.rincian[k];
-                        let valStr = (typeof valObj === 'object') ? `[Bidak:${valObj.no_bidak}]` : String(valObj);
+                        let valStr = this.formatNilaiRincian(valObj);
                         
                         let prefix = `${noItem}. `;
                         let indent = " ".repeat(prefix.length);
@@ -1033,8 +1173,13 @@
                     }
 
                     esc += "--------------------------------\n";
+                    if (dataStruk.dua_juri) {
+                        esc += "Total Juri 1 : " + dataStruk.total_juri1 + "\n";
+                        esc += "Total Juri 2 : " + dataStruk.total_juri2 + "\n";
+                        esc += "--------------------------------\n";
+                    }
                     esc += "\x1B\x45\x01\x1B\x61\x01";
-                    esc += "TOTAL SKOR: " + dataStruk.total_skor + "\n";
+                    esc += (dataStruk.dua_juri ? "RATA-RATA: " : "TOTAL SKOR: ") + dataStruk.total_skor + "\n";
                     esc += "\x1B\x45\x00\x1B\x61\x00";
                     esc += "Catatan: " + (dataStruk.catatan || "-") + "\n";
 
@@ -1076,7 +1221,7 @@
 
                 for (let item in dataStruk.rincian) {
                     let valObj = dataStruk.rincian[item];
-                    let valStr = (typeof valObj === 'object') ? `[Bidak: ${valObj.no_bidak}]` : valObj;
+                    let valStr = this.formatNilaiRincian(valObj);
 
                     rubrikHtml += `
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; font-size: 8.5pt;">
@@ -1108,14 +1253,19 @@
                     <div>Waktu : ${dataStruk.timestamp}</div>
                     <div>Pos   : ${posDisplay}</div>
                     <div style="font-weight:bold;">Tim   : ${dataStruk.kontingen}</div>
-                    <div>Juri  : ${dataStruk.nama_juri}</div>
+                    ${(dataStruk.dua_juri && dataStruk.nama_juri1)
+                        ? `<div>Juri 1: ${dataStruk.nama_juri1}</div><div>Juri 2: ${dataStruk.nama_juri2}</div>`
+                        : `<div>Juri  : ${dataStruk.nama_juri}</div>`}
                     <div>Durasi: ${dataStruk.durasi} Detik</div>
                     <div style="border-bottom:1px dashed #000; margin:4px 0;"></div>
-                    <div style="font-weight:bold; margin-bottom:4px;">RINCIAN PENILAIAN:</div>
+                    <div style="font-weight:bold; margin-bottom:4px;">RINCIAN PENILAIAN${dataStruk.dua_juri ? ' (Juri 1 | Juri 2)' : ''}:</div>
                     ${rubrikHtml}
                     <div style="border-bottom:1px dashed #000; margin:4px 0;"></div>
+                    ${dataStruk.dua_juri ? `
+                    <div style="display:flex; justify-content:space-between; font-size:9pt;"><span>Total Juri 1</span><strong>${dataStruk.total_juri1}</strong></div>
+                    <div style="display:flex; justify-content:space-between; font-size:9pt;"><span>Total Juri 2</span><strong>${dataStruk.total_juri2}</strong></div>` : ''}
                     <div style="font-size:12pt; font-weight:bold; text-align:center; border:1px solid #000; padding:3px; margin:6px 0;">
-                        TOTAL: ${dataStruk.total_skor}
+                        ${dataStruk.dua_juri ? 'RATA-RATA' : 'TOTAL'}: ${dataStruk.total_skor}
                     </div>
                     <div>Catatan: ${dataStruk.catatan || '-'}</div>
                     ${qrHtml}
