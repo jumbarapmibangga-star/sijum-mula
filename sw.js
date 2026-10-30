@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sijum-mula-v5.0.9';
+const CACHE_NAME = 'sijum-mula-v5.0.11';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
