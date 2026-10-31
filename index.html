@@ -445,6 +445,10 @@
                         // Jangan lakukan apa-apa jika timer sedang berjalan (juri sedang menilai)
                         if (this.timerRunning) return;
 
+                        // Jangan sync jika juri sudah memilih kontingen / stopwatch sudah berjalan (sedang proses menilai)
+                        const selNow = document.getElementById('selKontingen');
+                        if ((selNow && selNow.value) || this.timerSeconds > 0) return;
+
                         // Ambil data terbaru dari server
                         const res = await fetch(GAS_API_URL + "?action=getData");
                         const data = await res.json();
@@ -462,6 +466,7 @@
 
             renderKontingenOptions: function() {
                 const sel = document.getElementById('selKontingen');
+                const pilihanSebelumnya = sel.value;
                 sel.innerHTML = '<option value="">-- Pilih Tim (Belum Dinilai) --</option>';
                 
                 if (!this.masterData || !this.masterData.kontingen) return;
@@ -494,8 +499,8 @@
                             );
                         }
 
-                        if (!sudah) {
-                            const displayLabel = id ? `${id} - ${nama}` : nama;
+                        const displayLabel = id ? `${id} - ${nama}` : nama;
+                        if (!sudah || displayLabel === pilihanSebelumnya) {
                             sel.innerHTML += `<option value="${displayLabel}">${displayLabel} (${kec})</option>`;
                             countTampil++;
                         }
@@ -504,6 +509,8 @@
 
                 if (countTampil === 0) {
                     sel.innerHTML = '<option value="">🎉 Semua kontingen telah selesai dinilai di pos ini!</option>';
+                } else if (pilihanSebelumnya) {
+                    sel.value = pilihanSebelumnya;
                 }
 
                 sel.onchange = () => this.resetTimer();
